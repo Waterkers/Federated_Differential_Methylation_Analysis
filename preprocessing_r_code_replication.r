@@ -5,14 +5,14 @@ if (!require(need, quietly = TRUE))
 library(wateRmelon, methylumi)
 library(ChAMP) # for some reason library only loads this package when it is called on its own
 
-if (!require("RefFreeEWAS", quietly = TRUE))
-  install.packages("RefFreeEWAS") # not available on CRAN anymore so needs to be downloaded manually from the archive
+#if (!require("RefFreeEWAS", quietly = TRUE))
+#  install.packages("RefFreeEWAS") # not available on CRAN anymore so needs to be downloaded manually from the archive
 # for the workflow probably needs full translation
-library(RefFreeEWAS, lib.loc = "C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2\\RefFreeEWAS")
+#library(RefFreeEWAS, lib.loc = "C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2\\RefFreeEWAS")
 ##### source the Exeter functions needed for the pipeline
 lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\ExeterEWASPipeline-master\\R",pattern = "\\.r$",full.names = T),function(x){source(x)})
-#### import the data using methylumi -> create a MethyLumiSet object
-setwd("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\R_Pipeline") # set working directory
+## Set the working directory
+setwd("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\R_Pipeline") # set working directory
 ## create a folder for the QC output
 if(!dir.exists("QC")){
   dir.create("QC")
@@ -20,6 +20,7 @@ if(!dir.exists("QC")){
 if(!dir.exists("QC/Plots")){
   dir.create("QC/Plots")
 }
+#### import the data using methylumi -> create a MethyLumiSet object
 
 # data1 <- methylumiR("GSE80417_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1.txt", sep = ",")
 # data1 <- readEPIC("GSE80417_RAW")
@@ -30,6 +31,20 @@ samps <- read.table(system.file("extdata/samples.txt",
 mldat <- methylumi::methylumiR(system.file('extdata/exampledata.samples.txt',package='methylumi'),
                     qcfile=system.file('extdata/exampledata.controls.txt',package="methylumi"),
                     sampleDescriptions=samps)
+
+# loading in actual data - GSE66351
+pheno1 <- read.table("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351_pheno_info.txt")
+pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
+pheno1 <- as.data.frame(pheno1)
+colnames(pheno1)<- pheno1[1,]
+pheno1 <- pheno1[2:191,]
+Sample_ID <- getBarcodes("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
+pheno1 <- cbind(pheno1, Sample_ID)
+pheno1_half <- as.data.frame(pheno1[1:20,])
+#pheno1_half_t <- as.data.frame(t(pheno1_half))
+barcodes_GSE66351_half <- c(Sample_ID[1:20]) # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 80 instead
+data1 <- methylumi::methylumIDAT(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
+data2 <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
 pheno <- samps
 msetEPIC <- mldat
