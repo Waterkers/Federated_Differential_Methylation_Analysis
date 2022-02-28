@@ -6,9 +6,10 @@ library(wateRmelon, methylumi)
 library(ChAMP) # for some reason library only loads this package when it is called on its own
 
 #if (!require("RefFreeEWAS", quietly = TRUE))
-#  install.packages("RefFreeEWAS") # not available on CRAN anymore so needs to be downloaded manually from the archive
+install.packages("C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2.tar.gz", repos = NULL) # not available on CRAN anymore so needs to be downloaded manually from the archive
 # for the workflow probably needs full translation
-#library(RefFreeEWAS, lib.loc = "C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2\\RefFreeEWAS")
+install.packages("quadprog") # one of the RefFreeEWAS dependencies that I hadn't installed yet
+library(RefFreeEWAS)
 ##### source the Exeter functions needed for the pipeline
 lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\ExeterEWASPipeline-master\\R",pattern = "\\.r$",full.names = T),function(x){source(x)})
 ## Set the working directory
@@ -21,9 +22,6 @@ if(!dir.exists("QC/Plots")){
   dir.create("QC/Plots")
 }
 #### import the data using methylumi -> create a MethyLumiSet object
-
-# data1 <- methylumiR("GSE80417_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1.txt", sep = ",")
-# data1 <- readEPIC("GSE80417_RAW")
 # for now just using sample data from the methylumi package because the Exeter pipeline requires a
 # methylumiSet object
 samps <- read.table(system.file("extdata/samples.txt",
@@ -41,13 +39,14 @@ pheno1 <- pheno1[2:191,]
 Sample_ID <- getBarcodes("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
 pheno1 <- cbind(pheno1, Sample_ID)
 pheno1_half <- as.data.frame(pheno1[1:20,])
-#pheno1_half_t <- as.data.frame(t(pheno1_half))
+
 barcodes_GSE66351_half <- c(Sample_ID[1:20]) # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 80 instead
 data1 <- methylumi::methylumIDAT(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
 data2 <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
+#fData(data1) <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
-pheno <- samps
-msetEPIC <- mldat
+pheno <- pheno1_half
+msetEPIC <- data2
 
 ########## Start with the QC pipeline from Exeter ##################
 ### checking methylated and unmethylated intensities #############
@@ -103,7 +102,7 @@ strictoutliers = names(which(M.median<M_lower_bound | U.median<U_lower_bound | M
 strictoutliers
 
 # store outliers in QCmetrics
-QCmetrics$strict_outliers = QCmetrics$SampleLabel%in%strictoutliers
+QCmetrics$strict_outliers = QCmetrics$Sample_ID%in%strictoutliers #change column to match the sample_id column name
 
 ## calculate a summary statistic for each chip
 chip.M.median<-aggregate(M.median, by = list(unlist(strsplit(colnames(m_intensities), "_"))[seq(from = 1, to = 2*ncol(m_intensities), by = 2)]), FUN = median)
@@ -112,13 +111,13 @@ chip.U.median<-aggregate(U.median, by = list(unlist(strsplit(colnames(m_intensit
 
 ## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
 # of samples provided
-# pdf("QC/Plots/Sample_Intensity_ByPlate_boxplot.pdf")
-# par(mfrow = c(1,2))
-# par(mar = c(8, 4, 1, 1))
-# nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
-# boxplot(M.median ~ pheno$plate, ylab = "Median M intensity", xlab = "Plate", las = 2, col = rainbow(nCol)) 
-# boxplot(U.median ~ pheno$plate, ylab = "Median U intensity", xlab = "Plate", las = 2, col = rainbow(nCol))
-# dev.off()
+pdf("QC/Plots/Sample_Intensity_ByPlate_boxplot.pdf")
+par(mfrow = c(1,2))
+par(mar = c(8, 4, 1, 1))
+nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
+boxplot(M.median ~ pheno$plate, ylab = "Median M intensity", xlab = "Plate", las = 2, col = rainbow(nCol)) 
+boxplot(U.median ~ pheno$plate, ylab = "Median U intensity", xlab = "Plate", las = 2, col = rainbow(nCol))
+dev.off()
 # 
 # ## alternatively colour points in original scatterplot by Plate
 # pdf("QC/Plots/Sample_Intensity_ByPlate_histogram.pdf")
@@ -140,22 +139,22 @@ QCmetrics<-cbind(QCmetrics, bs)
 
 ##### Checking for biological sex vs. measured sex ############
 betas <- methylumi::betas(msetEPIC)
-pheno<-pheno[match(colnames(betas), pheno$SampleLabel),]
+pheno<-pheno[match(colnames(betas), pheno$Sample_ID),]
 
 pdf("QC/Plots/Gender_Cluster.pdf")
-predSex1<-findGenderPC(betas, pheno$Gender, npcs = 5) # the default setting of npcs = 20 gave an error so
+predSex1<-findGenderPC(betas, pheno$Sample_sex, npcs = 20) # the default setting of npcs = 20 gave an error so
 # I reduced the number of princicple components for the example data set -> remember to put it back at 20
 # when using real data
-predSex2<-clusterGender(betas, pheno$Gender)
+predSex2<-clusterGender(betas, pheno$Sample_sex)
 dev.off()
 
 # Confirm findings
 PCA = prcomp(betas[complete.cases(betas),])
-plot(PCA$rotation[,4],PCA$rotation[,2],col=ifelse(pheno$Gender=="MA","blue","magenta"), main= "PCA of betas, colored by phenotype trait sex",pch=19)
+plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(pheno$Sample_sex=="Sex: M","blue","magenta"), main= "PCA of betas, colored by phenotype trait sex",pch=19)
 # Check predsex
-plot(PCA$rotation[,4],PCA$rotation[,2],col=ifelse(predSex1=="M","blue","magenta"), main= "PCA of betas, colored by predicted trait predSex1",pch=19)
+plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(predSex1=="Sex: M","blue","magenta"), main= "PCA of betas, colored by predicted trait predSex1",pch=19)
 
-plot(PCA$rotation[,4],PCA$rotation[,2],col=ifelse(predSex2=="M","blue","magenta"), main= "PCA of betas, colored by predicted trait predSex2",pch=19)
+plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(predSex2=="Sex: M","blue","magenta"), main= "PCA of betas, colored by predicted trait predSex2",pch=19)
 
 # the next step would be to put a note in the QCmetrics matrix for the samples where biological/phenotypical 
 # sex does not match with the sex determined based on the methylation data - in the example data this is not 
@@ -171,7 +170,7 @@ plot(PCA$rotation[,4],PCA$rotation[,2],col=ifelse(predSex2=="M","blue","magenta"
 # samples_sex_wrong_shouldbemale
 
 # Saving the correct predicted sex results to the QCmetrics matrix
-QCmetrics<-cbind(QCmetrics, predSex2)
+QCmetrics<-cbind(QCmetrics, predSex1)
 
 ###### Check genetically identical samples correlate across SNP probes ######
 #- Does not work for the example data
@@ -206,10 +205,10 @@ for(i in 1:ncol(betas.rs)){
   cors = cor(val,betas.rs)
   cors[i] = NA
   o = which.max(cors)
-  xname = paste0(colnames(betas.rs)[i]," (ID: ",pheno$idtw[which(pheno$sentrix_full==colnames(betas.rs)[i])],")")
-  yname = paste0( colnames(cors)[o]," (ID: ",pheno$idtw[which(pheno$sentrix_full==colnames(cors)[o])],")")
+  xname = paste0(colnames(betas.rs)[i]," (ID: ",pheno$Sample_title[which(pheno$Sample_ID==colnames(betas.rs)[i])],")")
+  yname = paste0( colnames(cors)[o]," (ID: ",pheno$Sample_title[which(pheno$Sample_ID==colnames(cors)[o])],")")
   
-  id_match = pheno$idtw[which(pheno$sentrix_full==colnames(betas.rs)[i])] == pheno$idtw[which(pheno$sentrix_full==colnames(cors)[o])]
+  id_match = pheno$Sample_title[which(pheno$Sample_ID==colnames(betas.rs)[i])] == pheno$Sample_title[which(pheno$Sample_ID==colnames(cors)[o])]
   
   id_match_text = ifelse(id_match,"IDs match","IDs dont match")
   if(!id_match){warning(paste0("mismatch with sample ",xname, " Index: ",i))}
@@ -227,7 +226,7 @@ QCmetrics<-cbind(QCmetrics, duplicateSamples)
 
 ##### P-filter #############
 # Remove objects in memory as a lot of RAM is needed when running pfilter
-removelist = c("betas","chip.M.median","chip.U.median","cors","dnamage","duplicateSamples","m_intensities","PCA","u_intensities","snpCor","betas.rs","bs","coef","corMax","i","id_match","id_match_text","M.median","o","PC2","PC4","predSex1","predSex2","U.median","val","xname","yname")
+removelist = c("betas","chip.M.median","chip.U.median","cors","duplicateSamples","m_intensities","PCA","u_intensities","snpCor","betas.rs","bs","corMax","i","id_match","id_match_text","M.median","o","predSex1","predSex2","U.median","val","xname","yname")
 rm(list=removelist)
 gc()
 
@@ -240,7 +239,7 @@ dev.off()
 # Filter on quality
 msetEPIC.pf <- wateRmelon::pfilter(msetEPIC, perc = 5) # samples to 5% due to buccal
 # reload methylumi package when running into issues
-
+retained_probes <- rownames(betas(msetEPIC)) %in% rownames(betas(msetEPIC.pf))
 # store info
 pFilterPass<-colnames(betas(msetEPIC)) %in% colnames(betas(msetEPIC.pf))
 QCmetrics<-cbind(QCmetrics, pFilterPass)
@@ -254,6 +253,11 @@ gc()
 
 ###### Normalisation ################
 msetEPIC.pf <- dasen(msetEPIC.pf)
+# adding feature/probe annotation information after normalisation because otherwise
+# the dasen function becomes fussy and won't work
+annotation_data <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
+retained_annotation <- annotation_data[annotation_data$Probe_ID %in% rownames(betas(msetEPIC.pf)), ]
+fData(msetEPIC.pf) <- retained_annotation
 
 pdf("QC/Plots/Betas_normalized_boxplot.pdf")
 boxplot(betas(msetEPIC.pf),main="Betas normalized")
@@ -262,8 +266,8 @@ dev.off()
 ##### Cell type estimation ##############
 # start with removing the X-chromosome probes from the dataset if they are there
 # because they can interfere with the cell-type decomposition.
-temp_data = betas(msetEPIC.pf[fData(msetEPIC.pf)$CHR!="X", ]) # change to match the sex chromosome
-# notation in the methylumiset datastructure
+temp_data = betas(msetEPIC.pf[fData(msetEPIC.pf)$Chromosome_36!="X", ]) #something funky going on here
+
 
 # next transpose the data so the samples become the rows and run signular value decomposition
 # the top x most informative singular value decomposition 'components' are used to select the most
@@ -290,4 +294,108 @@ points(elbowdif[elbowdif>quantile(elbowdif,0.98)],pch=19,col="blue")
 
 # select the right singular vectors corresponding to the selected top values
 pcSelect =  sv$v[,1:s_maxPC]  
+pcSelect = as.data.frame(pcSelect)
+# from here select the probes with the most informative factor-loadings - using mahalanobis distance
+mh = mahalanobis(pcSelect, apply(pcSelect,2,mean), cov(pcSelect)) # calculate mahalanobis distance for all the 
+# factor-loadings
+hist(mh) #plot a histogram of these
+
+#select the top 5000 (as initial estimate) with the lowest mh distance -> these are most informative
+s_select_CpGs = 10000 # first 5000 OK
+plot(mh[order(mh, decreasing=TRUE)])
+abline(v=s_select_CpGs,col="red",lty=2) # plot the mh distances in decreasing order together with the suggested
+# cut off for informative CpGs to see if all of the factor loadings with a mh distance < 1 are included
+# now select the most important CpGs based on the cut-off defined above
+cpgSelect = order(mh, decreasing=TRUE)[1:s_select_CpGs]
+Ysel = temp_data[cpgSelect,]
+rm(temp_data) # clear space in memory
+# as a final step before moving on the cell type decomposition is to double check that there are no sex effects
+# present in the data anymore
+plot((prcomp(t(Ysel))$x),col=ifelse(pheno$Sample_Sex=="Sex: M",1,2))
+
+# Maximum number of estimatable celltypes set to 5 (this is default and supported by evidence see https://www.nature.com/articles/s41598-018-25311-0 )
+s_maxCelltypes  = 5
+
+# Get PCs (without standardization)
+svSel2 = svd(Ysel)
+
+# Initial deconvolution (note, this could take awhile)
+cellmixArray  <- RefFreeCellMixArrayWithCustomStart(Ysel, 
+                                                    mu.start = svSel2$u,  # Initial methylome matrix 
+                                                    Klist=3:s_maxCelltypes          # List of K values to try (# constituent cell types)
+)
+
+rm(svSel2) 
+gc()
+
+#-----------------------------------------------------------------------------------------------------#
+#                           Bootstrap
+#-----------------------------------------------------------------------------------------------------#
+# Do the bootstrap for selecting the K parameter (# assumed cell types)
+cellmixArrayBoot <- RefFreeCellMixArrayDevianceBoots(
+  cellmixArray,            # Array object
+  Y=Ysel,                  # Data on which array was based
+  R=100,                    # defaults 5; 
+  bootstrapIterations=5)    # defaults 5; 
+
+#-----------------------------------------------------------------------------------------------------#
+#                           Select K
+#-----------------------------------------------------------------------------------------------------#
+# Show mean deviance per K, per window
+wnsrMeanDev <-apply(cellmixArrayBoot[-1,], 2, mean, trim=0.25)
+#wnsrMeanDev
+
+# Choose K based on minimum deviance
+Kchoose <- as.numeric(which.min(wnsrMeanDev))
+#Kchoose # 1
+
+#-----------------------------------------------------------------------------------------------------#
+#                           Omega
+#-----------------------------------------------------------------------------------------------------#
+# Chosen Omega
+Omega <- cellmixArray[[ Kchoose ]]$Omega # The cell mixture matrix
+MuSmall <- cellmixArray[[ Kchoose ]]$Mu
+
+# Celltype estimations (Omega matrix)
+Omega = data.frame(Omega)
+colnames(Omega)=paste0("CT",1:(dim(Omega)[2]))
+
+# rename to CT
+CT= Omega
+rm(Omega)
+
+# make image
+temp_CT = CT
+temp_CT$SampleID=rownames(CT)
+
+# format data
+DF <- pivot_longer(temp_CT,cols = 1:dim(CT)[2],names_to = "Celltypes",values_to = "Proportion") %>% group_by(SampleID,Celltypes) #%>%  mutate(name = fct_reorder(name, value)) 
+
+pdf("QC/Plots/Celltype_estimates_barplot.pdf")
+ggplot(DF, aes(x = SampleID, y = Proportion, fill = Celltypes))+
+  ggtitle("Celltype composition estimate per sample")  + 
+  coord_flip() +
+  geom_bar(stat = "identity")
+dev.off()
+
+#### save the final pre-processed betas with minimal and full phenotype information
+Betas <- betas(msetEPIC.pf)
+
+temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID)]
+# remove unnecessary text from the phenotype dataframe cells
+temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
+
+Cell_Types <- CT[match(colnames(Betas), rownames(CT)),]
+
+Small_Pheno <- data.frame(Sample_ID = QCmetrics$Sample_ID, Diagnosis = temp_Pheno$Sample_diagnosis, Sex = temp_Pheno$Sample_sex,
+                          Age = temp_Pheno$Sample_age, Cell_Type = Cell_Types)
+# create a column with the full sentrix ID because it seems handy
+Small_Pheno$Sentrix_ID <- str_c(temp_Pheno$Sample_sentrix_id, "_", temp_Pheno$Sample_sentrix_position)
+
+# Create the full phenotype file
+Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
+
+# save everything
+save(Betas, Small_Pheno, file = "QC\\GSE66351_first20_QCandDasen.RData")
+save(Full_Pheno, file = "QC\\GSE66351_Full_Phenotype_Information.RData")
 
