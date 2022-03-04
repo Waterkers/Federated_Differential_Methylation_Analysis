@@ -48,6 +48,12 @@ data2 <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_h
 pheno <- pheno1_half
 msetEPIC <- data2
 
+### adding the annotations using the Illumia450kManifest package ####
+library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+data("Locations")
+force(Locations)
+fData(msetEPIC)<- Locations
 ########## Start with the QC pipeline from Exeter ##################
 ### checking methylated and unmethylated intensities #############
 ### extract sample intensities 
