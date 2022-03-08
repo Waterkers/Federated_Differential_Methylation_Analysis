@@ -53,7 +53,15 @@ library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
 data("Locations")
 force(Locations)
-fData(msetEPIC)<- Locations
+annotation_bleh <- getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+fData(msetEPIC) <- annotation_bleh
+fData(msetEPIC)["CHR"]<- Locations # not the same length as the data
+
+# find out which probes are missing in the annotation information compared to the data
+not_in_annotation <- fData(msetEPIC)[!rownames(fData(msetEPIC)) %in% rownames(Locations),]
+
+
+
 ########## Start with the QC pipeline from Exeter ##################
 ### checking methylated and unmethylated intensities #############
 ### extract sample intensities 
