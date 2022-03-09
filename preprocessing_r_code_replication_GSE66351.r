@@ -22,14 +22,6 @@ if(!dir.exists("QC_GSE66351/Plots")){
   dir.create("QC_GSE66351/Plots")
 }
 #### import the data using methylumi -> create a MethyLumiSet object
-# for now just using sample data from the methylumi package because the Exeter pipeline requires a
-# methylumiSet object
-samps <- read.table(system.file("extdata/samples.txt",
-                                package = "methylumi"),sep="\t",header=TRUE)
-mldat <- methylumi::methylumiR(system.file('extdata/exampledata.samples.txt',package='methylumi'),
-                    qcfile=system.file('extdata/exampledata.controls.txt',package="methylumi"),
-                    sampleDescriptions=samps)
-
 # loading in actual data - GSE66351
 pheno1 <- read.table("F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351_pheno_info.txt")
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
@@ -39,8 +31,13 @@ pheno1 <- pheno1[2:191,]
 Sample_ID <- getBarcodes("F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
 pheno1 <- cbind(pheno1, Sample_ID)
 
-data1 <- methylumi::methylumIDAT(barcodes = Sample_ID, pdat = pheno1, idatPath = "F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
-data2 <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = "F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
+# set up the system for parallel processing to make it possible to deal with the dataset
+install.packages("parallel")
+library(parallel)
+num_cores <- detectCores()
+
+data1 <- methylumi::methylumIDAT(barcodes = Sample_ID, pdat = pheno1, idatPath = "F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351", parallel = TRUE, mc.cores = num_cores)
+data2 <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = "F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351", parallel = TRUE, mc.cores = num_cores)
 #fData(data1) <- read.csv("F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
 pheno <- pheno1_half
