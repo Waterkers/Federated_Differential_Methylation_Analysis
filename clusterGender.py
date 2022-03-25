@@ -33,7 +33,7 @@ def clusterGender(betas, sex, npcs = 20, thres = 0.5, makePlot = True, inLine = 
     print("The top correlated principle components with sex:", first.name + 1, second.name + 1) #the +1 is necessary to get the correct PC number when compared to R since python
     # indexes from 0 and R from 1
     
-    if makePlot == True:
+    """ if makePlot == True:
         # insert code for correlation plot
         if inLine == True:
             %matplotlib inline
@@ -45,7 +45,7 @@ def clusterGender(betas, sex, npcs = 20, thres = 0.5, makePlot = True, inLine = 
             fig = plt.figure()
             ax = fig.add_axes([0,0,1,1])
             ax.scatter(pca_results.components_[np.int_(first[0])], pca_results.components_[np.int_(second[0])], c = codes_sex, cmap="Set2")
-        
+      """ #needs to be fixed so the legend works properly  
         
     
     # Lousis kmean clustering algorithm with hartigan approximation I think

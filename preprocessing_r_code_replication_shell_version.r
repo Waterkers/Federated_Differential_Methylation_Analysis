@@ -266,7 +266,7 @@ msetEPIC.pf <- dasen(msetEPIC.pf)
 # the dasen function becomes fussy and won't work
 annotation_data <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
 retained_annotation <- annotation_data[annotation_data$Probe_ID %in% rownames(betas(msetEPIC.pf)), ]
-fData(msetEPIC.pf) <- retained_annotation
+fData(msetEPIC.pf)["CHR"] <- retained_annotation["Chromosome_36"]
 
 pdf("QC/Plots/Betas_normalized_boxplot.pdf")
 boxplot(betas(msetEPIC.pf),main="Betas normalized")
@@ -275,7 +275,7 @@ dev.off()
 ##### Cell type estimation ##############
 # start with removing the X-chromosome probes from the dataset if they are there
 # because they can interfere with the cell-type decomposition.
-temp_data = betas(msetEPIC.pf[fData(msetEPIC.pf)$Chromosome_36!="X", ]) #something funky going on here
+temp_data = betas(msetEPIC.pf[fData(msetEPIC.pf)$CHR!="X", ]) #something funky going on here
 
 
 # next transpose the data so the samples become the rows and run signular value decomposition
