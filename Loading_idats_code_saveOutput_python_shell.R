@@ -1,6 +1,10 @@
 ### get the commands from the subprocess call ###
 input <- commandArgs(trailingOnly = TRUE)
 
+## save input commands as local objects
+idat <- input[1]
+pheno_information <- input[2]
+working_dir <- input[3]
 
 ##### Start with installing the required Bioconductor and then packages ########
 if (!require("BiocManager", quietly = TRUE))
@@ -13,14 +17,10 @@ if (!require(need, quietly = TRUE))
 library(methylumi)
 library(wateRmelon)
 
-## save input commands as local objects
-idat_path <- input[1]
-pheno_information <- input[2]
-working_dir <- input[3]
-
 
 ##### source the Exeter functions needed for the pipeline
 lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\ExeterEWASPipeline-master\\R",pattern = "\\.r$",full.names = T),function(x){source(x)})
+
 ## Set the working directory
 setwd(working_dir) # set working directory
 
@@ -34,8 +34,10 @@ if(!dir.exists("QC_GSE66351_PythonShell\\Plots")){
 
 print("Output directories created")
 
+#Creating a function around the code to load the data
+load_and_save <- function(idat_path, pheno_info) {
 # loading in actual data - GSE66351
-pheno1 <- read.table(pheno_information)
+pheno1 <- read.table(pheno_info)
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
 colnames(pheno1)<- pheno1[1,]
@@ -49,13 +51,14 @@ write.csv(Sample_ID, "QC_GSE66351_PythonShell\\barcodes_check1.csv")
 pheno1 <- cbind(pheno1, Sample_ID)
 pheno1_half <- as.data.frame(pheno1[1:20,])
 
-write.csv(pheno1_half, "QC_GSE66351_PythonShell\\input_check.csv")
+write.csv(pheno1, "QC_GSE66351_PythonShell\\input_check.csv")
 
 barcodes_GSE66351_half <- pheno1_half$Sample_ID # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 20 instead
 write.csv(barcodes_GSE66351_half, "QC_GSE66351_PythonShell\\barcodes_check2.csv")
 data <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = idat_path)
 
-write.csv(pheno1_half,"QC_GSE66351_PythonShell\\input_check_postIDAT.csv")
+save(data, file = "QC_GSE66351_PythonShell\\methylumiSet.RData")
+write.csv(pheno1,"QC_GSE66351_PythonShell\\input_check_postIDAT.csv")
 print("idats")
 
 #save the information stored in the data2 object (the MethylumiSet object thing) into seperate dataframes
@@ -70,8 +73,8 @@ write.csv(raw_methylated, "QC_GSE66351_PythonShell\\Raw_methylated_intensities.c
 raw_unmethylated <- methylumi::unmethylated(data)
 write.csv(raw_unmethylated, "QC_GSE66351_PythonShell\\Raw_unmethylated_intensities.csv")
 
-print("Done")
+}
 
-
+load_and_save(idat, pheno_information)
 
 
