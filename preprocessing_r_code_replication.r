@@ -49,16 +49,17 @@ pheno <- pheno1_half
 msetEPIC <- data2
 
 ### adding the annotations using the Illumia450kManifest package ####
-library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
-data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
-data("Locations")
-force(Locations)
-annotation_bleh <- getAnnotation(IlluminaHumanMethylation450kanno.ilmn12.hg19)
-fData(msetEPIC) <- annotation_bleh
-fData(msetEPIC)["CHR"]<- Locations # not the same length as the data
+#library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+#data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+#data("Locations")
+#force(Locations)
+#annotation_bleh <- Locations
+#fData(msetEPIC) <- annotation_bleh
+#fData(msetEPIC)["CHR"]<- Locations # not the same length as the data
 
 # find out which probes are missing in the annotation information compared to the data
-not_in_annotation <- fData(msetEPIC)[!rownames(fData(msetEPIC)) %in% rownames(Locations),]
+#not_in_annotation <- fData(msetEPIC)[!rownames(fData(msetEPIC)) %in% rownames(Locations),]
+# the SNP probes are missing in the annotation file
 
 
 
@@ -271,7 +272,7 @@ msetEPIC.pf <- dasen(msetEPIC.pf)
 # the dasen function becomes fussy and won't work
 annotation_data <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
 retained_annotation <- annotation_data[annotation_data$Probe_ID %in% rownames(betas(msetEPIC.pf)), ]
-fData(msetEPIC.pf) <- retained_annotation
+fData(msetEPIC.pf)["CHR"] <- retained_annotation["Chromosome_36"]
 
 pdf("QC/Plots/Betas_normalized_boxplot.pdf")
 boxplot(betas(msetEPIC.pf),main="Betas normalized")
@@ -280,7 +281,7 @@ dev.off()
 ##### Cell type estimation ##############
 # start with removing the X-chromosome probes from the dataset if they are there
 # because they can interfere with the cell-type decomposition.
-temp_data = betas(msetEPIC.pf[fData(msetEPIC.pf)$Chromosome_36!="X", ]) #something funky going on here
+temp_data = betas(msetEPIC.pf[fData(msetEPIC.pf)$CHR!="X", ]) #something funky going on here
 
 
 # next transpose the data so the samples become the rows and run signular value decomposition
