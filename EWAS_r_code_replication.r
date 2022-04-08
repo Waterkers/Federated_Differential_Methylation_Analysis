@@ -15,7 +15,7 @@ if(!dir.exists("EWAS/Plots")){
 
 #### Get rid of cross-hybridising probes, based on McCartney et al., 2016 ###
 crosshyb <- read.table("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Federated_Differential_Methylation_Analysis\\Cross_hybridising_CpGTargetting_Probes_McCartneyetal2016.txt")
-
+snpProbes <- read.table("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Federated_Differential_Methylation_Analysis\\mmc1.txt", header = TRUE)
 betas<-Betas[!(rownames(Betas) %in% crosshyb[,1]), ]
 betas<-filterSNPprobes(betas, population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
 betas<-betas[-grep("rs", rownames(betas)),] ## remove SNP probes
@@ -27,11 +27,12 @@ rownames(res)<-rownames(betas)
 # removed the smoking score variable from the linear model because not all data was provided to run the 
 # smokingScore function and calculate the smoking score for the samples. 
 for(i in 1:nrow(betas)){
-  model<-lm(betas[i,] ~ Small_Pheno$Diagnosis + Small_Pheno$Age + factor(Small_Pheno$Sex) + Small_Pheno$Cell_Type.CT1 + Small_Pheno$Cell_Type.CT2 + Small_Pheno$Cell_Type.CT3 + factor(Small_Pheno$Sentrix_ID))
-  res[i,c(1)]<-coefficients(model)["Small_Pheno$Diagnosis"]
-  res[i,2]<-summary(model)$coefficients["Small_Pheno$Diagnosis",2]
-  res[i,c(3)]<-summary(model)$coefficients["Small_Pheno$Diagnosis",4]
+  model<-lm(betas[i,] ~ Small_Pheno$Diagnosis + as.numeric(Small_Pheno$Age) + factor(Small_Pheno$Sex) + as.numeric(Small_Pheno$Cell_Type.CT1)+ as.numeric(Small_Pheno$Cell_Type.CT2) + as.numeric(Small_Pheno$Cell_Type.CT3)+ factor(Small_Pheno$Sentrix_ID))
+  res[i,c(1)]<-coefficients(model)["Small_Pheno$Diagnosis CTRL"]
+  res[i,2]<-summary(model)$coefficients["Small_Pheno$Diagnosis CTRL",2]
+  res[i,c(3)]<-summary(model)$coefficients["Small_Pheno$Diagnosis CTRL",4]
 }
 
-# the model part of the code runs, but it doesn't provide a standard error or p-value for each row
-# meaning that the loop doesn't work and there is no results matrix generated
+# By changing the name of the coefficient to select to its actual name in the table everything now works fine
+# However, the fact that I had to manually copy and paste the name from the coefficients names table probably means
+# it cannot be easilly automated, at least not in a way that I can think of
