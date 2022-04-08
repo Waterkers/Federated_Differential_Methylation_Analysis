@@ -33,7 +33,15 @@ for(i in 1:nrow(betas)){
   res[i,c(3)]<-summary(model)$coefficients["Small_Pheno$Diagnosis CTRL",4]
 }
 
-write.csv(res, "EWAS/Results_dataset.csv")
 # By changing the name of the coefficient to select to its actual name in the table everything now works fine
 # However, the fact that I had to manually copy and paste the name from the coefficients names table probably means
 # it cannot be easilly automated, at least not in a way that I can think of
+
+#add annotation
+
+
+#save the results to a csv as as
+write.csv(res, "EWAS/Results_dataset.csv")
+
+#save the results in the standard format defined for a BED file - needed for the DMR calling function
+
