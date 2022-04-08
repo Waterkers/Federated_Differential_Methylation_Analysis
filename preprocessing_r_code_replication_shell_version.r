@@ -1,3 +1,12 @@
+input <- commandArgs(trailingOnly = TRUE)
+
+## save input commands as local objects
+idat <- input[1]
+pheno_info <- input[2]
+working_dir <- input[3]
+manifest_path <- input[4]
+
+
 ##### Start with installing the required packages ########
 need <- c("wateRmelon", "methylumi", "ChAMP")
 if (!require(need, quietly = TRUE))
@@ -5,27 +14,27 @@ if (!require(need, quietly = TRUE))
 library(wateRmelon, methylumi)
 library(ChAMP) # for some reason library only loads this package when it is called on its own
 
-#if (!require("RefFreeEWAS", quietly = TRUE))
-install.packages("C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2.tar.gz", repos = NULL) # not available on CRAN anymore so needs to be downloaded manually from the archive
-# for the workflow probably needs full translation
-install.packages("quadprog") # one of the RefFreeEWAS dependencies that I hadn't installed yet
-library(RefFreeEWAS)
-##### source the Exeter functions needed for the pipeline
+# #if (!require("RefFreeEWAS", quietly = TRUE))
+# install.packages("C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2.tar.gz", repos = NULL) # not available on CRAN anymore so needs to be downloaded manually from the archive
+# # add the filepath to where the archived version of RefFreeEWAS was downloaded above
+# install.packages("quadprog") # one of the RefFreeEWAS dependencies that I hadn't installed yet
+# library(RefFreeEWAS)
+##### source the Exeter functions needed for the pipeline - Change to the local filepath that contains these functions
 lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\ExeterEWASPipeline-master\\R",pattern = "\\.r$",full.names = T),function(x){source(x)})
 ## Set the working directory
-setwd("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\R_Pipeline") # set working directory
+setwd(working_dir) # set working directory
 ## create a folder for the QC output
-if(!dir.exists("QC")){
-  dir.create("QC")
+if(!dir.exists(sprintf("QC_GSE66351_PythonShell"))){
+	dir.create(sprintf("QC_GSE66351_PythonShell"))
 }
-if(!dir.exists("QC/Plots")){
-  dir.create("QC/Plots")
-}
+if(!dir.exists(sprintf("QC_GSE66351_PythonShell\\Polts"))){
+  dir.create(sprintf("QC_GSE66351_PythonShell\\Polts"))
+} 
 
 load <- function(idat, pheno) {
 # loading in actual data - GSE66351
 pheno1 <- read.table(pheno)
-pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
+pheno1 <- t(pheno1)#transpose the imported table to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
 colnames(pheno1)<- pheno1[1,]
 pheno1 <- pheno1[2:191,]
@@ -35,16 +44,31 @@ pheno1_half <- as.data.frame(pheno1[1:20,])
 
 barcodes_GSE66351_half <- c(Sample_ID[1:20]) # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 80 instead
 data <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = idat)
-#fData(data1) <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
+
+save(data, file = "QC_GSE66351_PythonShell\\methylumiSet.RData")
+
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
 pheno <- pheno1_half
 msetEPIC <- data
+
+#save the information stored in the data2 object (the MethylumiSet object thing) into seperate dataframes
+setwd(working_dir)
+# betas
+raw_betas <- betas(data)
+write.csv(betas, "QC_GSE66351_PythonShell\\Raw_betas.csv")
+# methylated values
+raw_methylated <- methylumi::methylated(data)
+write.csv(raw_methylated, "QC_GSE66351_PythonShell\\Raw_methylated_intensities.csv")
+# unmethylated values
+raw_unmethylated <- methylumi::unmethylated(data)
+write.csv(raw_unmethylated, "QC_GSE66351_PythonShell\\Raw_unmethylated_intensities.csv")
+
 
 out <- list(pheno, msetEPIC)
 return(out)
 }
 
-load()
+load(idat, pheno_info)
 
 ########## Start with the QC pipeline from Exeter ##################
 Quality_control <- function(msetEPIC, pheno, intens_threshold){
@@ -109,26 +133,26 @@ chip.U.median<-aggregate(U.median, by = list(unlist(strsplit(colnames(m_intensit
 
 
 
-if (exists(pheno$plate) {
+if (exists(pheno$plate)) {
 ## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
 # of samples provided
-pdf("QC/Plots/Sample_Intensity_ByPlate_boxplot.pdf")
-par(mfrow = c(1,2))
-par(mar = c(8, 4, 1, 1))
-nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
-boxplot(M.median ~ pheno$plate, ylab = "Median M intensity", xlab = "Plate", las = 2, col = rainbow(nCol)) 
-boxplot(U.median ~ pheno$plate, ylab = "Median U intensity", xlab = "Plate", las = 2, col = rainbow(nCol))
-dev.off()
+  pdf("QC/Plots/Sample_Intensity_ByPlate_boxplot.pdf")
+  par(mfrow = c(1,2))
+  par(mar = c(8, 4, 1, 1))
+  nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
+  boxplot(M.median ~ pheno$plate, ylab = "Median M intensity", xlab = "Plate", las = 2, col = rainbow(nCol)) 
+  boxplot(U.median ~ pheno$plate, ylab = "Median U intensity", xlab = "Plate", las = 2, col = rainbow(nCol))
+  dev.off()
  
 ## alternatively colour points in original scatterplot by Plate
-pdf("QC/Plots/Sample_Intensity_ByPlate_histogram.pdf")
-nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
-plot(M.median, U.median, pch = 16, xlab = "Median M intensity", ylab = "Median U intensity", col = rainbow(nCol)[factor(pheno$plate)])
-abline(v = intens.Thres, col = "red")
-abline(h = intens.Thres, col = "red") 
-legend("topright", levels(factor(pheno$plate)), col = rainbow(nCol), pch = 16)
-dev.off()
-}
+  pdf("QC/Plots/Sample_Intensity_ByPlate_histogram.pdf")
+  nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
+  plot(M.median, U.median, pch = 16, xlab = "Median M intensity", ylab = "Median U intensity", col = rainbow(nCol)[factor(pheno$plate)])
+  abline(v = intens.Thres, col = "red")
+  abline(h = intens.Thres, col = "red") 
+  legend("topright", levels(factor(pheno$plate)), col = rainbow(nCol), pch = 16)
+  dev.off() }
+
 
 ##### Checking the Bisulfite conversion ################
 bs<-wateRmelon::bscon(msetEPIC) # - doesn't work because of this error "Error in bsI.green[1:2, ] : subscript out of bounds"
@@ -253,6 +277,20 @@ gc()
 ##### Removal of cross-hybridisation probes ###############
 # load the cpgs to be removed - this step should probably be preformed locally
 
+
+#save the information stored in the data2 object (the MethylumiSet object thing) into seperate dataframes
+setwd(working_dir)
+# betas
+raw_betas <- betas(msetEPIC.pf)
+write.csv(betas, "QC_GSE66351_PythonShell\\Preprocessed_betas.csv")
+# methylated values
+raw_methylated <- methylumi::methylated(msetEPIC.pf)
+write.csv(raw_methylated, "QC_GSE66351_PythonShell\\Preprocessed_methylated_intensities.csv")
+# unmethylated values
+raw_unmethylated <- methylumi::unmethylated(msetEPIC.pf)
+write.csv(raw_unmethylated, "QC_GSE66351_PythonShell\\Preprocessed_unmethylated_intensities.csv")
+
+
 out <- list(msetEPIC.pf, pFilterPass, QCmetrics)
 return(out)
 }
@@ -264,147 +302,162 @@ Quality_control(msetEPIC, pheno, 2000)
 msetEPIC.pf <- dasen(msetEPIC.pf)
 # adding feature/probe annotation information after normalisation because otherwise
 # the dasen function becomes fussy and won't work
-annotation_data <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
-retained_annotation <- annotation_data[annotation_data$Probe_ID %in% rownames(betas(msetEPIC.pf)), ]
-fData(msetEPIC.pf)["CHR"] <- retained_annotation["Chromosome_36"]
 
-pdf("QC/Plots/Betas_normalized_boxplot.pdf")
-boxplot(betas(msetEPIC.pf),main="Betas normalized")
-dev.off()
+# cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics){
+# annotation_data <- read.csv(manifest_path , header = TRUE)
+# retained_annotation <- annotation_data[annotation_data$Probe_ID %in% rownames(betas(msetEPIC.pf)), ]
+# fData(msetEPIC.pf)["CHR"] <- retained_annotation["Chromosome_36"]
 
-##### Cell type estimation ##############
-# start with removing the X-chromosome probes from the dataset if they are there
-# because they can interfere with the cell-type decomposition.
-temp_data = betas(msetEPIC.pf[fData(msetEPIC.pf)$CHR!="X", ]) #something funky going on here
+# pdf("QC/Plots/Betas_normalized_boxplot.pdf")
+# boxplot(betas(msetEPIC.pf),main="Betas normalized")
+# dev.off()
+
+# ##### Cell type estimation ##############
+# # start with removing the X-chromosome probes from the dataset if they are there
+# # because they can interfere with the cell-type decomposition.
+# temp_data = betas(msetEPIC.pf[fData(msetEPIC.pf)$CHR!="X", ]) #something funky going on here
 
 
-# next transpose the data so the samples become the rows and run signular value decomposition
-# the top x most informative singular value decomposition 'components' are used to select the most
-# informative probes to be used for the cell-type decomposition. 
-sv = svd(scale(t(temp_data)))    # PCA ; samples should become row
-plot(sv$d^2,type="b")        # Scree plot - shows the most informative data decompositions based on the input data
+# # next transpose the data so the samples become the rows and run signular value decomposition
+# # the top x most informative singular value decomposition 'components' are used to select the most
+# # informative probes to be used for the cell-type decomposition. 
+# sv = svd(scale(t(temp_data)))    # PCA ; samples should become row
+# plot(sv$d^2,type="b")        # Scree plot - shows the most informative data decompositions based on the input data
 
-# from here the most informative decompositions/values/whatever they are called need to be selected. The top 98th
-# percentile of values is used here
-# values for elbow to detect
-elbowdif = sv$d^2
+# # from here the most informative decompositions/values/whatever they are called need to be selected. The top 98th
+# # percentile of values is used here
+# # values for elbow to detect
+# elbowdif = sv$d^2
 
-# estimate better amount of PCs (based on above 98th percentile)
-s_maxPC=10
-s_minPC=1
-s_maxPC = min(s_maxPC,max(s_minPC,sum(elbowdif>quantile(elbowdif,0.98)))) # calculate the 98th percentile based on the
-# svd output calculated based on the input data and store the number of values that are above this cut-off in the term
-# s_maxPC
+# # estimate better amount of PCs (based on above 98th percentile)
+# s_maxPC=10
+# s_minPC=1
+# s_maxPC = min(s_maxPC,max(s_minPC,sum(elbowdif>quantile(elbowdif,0.98)))) # calculate the 98th percentile based on the
+# # svd output calculated based on the input data and store the number of values that are above this cut-off in the term
+# # s_maxPC
 
-# Automated elbow cutoff - visualisation of the values selected (above the cut-off)
-plot(elbowdif)
-abline(h=quantile(elbowdif,0.98),col="red")
-points(elbowdif[elbowdif>quantile(elbowdif,0.98)],pch=19,col="blue")
+# # Automated elbow cutoff - visualisation of the values selected (above the cut-off)
+# plot(elbowdif)
+# abline(h=quantile(elbowdif,0.98),col="red")
+# points(elbowdif[elbowdif>quantile(elbowdif,0.98)],pch=19,col="blue")
 
-# select the right singular vectors corresponding to the selected top values
-pcSelect =  sv$v[,1:s_maxPC]  
-pcSelect = as.data.frame(pcSelect)
-# from here select the probes with the most informative factor-loadings - using mahalanobis distance
-mh = mahalanobis(pcSelect, apply(pcSelect,2,mean), cov(pcSelect)) # calculate mahalanobis distance for all the 
-# factor-loadings
-hist(mh) #plot a histogram of these
+# # select the right singular vectors corresponding to the selected top values
+# pcSelect =  sv$v[,1:s_maxPC]  
+# pcSelect = as.data.frame(pcSelect)
+# # from here select the probes with the most informative factor-loadings - using mahalanobis distance
+# mh = mahalanobis(pcSelect, apply(pcSelect,2,mean), cov(pcSelect)) # calculate mahalanobis distance for all the 
+# # factor-loadings
+# hist(mh) #plot a histogram of these
 
-#select the top 5000 (as initial estimate) with the lowest mh distance -> these are most informative
-s_select_CpGs = 10000 # first 5000 OK
-plot(mh[order(mh, decreasing=TRUE)])
-abline(v=s_select_CpGs,col="red",lty=2) # plot the mh distances in decreasing order together with the suggested
-# cut off for informative CpGs to see if all of the factor loadings with a mh distance < 1 are included
-# now select the most important CpGs based on the cut-off defined above
-cpgSelect = order(mh, decreasing=TRUE)[1:s_select_CpGs]
-Ysel = temp_data[cpgSelect,]
-rm(temp_data) # clear space in memory
-# as a final step before moving on the cell type decomposition is to double check that there are no sex effects
-# present in the data anymore
-plot((prcomp(t(Ysel))$x),col=ifelse(pheno$Sample_Sex=="Sex: M",1,2))
+# #select the top 5000 (as initial estimate) with the lowest mh distance -> these are most informative
+# s_select_CpGs = 10000 # first 5000 OK
+# plot(mh[order(mh, decreasing=TRUE)])
+# abline(v=s_select_CpGs,col="red",lty=2) # plot the mh distances in decreasing order together with the suggested
+# # cut off for informative CpGs to see if all of the factor loadings with a mh distance < 1 are included
+# # now select the most important CpGs based on the cut-off defined above
+# cpgSelect = order(mh, decreasing=TRUE)[1:s_select_CpGs]
+# Ysel = temp_data[cpgSelect,]
+# rm(temp_data) # clear space in memory
+# # as a final step before moving on the cell type decomposition is to double check that there are no sex effects
+# # present in the data anymore
+# plot((prcomp(t(Ysel))$x),col=ifelse(pheno$Sample_Sex=="Sex: M",1,2))
 
-# Maximum number of estimatable celltypes set to 5 (this is default and supported by evidence see https://www.nature.com/articles/s41598-018-25311-0 )
-s_maxCelltypes  = 5
+# # Maximum number of estimatable celltypes set to 5 (this is default and supported by evidence see https://www.nature.com/articles/s41598-018-25311-0 )
+# s_maxCelltypes  = 5
 
-# Get PCs (without standardization)
-svSel2 = svd(Ysel)
+# # Get PCs (without standardization)
+# svSel2 = svd(Ysel)
 
-# Initial deconvolution (note, this could take awhile)
-cellmixArray  <- RefFreeCellMixArrayWithCustomStart(Ysel, 
-                                                    mu.start = svSel2$u,  # Initial methylome matrix 
-                                                    Klist=3:s_maxCelltypes          # List of K values to try (# constituent cell types)
-)
+# # Initial deconvolution (note, this could take awhile)
+# cellmixArray  <- RefFreeCellMixArrayWithCustomStart(Ysel, 
+                                                    # mu.start = svSel2$u,  # Initial methylome matrix 
+                                                    # Klist=3:s_maxCelltypes          # List of K values to try (# constituent cell types)
+# )
 
-rm(svSel2) 
-gc()
+# rm(svSel2) 
+# gc()
 
-#-----------------------------------------------------------------------------------------------------#
-#                           Bootstrap
-#-----------------------------------------------------------------------------------------------------#
-# Do the bootstrap for selecting the K parameter (# assumed cell types)
-cellmixArrayBoot <- RefFreeCellMixArrayDevianceBoots(
-  cellmixArray,            # Array object
-  Y=Ysel,                  # Data on which array was based
-  R=100,                    # defaults 5; 
-  bootstrapIterations=5)    # defaults 5; 
+# #-----------------------------------------------------------------------------------------------------#
+# #                           Bootstrap
+# #-----------------------------------------------------------------------------------------------------#
+# # Do the bootstrap for selecting the K parameter (# assumed cell types)
+# cellmixArrayBoot <- RefFreeCellMixArrayDevianceBoots(
+  # cellmixArray,            # Array object
+  # Y=Ysel,                  # Data on which array was based
+  # R=100,                    # defaults 5; 
+  # bootstrapIterations=5)    # defaults 5; 
 
-#-----------------------------------------------------------------------------------------------------#
-#                           Select K
-#-----------------------------------------------------------------------------------------------------#
-# Show mean deviance per K, per window
-wnsrMeanDev <-apply(cellmixArrayBoot[-1,], 2, mean, trim=0.25)
-#wnsrMeanDev
+# #-----------------------------------------------------------------------------------------------------#
+# #                           Select K
+# #-----------------------------------------------------------------------------------------------------#
+# # Show mean deviance per K, per window
+# wnsrMeanDev <-apply(cellmixArrayBoot[-1,], 2, mean, trim=0.25)
+# #wnsrMeanDev
 
-# Choose K based on minimum deviance
-Kchoose <- as.numeric(which.min(wnsrMeanDev))
-#Kchoose # 1
+# # Choose K based on minimum deviance
+# Kchoose <- as.numeric(which.min(wnsrMeanDev))
+# #Kchoose # 1
 
-#-----------------------------------------------------------------------------------------------------#
-#                           Omega
-#-----------------------------------------------------------------------------------------------------#
-# Chosen Omega
-Omega <- cellmixArray[[ Kchoose ]]$Omega # The cell mixture matrix
-MuSmall <- cellmixArray[[ Kchoose ]]$Mu
+# #-----------------------------------------------------------------------------------------------------#
+# #                           Omega
+# #-----------------------------------------------------------------------------------------------------#
+# # Chosen Omega
+# Omega <- cellmixArray[[ Kchoose ]]$Omega # The cell mixture matrix
+# MuSmall <- cellmixArray[[ Kchoose ]]$Mu
 
-# Celltype estimations (Omega matrix)
-Omega = data.frame(Omega)
-colnames(Omega)=paste0("CT",1:(dim(Omega)[2]))
+# # Celltype estimations (Omega matrix)
+# Omega = data.frame(Omega)
+# colnames(Omega)=paste0("CT",1:(dim(Omega)[2]))
 
-# rename to CT
-CT= Omega
-rm(Omega)
+# # rename to CT
+# CT= Omega
+# rm(Omega)
 
-# make image
-temp_CT = CT
-temp_CT$SampleID=rownames(CT)
+# # make image
+# temp_CT = CT
+# temp_CT$SampleID=rownames(CT)
 
-# format data
-DF <- pivot_longer(temp_CT,cols = 1:dim(CT)[2],names_to = "Celltypes",values_to = "Proportion") %>% group_by(SampleID,Celltypes) #%>%  mutate(name = fct_reorder(name, value)) 
+# # format data
+# DF <- pivot_longer(temp_CT,cols = 1:dim(CT)[2],names_to = "Celltypes",values_to = "Proportion") %>% group_by(SampleID,Celltypes) #%>%  mutate(name = fct_reorder(name, value)) 
 
-pdf("QC/Plots/Celltype_estimates_barplot.pdf")
-ggplot(DF, aes(x = SampleID, y = Proportion, fill = Celltypes))+
-  ggtitle("Celltype composition estimate per sample")  + 
-  coord_flip() +
-  geom_bar(stat = "identity")
-dev.off()
+# pdf("QC/Plots/Celltype_estimates_barplot.pdf")
+# ggplot(DF, aes(x = SampleID, y = Proportion, fill = Celltypes))+
+  # ggtitle("Celltype composition estimate per sample")  + 
+  # coord_flip() +
+  # geom_bar(stat = "identity")
+# dev.off()
 
-#### save the final pre-processed betas with minimal and full phenotype information
-Betas <- betas(msetEPIC.pf)
+# #### save the final pre-processed betas with minimal and full phenotype information
+# Betas <- betas(msetEPIC.pf)
 
-temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID)]
-# remove unnecessary text from the phenotype dataframe cells
-temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
+# temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID)]
+# # remove unnecessary text from the phenotype dataframe cells
+# temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
 
-Cell_Types <- CT[match(colnames(Betas), rownames(CT)),]
+# Cell_Types <- CT[match(colnames(Betas), rownames(CT)),]
 
-Small_Pheno <- data.frame(Sample_ID = QCmetrics$Sample_ID, Diagnosis = temp_Pheno$Sample_diagnosis, Sex = temp_Pheno$Sample_sex,
-                          Age = temp_Pheno$Sample_age, Cell_Type = Cell_Types)
-# create a column with the full sentrix ID because it seems handy
-Small_Pheno$Sentrix_ID <- str_c(temp_Pheno$Sample_sentrix_id, "_", temp_Pheno$Sample_sentrix_position)
+# Small_Pheno <- data.frame(Sample_ID = QCmetrics$Sample_ID, Diagnosis = temp_Pheno$Sample_diagnosis, Sex = temp_Pheno$Sample_sex,
+                          # Age = temp_Pheno$Sample_age, Cell_Type = Cell_Types)
+# # create a column with the full sentrix ID because it seems handy
+# Small_Pheno$Sentrix_ID <- str_c(temp_Pheno$Sample_sentrix_id, "_", temp_Pheno$Sample_sentrix_position)
 
-# Create the full phenotype file
-Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
+# # Create the full phenotype file
+# Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
 
-# save everything
-save(Betas, Small_Pheno, file = "QC\\GSE66351_first20_QCandDasen.RData")
-save(Full_Pheno, file = "QC\\GSE66351_Full_Phenotype_Information.RData")
+# # save everything
+# save(Betas, Small_Pheno, file = "QC\\GSE66351_first20_QCandDasen.RData")
 
+# save(Full_Pheno, file = "QC\\GSE66351_Full_Phenotype_Information.RData")
+
+# #save the information stored in the data2 object (the MethylumiSet object thing) into seperate dataframes
+# setwd(working_dir)
+# # betas
+# write.csv(Betas, "QC_GSE66351_PythonShell\\Final_preprocessed_betas.csv")
+
+# # full phenotype information
+# write.csv(Full_Pheno, "QC_GSE66351_PythonShell\\Full_pheno_information.csv")
+
+# print("Preprocessed data, short and full phenotype information saved")
+# }
+
+# cell_decomp_RefFreeEWAS(manifest_path, msetEPIC.pf, QCmetrics)
