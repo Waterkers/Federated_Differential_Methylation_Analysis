@@ -60,4 +60,4 @@ standard_bed_columns <- standard_bed_columns[ ,c(1,2,3,4)]
 res_bed <- merge(standard_bed_columns, res, by.x = 4, by.y = "row.names", all.y = TRUE)
 
 res_bed <- data.frame(chrom = res_bed[2], start = res_bed[3], stop = res_bed[4], p_value = res_bed$Diagnosis_P, coeffi = res_bed$Diagnosis_Beta, stan_er = res_bed$Diagnosis_SE, Illumina_ID = res_bed[1])
-
+write.table(res_bed, "EWAS/results.bed")
