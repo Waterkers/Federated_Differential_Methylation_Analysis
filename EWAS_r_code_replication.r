@@ -38,10 +38,26 @@ for(i in 1:nrow(betas)){
 # it cannot be easilly automated, at least not in a way that I can think of
 
 #add annotation
+data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+data("Locations")
+force(Locations)
+included_annotations <- cbind(c(Locations["chr"], Islands.UCSC, Other[c("UCSC_RefGene_Name", "UCSC_RefGene_Accession", "UCSC_RefGene_Group", "HMM_Island")]))
+included_annotations <- included_annotations[match(rownames(betas), rownames(included_annotations)),]
+res_annotated <- cbind(res, included_annotations)
 
 
 #save the results to a csv as as
 write.csv(res, "EWAS/Results_dataset.csv")
+write.csv(res_annotated, "EWAS/Annotated_Results_dataset.csv")
 
 #save the results in the standard format defined for a BED file - needed for the DMR calling function
+# standard format that requires the first three columns to be: chrom, start and end. 
+# This information was downloaded from http://hgdownload.soe.ucsc.edu/goldenPath/hg19/encodeDCC/wgEncodeHaibMethyl450/
+# for the method the 4th column is assumed to contain the p-value for a region
+standard_bed_columns <- read.table("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\HAIB.A549.EtOH.Rep.3.bed")
+standard_bed_columns <- standard_bed_columns[ ,c(1,2,3,4)]
+
+res_bed <- merge(standard_bed_columns, res, by.x = 4, by.y = "row.names", all.y = TRUE)
+
+res_bed <- data.frame(chrom = res_bed[2], start = res_bed[3], stop = res_bed[4], p_value = res_bed$Diagnosis_P, coeffi = res_bed$Diagnosis_Beta, stan_er = res_bed$Diagnosis_SE, Illumina_ID = res_bed[1])
 
