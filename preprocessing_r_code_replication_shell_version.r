@@ -1,12 +1,3 @@
-input <- commandArgs(trailingOnly = TRUE)
-
-## save input commands as local objects
-idat <- input[1]
-pheno_info <- input[2]
-working_dir <- input[3]
-manifest_path <- input[4]
-
-
 ##### Start with installing the required packages ########
 need <- c("wateRmelon", "methylumi", "ChAMP")
 if (!require(need, quietly = TRUE))
@@ -14,42 +5,56 @@ if (!require(need, quietly = TRUE))
 library(wateRmelon, methylumi)
 library(ChAMP) # for some reason library only loads this package when it is called on its own
 
-# #if (!require("RefFreeEWAS", quietly = TRUE))
-# install.packages("C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2.tar.gz", repos = NULL) # not available on CRAN anymore so needs to be downloaded manually from the archive
-# # add the filepath to where the archived version of RefFreeEWAS was downloaded above
-# install.packages("quadprog") # one of the RefFreeEWAS dependencies that I hadn't installed yet
-# library(RefFreeEWAS)
-##### source the Exeter functions needed for the pipeline - Change to the local filepath that contains these functions
+#if (!require("RefFreeEWAS", quietly = TRUE))
+#install.packages("C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2.tar.gz", repos = NULL, type = "source") # not available on CRAN anymore so needs to be downloaded manually from the archive
+# for the workflow probably needs full translation - , lib = "C:\\Program Files\\R\\R-4.1.2\\library"
+#install.packages("quadprog") # one of the RefFreeEWAS dependencies that I hadn't installed yet
+library(RefFreeEWAS)
+##### source the Exeter functions needed for the pipeline
 lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\ExeterEWASPipeline-master\\R",pattern = "\\.r$",full.names = T),function(x){source(x)})
+
+input <- commandArgs(trailingOnly = TRUE)
+
+idat <- input[1]
+pheno_info <- input[2]
+working_dir <- input[3]
+#manifest_path <- input[4]
+
 ## Set the working directory
 setwd(working_dir) # set working directory
 ## create a folder for the QC output
-if(!dir.exists(sprintf("QC_GSE66351_PythonShell"))){
-	dir.create(sprintf("QC_GSE66351_PythonShell"))
+if(!dir.exists("QC_GSE66351_PythonShell")){
+  dir.create("QC_GSE66351_PythonShell")
 }
-if(!dir.exists(sprintf("QC_GSE66351_PythonShell\\Polts"))){
-  dir.create(sprintf("QC_GSE66351_PythonShell\\Polts"))
-} 
+if(!dir.exists("QC_GSE66351_PythonShell/Plots")){
+  dir.create("QC_GSE66351_PythonShell/Plots")
+}
 
-load <- function(idat, pheno) {
+load <- function(idat, pheno_info, intens_threshold) {
 # loading in actual data - GSE66351
-pheno1 <- read.table(pheno)
-pheno1 <- t(pheno1)#transpose the imported table to the sample characteristics/ids etc are columns and the samples are rows
+pheno1 <- read.table(pheno_info)
+pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
 colnames(pheno1)<- pheno1[1,]
 pheno1 <- pheno1[2:191,]
+
+write.csv(pheno1, "QC_GSE66351_PythonShell\\pheno_check.csv")
+print("Phenotype information imported")
+
 Sample_ID <- getBarcodes(idat)
+write.csv(Sample_ID, "QC_GSE66351_PythonShell\\barcodes_check1.csv")
 pheno1 <- cbind(pheno1, Sample_ID)
 pheno1_half <- as.data.frame(pheno1[1:20,])
 
-barcodes_GSE66351_half <- c(Sample_ID[1:20]) # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 80 instead
+write.csv(pheno1, "QC_GSE66351_PythonShell\\input_check.csv")
+
+barcodes_GSE66351_half <- pheno1_half$Sample_ID # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 20 instead
+write.csv(barcodes_GSE66351_half, "QC_GSE66351_PythonShell\\barcodes_check2.csv")
 data <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = idat)
 
 save(data, file = "QC_GSE66351_PythonShell\\methylumiSet.RData")
-
-## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
-pheno <- pheno1_half
-msetEPIC <- data
+write.csv(pheno1,"QC_GSE66351_PythonShell\\input_check_postIDAT.csv")
+print("idats")
 
 #save the information stored in the data2 object (the MethylumiSet object thing) into seperate dataframes
 setwd(working_dir)
@@ -63,17 +68,13 @@ write.csv(raw_methylated, "QC_GSE66351_PythonShell\\Raw_methylated_intensities.c
 raw_unmethylated <- methylumi::unmethylated(data)
 write.csv(raw_unmethylated, "QC_GSE66351_PythonShell\\Raw_unmethylated_intensities.csv")
 
-
-out <- list(pheno, msetEPIC)
-return(out)
-}
-
-load(idat, pheno_info)
+msetEPIC <- data
+pheno <- pheno1_half
 
 ########## Start with the QC pipeline from Exeter ##################
-Quality_control <- function(msetEPIC, pheno, intens_threshold){
 ### checking methylated and unmethylated intensities #############
 ### extract sample intensities 
+library(methylumi)
 m_intensities<-methylumi::methylated(msetEPIC) 
 u_intensities<-methylumi::unmethylated(msetEPIC)
 ## this gives a matrix where each row is a probe and each column a sample
@@ -102,7 +103,7 @@ U_upper_bound
 intens.Thres<-intens_threshold
 
 # make PDF histogram of sample intensities
-pdf("QC/Plots/Sample_Intensity_histogram.pdf")
+pdf("QC_GSE66351_PythonShell\\Plots\\Sample_Intensity_histogram.pdf")
 par(mfrow = c(1,2))
 hist(M.median, xlab = "Median M intensity")
 abline(v=M_lower_bound,col=alpha("blue",0.3),lty=2)
@@ -133,10 +134,10 @@ chip.U.median<-aggregate(U.median, by = list(unlist(strsplit(colnames(m_intensit
 
 
 
-if (exists(pheno$plate)) {
-## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
+if ("plate" %in% colnames(pheno)) {
+	## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
 # of samples provided
-  pdf("QC/Plots/Sample_Intensity_ByPlate_boxplot.pdf")
+  pdf("QC_GSE66351_PythonShell\\Plots\\Sample_Intensity_ByPlate_boxplot.pdf")
   par(mfrow = c(1,2))
   par(mar = c(8, 4, 1, 1))
   nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
@@ -145,7 +146,27 @@ if (exists(pheno$plate)) {
   dev.off()
  
 ## alternatively colour points in original scatterplot by Plate
-  pdf("QC/Plots/Sample_Intensity_ByPlate_histogram.pdf")
+  pdf("QC_GSE66351_PythonShell\\Plots\\Sample_Intensity_ByPlate_histogram.pdf")
+  nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
+  plot(M.median, U.median, pch = 16, xlab = "Median M intensity", ylab = "Median U intensity", col = rainbow(nCol)[factor(pheno$plate)])
+  abline(v = intens.Thres, col = "red")
+  abline(h = intens.Thres, col = "red") 
+  legend("topright", levels(factor(pheno$plate)), col = rainbow(nCol), pch = 16)
+  dev.off() 
+	
+	
+## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
+# of samples provided
+  pdf("QC_GSE66351_PythonShell\\Plots\\Sample_Intensity_ByPlate_boxplot.pdf")
+  par(mfrow = c(1,2))
+  par(mar = c(8, 4, 1, 1))
+  nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
+  boxplot(M.median ~ pheno$plate, ylab = "Median M intensity", xlab = "Plate", las = 2, col = rainbow(nCol)) 
+  boxplot(U.median ~ pheno$plate, ylab = "Median U intensity", xlab = "Plate", las = 2, col = rainbow(nCol))
+  dev.off()
+ 
+## alternatively colour points in original scatterplot by Plate
+  pdf("QC_GSE66351_PythonShell\\Plots\\Sample_Intensity_ByPlate_histogram.pdf")
   nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
   plot(M.median, U.median, pch = 16, xlab = "Median M intensity", ylab = "Median U intensity", col = rainbow(nCol)[factor(pheno$plate)])
   abline(v = intens.Thres, col = "red")
@@ -157,7 +178,7 @@ if (exists(pheno$plate)) {
 ##### Checking the Bisulfite conversion ################
 bs<-wateRmelon::bscon(msetEPIC) # - doesn't work because of this error "Error in bsI.green[1:2, ] : subscript out of bounds"
 
-pdf("QC/Plots/Bisulphite_Conversion.pdf")
+pdf("QC_GSE66351_PythonShell\\Plots\\Bisulphite_Conversion.pdf")
 hist(bs, xlab = "Median % BS conversion", main = "")
 abline(v = 80, col = "red")
 dev.off()
@@ -167,7 +188,7 @@ QCmetrics<-cbind(QCmetrics, bs)
 betas <- methylumi::betas(msetEPIC)
 pheno<-pheno[match(colnames(betas), pheno$Sample_ID),]
 
-pdf("QC/Plots/Gender_Cluster.pdf")
+pdf("QC_GSE66351_PythonShell\\Plots\\Gender_Cluster.pdf")
 predSex1<-findGenderPC(betas, pheno$Sample_sex, npcs = 20) # the default setting of npcs = 20 gave an error so
 # I reduced the number of princicple components for the example data set -> remember to put it back at 20
 # when using real data
@@ -219,12 +240,12 @@ for(i in 1:ncol(betas.rs)){
 # calculate the maximum correlation for each sample with all other samples (except for itself)
 corMax<-apply(snpCor, 1, max, na.rm = TRUE)
 
-pdf("QC/Plots/SNP_Correlations.pdf")
+pdf("QC_GSE66351_PythonShell\\Plots\\SNP_Correlations.pdf")
 hist(corMax, xlab = "Max. correlation with all other samples", main = "")
 dev.off()
 
 # Check which samples match to their best match 
-pdf("QC/Plots/SNP_Samples.pdf", width = 15, height = 8)
+pdf("QC_GSE66351_PythonShell\\Plots\\SNP_Samples.pdf", width = 15, height = 8)
 par(mfrow = c(2,4))
 for(i in 1:ncol(betas.rs)){
   val = betas.rs[,i]
@@ -237,7 +258,7 @@ for(i in 1:ncol(betas.rs)){
   id_match = pheno$Sample_title[which(pheno$Sample_ID==colnames(betas.rs)[i])] == pheno$Sample_title[which(pheno$Sample_ID==colnames(cors)[o])]
   
   id_match_text = ifelse(id_match,"IDs match","IDs dont match")
-  if(!id_match){warning(paste0("mismatch with sample ",xname, " Index: ",i))}
+  #if(!id_match){warning(paste0("mismatch with sample ",xname, " Index: ",i))}
   
   plot(betas.rs[,i], betas.rs[,o],xlab=xname,ylab=yname,main=paste0(id_match_text,"\n Cor: ",round(cors[o],3)))
   
@@ -257,7 +278,7 @@ rm(list=removelist)
 gc()
 
 # filter on bad samples and sites (CpGs)
-pdf("QC/Plots/Betas_raw_boxplot.pdf")
+pdf("QC_GSE66351_PythonShell\\Plots\\Betas_raw_boxplot.pdf")
 boxplot(methylumi::betas(msetEPIC),main="Betas raw betas")
 dev.off()
 
@@ -278,11 +299,25 @@ gc()
 # load the cpgs to be removed - this step should probably be preformed locally
 
 
-#save the information stored in the data2 object (the MethylumiSet object thing) into seperate dataframes
-setwd(working_dir)
+###### Normalisation ################
+msetEPIC.pf <- dasen(msetEPIC.pf)
+# adding feature/probe annotation information after normalisation because otherwise
+# the dasen function becomes fussy and won't work
+
+# annotation_data <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
+# retained_annotation <- annotation_data[annotation_data$Probe_ID %in% rownames(betas(msetEPIC.pf)), ]
+# fData(msetEPIC.pf)["CHR"] <- retained_annotation["CHR"]
+
+pdf("QC_GSE66351_PythonShell/Plots/Betas_normalized_boxplot.pdf")
+boxplot(betas(msetEPIC.pf),main="Betas normalized")
+dev.off()
+
+# save the filtered and normalised MethylumiSet object for cell-type decomposition
+save(msetEPIC.pf, file = "QC_GSE66351_PythonShell\\Preprocessed_Normalised_MethyLumiSet.RData")
+
 # betas
 raw_betas <- betas(msetEPIC.pf)
-write.csv(betas, "QC_GSE66351_PythonShell\\Preprocessed_betas.csv")
+write.csv(raw_betas, "QC_GSE66351_PythonShell\\Preprocessed_betas.csv")
 # methylated values
 raw_methylated <- methylumi::methylated(msetEPIC.pf)
 write.csv(raw_methylated, "QC_GSE66351_PythonShell\\Preprocessed_methylated_intensities.csv")
@@ -290,31 +325,14 @@ write.csv(raw_methylated, "QC_GSE66351_PythonShell\\Preprocessed_methylated_inte
 raw_unmethylated <- methylumi::unmethylated(msetEPIC.pf)
 write.csv(raw_unmethylated, "QC_GSE66351_PythonShell\\Preprocessed_unmethylated_intensities.csv")
 
+write.csv(QCmetrics, "QC_GSE66351_PythonShell/post_norm_pheno_information.csv")
 
-out <- list(msetEPIC.pf, pFilterPass, QCmetrics)
-return(out)
 }
 
-Quality_control(msetEPIC, pheno, 2000)
-
-
-###### Normalisation ################
-msetEPIC.pf <- dasen(msetEPIC.pf)
-# adding feature/probe annotation information after normalisation because otherwise
-# the dasen function becomes fussy and won't work
-
-# cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics){
-# annotation_data <- read.csv(manifest_path , header = TRUE)
-# retained_annotation <- annotation_data[annotation_data$Probe_ID %in% rownames(betas(msetEPIC.pf)), ]
-# fData(msetEPIC.pf)["CHR"] <- retained_annotation["Chromosome_36"]
-
-# pdf("QC/Plots/Betas_normalized_boxplot.pdf")
-# boxplot(betas(msetEPIC.pf),main="Betas normalized")
-# dev.off()
-
-# ##### Cell type estimation ##############
-# # start with removing the X-chromosome probes from the dataset if they are there
-# # because they can interfere with the cell-type decomposition.
+load(idat, pheno_info, 2000)
+##### Cell type estimation ##############
+# start with removing the X-chromosome probes from the dataset if they are there
+# because they can interfere with the cell-type decomposition.
 # temp_data = betas(msetEPIC.pf[fData(msetEPIC.pf)$CHR!="X", ]) #something funky going on here
 
 
@@ -446,18 +464,5 @@ msetEPIC.pf <- dasen(msetEPIC.pf)
 
 # # save everything
 # save(Betas, Small_Pheno, file = "QC\\GSE66351_first20_QCandDasen.RData")
-
 # save(Full_Pheno, file = "QC\\GSE66351_Full_Phenotype_Information.RData")
 
-# #save the information stored in the data2 object (the MethylumiSet object thing) into seperate dataframes
-# setwd(working_dir)
-# # betas
-# write.csv(Betas, "QC_GSE66351_PythonShell\\Final_preprocessed_betas.csv")
-
-# # full phenotype information
-# write.csv(Full_Pheno, "QC_GSE66351_PythonShell\\Full_pheno_information.csv")
-
-# print("Preprocessed data, short and full phenotype information saved")
-# }
-
-# cell_decomp_RefFreeEWAS(manifest_path, msetEPIC.pf, QCmetrics)
