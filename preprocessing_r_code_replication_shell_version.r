@@ -325,6 +325,9 @@ write.csv(raw_methylated, "QC_GSE66351_PythonShell\\Preprocessed_methylated_inte
 raw_unmethylated <- methylumi::unmethylated(msetEPIC.pf)
 write.csv(raw_unmethylated, "QC_GSE66351_PythonShell\\Preprocessed_unmethylated_intensities.csv")
 
+QCmetrics1 <- lapply(QCmetrics, sub, pattern = "^[^:]*:", replacement = "")
+write.csv(QCmetrics1, "QC_GSE66351_PythonShell/post_norm_pheno_information_no_bla.csv")
+
 write.csv(QCmetrics, "QC_GSE66351_PythonShell/post_norm_pheno_information.csv")
 
 }
