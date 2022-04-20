@@ -21,49 +21,33 @@ if(!dir.exists("QC")){
 if(!dir.exists("QC/Plots")){
   dir.create("QC/Plots")
 }
-#### import the data using methylumi -> create a MethyLumiSet object
-# for now just using sample data from the methylumi package because the Exeter pipeline requires a
-# methylumiSet object
-samps <- read.table(system.file("extdata/samples.txt",
-                                package = "methylumi"),sep="\t",header=TRUE)
-mldat <- methylumi::methylumiR(system.file('extdata/exampledata.samples.txt',package='methylumi'),
-                    qcfile=system.file('extdata/exampledata.controls.txt',package="methylumi"),
-                    sampleDescriptions=samps)
 
+load <- function(idat, pheno) {
 # loading in actual data - GSE66351
-pheno1 <- read.table("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351_pheno_info.txt")
+pheno1 <- read.table(pheno)
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
 colnames(pheno1)<- pheno1[1,]
 pheno1 <- pheno1[2:191,]
-Sample_ID <- getBarcodes("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
+Sample_ID <- getBarcodes(idat)
 pheno1 <- cbind(pheno1, Sample_ID)
 pheno1_half <- as.data.frame(pheno1[1:20,])
 
 barcodes_GSE66351_half <- c(Sample_ID[1:20]) # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 80 instead
-data1 <- methylumi::methylumIDAT(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
-data2 <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
+data <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = idat)
 #fData(data1) <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
 pheno <- pheno1_half
-msetEPIC <- data2
+msetEPIC <- data
 
-### adding the annotations using the Illumia450kManifest package ####
-#library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
-#data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
-#data("Locations")
-#force(Locations)
-#annotation_bleh <- Locations
-#fData(msetEPIC) <- annotation_bleh
-#fData(msetEPIC)["CHR"]<- Locations # not the same length as the data
+out <- list(pheno, msetEPIC)
+return(out)
+}
 
-# find out which probes are missing in the annotation information compared to the data
-#not_in_annotation <- fData(msetEPIC)[!rownames(fData(msetEPIC)) %in% rownames(Locations),]
-# the SNP probes are missing in the annotation file
-
-
+load()
 
 ########## Start with the QC pipeline from Exeter ##################
+Quality_control <- function(msetEPIC, pheno, intens_threshold){
 ### checking methylated and unmethylated intensities #############
 ### extract sample intensities 
 m_intensities<-methylumi::methylated(msetEPIC) 
@@ -91,7 +75,7 @@ U_upper_bound <- median(U.median) + 3 * mad(U.median, constant = 1)
 U_upper_bound
 
 ## 1500 for buccal/saliva. change this to adjust the threshold at which you filter; 2000 for blood
-intens.Thres<-2000 
+intens.Thres<-intens_threshold
 
 # make PDF histogram of sample intensities
 pdf("QC/Plots/Sample_Intensity_histogram.pdf")
@@ -124,6 +108,8 @@ chip.M.median<-aggregate(M.median, by = list(unlist(strsplit(colnames(m_intensit
 chip.U.median<-aggregate(U.median, by = list(unlist(strsplit(colnames(m_intensities), "_"))[seq(from = 1, to = 2*ncol(u_intensities), by = 2)]), FUN = median)
 
 
+
+if (exists(pheno$plate) {
 ## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
 # of samples provided
 pdf("QC/Plots/Sample_Intensity_ByPlate_boxplot.pdf")
@@ -133,15 +119,16 @@ nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in yo
 boxplot(M.median ~ pheno$plate, ylab = "Median M intensity", xlab = "Plate", las = 2, col = rainbow(nCol)) 
 boxplot(U.median ~ pheno$plate, ylab = "Median U intensity", xlab = "Plate", las = 2, col = rainbow(nCol))
 dev.off()
-# 
-# ## alternatively colour points in original scatterplot by Plate
-# pdf("QC/Plots/Sample_Intensity_ByPlate_histogram.pdf")
-# nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
-# plot(M.median, U.median, pch = 16, xlab = "Median M intensity", ylab = "Median U intensity", col = rainbow(nCol)[factor(pheno$plate)])
-# abline(v = intens.Thres, col = "red")
-# abline(h = intens.Thres, col = "red") 
-# legend("topright", levels(factor(pheno$plate)), col = rainbow(nCol), pch = 16)
-# dev.off()
+ 
+## alternatively colour points in original scatterplot by Plate
+pdf("QC/Plots/Sample_Intensity_ByPlate_histogram.pdf")
+nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
+plot(M.median, U.median, pch = 16, xlab = "Median M intensity", ylab = "Median U intensity", col = rainbow(nCol)[factor(pheno$plate)])
+abline(v = intens.Thres, col = "red")
+abline(h = intens.Thres, col = "red") 
+legend("topright", levels(factor(pheno$plate)), col = rainbow(nCol), pch = 16)
+dev.off()
+}
 
 ##### Checking the Bisulfite conversion ################
 bs<-wateRmelon::bscon(msetEPIC) # - doesn't work because of this error "Error in bsI.green[1:2, ] : subscript out of bounds"
@@ -265,6 +252,13 @@ gc()
 
 ##### Removal of cross-hybridisation probes ###############
 # load the cpgs to be removed - this step should probably be preformed locally
+
+out <- list(msetEPIC.pf, pFilterPass, QCmetrics)
+return(out)
+}
+
+Quality_control(msetEPIC, pheno, 2000)
+
 
 ###### Normalisation ################
 msetEPIC.pf <- dasen(msetEPIC.pf)
@@ -404,9 +398,8 @@ Cell_Types <- CT[match(colnames(Betas), rownames(CT)),]
 
 Small_Pheno <- data.frame(Sample_ID = QCmetrics$Sample_ID, Diagnosis = temp_Pheno$Sample_diagnosis, Sex = temp_Pheno$Sample_sex,
                           Age = temp_Pheno$Sample_age, Cell_Type = Cell_Types)
-# create a column with the sentrix ID and position because it seems handy
-Small_Pheno$Sentrix_ID <- temp_Pheno$Sample_sentrix_id # this is the correct format of the sentrix ID
-Small_Pheno$Sentrix_Position <-temp_Pheno$Sample_sentrix_position
+# create a column with the full sentrix ID because it seems handy
+Small_Pheno$Sentrix_ID <- str_c(temp_Pheno$Sample_sentrix_id, "_", temp_Pheno$Sample_sentrix_position)
 
 # Create the full phenotype file
 Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
