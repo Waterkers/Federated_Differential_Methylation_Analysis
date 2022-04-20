@@ -389,6 +389,10 @@ Small_Pheno$Sentrix_ID <- str_c(temp_Pheno$Sample_sentrix_id, "_", temp_Pheno$Sa
 Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
 
 # save everything
-save(Betas, Small_Pheno, file = "QC_GSE105109/GSE105109_first20_QCandDasen.RData")
+save(Betas, Small_Pheno, file = "QC_GSE105109/GSE105109_Preprocessed_CTD.RData")
 save(Full_Pheno, file = "QC_GSE105109/GSE105109_Full_Phenotype_Information.RData")
+
+write.csv(Betas, file = "QC_GSE105109/GSE105109_Preprocessed_CTD_Betas.csv")
+write.csv(Small_Pheno, file = "QC_GSE105109/GSE105109_Reduced_Pheno_Info.csv")
+write.csv(Full_Pheno, file = "QC_GSE105109/GSE105109_Full_Pheno_Info.csv")
 
