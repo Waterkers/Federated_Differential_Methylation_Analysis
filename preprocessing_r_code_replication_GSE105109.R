@@ -6,14 +6,14 @@ library(wateRmelon, methylumi)
 library(ChAMP) # for some reason library only loads this package when it is called on its own
 
 #if (!require("RefFreeEWAS", quietly = TRUE))
-install.packages("C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2.tar.gz", repos = NULL) # not available on CRAN anymore so needs to be downloaded manually from the archive
+install.packages("/home/rstudio/RefFreeEWAS_2.2.tar.gz", repos = NULL)
 # for the workflow probably needs full translation
 install.packages("quadprog") # one of the RefFreeEWAS dependencies that I hadn't installed yet
 library(RefFreeEWAS)
 ##### source the Exeter functions needed for the pipeline
-lapply(list.files("F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\ExeterEWASPipeline-master\\R",pattern = "\\.r$",full.names = T),function(x){source(x)})
+lapply(list.files("/home/rstudio/ExeterEWASPipeline-master/R",pattern = "\\.r$",full.names = T),function(x){source(x)})
 ## Set the working directory
-setwd("F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\R_Pipeline") # set working directory
+setwd("/home/rstudio") # set working directory
 ## create a folder for the QC output
 if(!dir.exists("QC_GSE105109")){
   dir.create("QC_GSE105109")
@@ -23,12 +23,12 @@ if(!dir.exists("QC_GSE105109/Plots")){
 }
 #### import the data using methylumi -> create a MethyLumiSet object
 # loading in actual data - GSE105109
-pheno1 <- read.table("F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE105109_RAW\\GSE105109_pheno.txt")
+pheno1 <- read.table("/home/rstudio/GSE105109_RAW/GSE105109_pheno.txt")
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
 colnames(pheno1)<- pheno1[1,]
 pheno1 <- pheno1[2:191,]
-Sample_ID <- getBarcodes("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE105109_RAW\\idat")
+Sample_ID <- getBarcodes("/home/rstudio/GSE105109_RAW/idat")
 pheno1 <- cbind(pheno1, Sample_ID)
 
 # set up the system for parallel processing to make it possible to deal with the dataset
@@ -36,9 +36,7 @@ install.packages("parallel")
 library(parallel)
 num_cores <- detectCores()
 
-#data1 <- methylumi::methylumIDAT(barcodes = Sample_ID, pdat = pheno1, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE105109_RAW\\idat", parallel = TRUE, mc.cores = num_cores)
-data2 <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE105109_RAW\\idat", parallel = TRUE, mc.cores = num_cores)
-#fData(data1) <- read.csv("F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
+data2 <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = "/home/rstudio/GSE105109_RAW/idat", parallel = TRUE, mc.cores = num_cores)
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
 pheno <- pheno1
 msetEPIC <- data2 #or data1 depending on the read in method used
@@ -74,7 +72,7 @@ U_upper_bound
 intens.Thres<-2000 
 
 # make PDF histogram of sample intensities
-pdf("QC/Plots/Sample_Intensity_histogram.pdf")
+pdf("QC_GSE105109/Plots/Sample_Intensity_histogram.pdf")
 par(mfrow = c(1,2))
 hist(M.median, xlab = "Median M intensity")
 abline(v=M_lower_bound,col=alpha("blue",0.3),lty=2)
@@ -106,7 +104,7 @@ chip.U.median<-aggregate(U.median, by = list(unlist(strsplit(colnames(m_intensit
 
 ## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
 # of samples provided
-pdf("QC/Plots/Sample_Intensity_ByPlate_boxplot.pdf")
+pdf("QC_GSE105109/Plots/Sample_Intensity_ByPlate_boxplot.pdf")
 par(mfrow = c(1,2))
 par(mar = c(8, 4, 1, 1))
 nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
@@ -115,7 +113,7 @@ boxplot(U.median ~ pheno$plate, ylab = "Median U intensity", xlab = "Plate", las
 dev.off()
 # 
 # ## alternatively colour points in original scatterplot by Plate
-# pdf("QC/Plots/Sample_Intensity_ByPlate_histogram.pdf")
+# pdf("QC_GSE105109/Plots/Sample_Intensity_ByPlate_histogram.pdf")
 # nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
 # plot(M.median, U.median, pch = 16, xlab = "Median M intensity", ylab = "Median U intensity", col = rainbow(nCol)[factor(pheno$plate)])
 # abline(v = intens.Thres, col = "red")
@@ -126,7 +124,7 @@ dev.off()
 ##### Checking the Bisulfite conversion ################
 bs<-wateRmelon::bscon(msetEPIC) # - doesn't work because of this error "Error in bsI.green[1:2, ] : subscript out of bounds"
 
-pdf("QC/Plots/Bisulphite_Conversion.pdf")
+pdf("QC_GSE105109/Plots/Bisulphite_Conversion.pdf")
 hist(bs, xlab = "Median % BS conversion", main = "")
 abline(v = 80, col = "red")
 dev.off()
@@ -136,7 +134,7 @@ QCmetrics<-cbind(QCmetrics, bs)
 betas <- methylumi::betas(msetEPIC)
 pheno<-pheno[match(colnames(betas), pheno$Sample_ID),]
 
-pdf("QC/Plots/Gender_Cluster.pdf")
+pdf("QC_GSE105109/Plots/Gender_Cluster.pdf")
 predSex1<-findGenderPC(betas, pheno$Sample_sex, npcs = 20) # the default setting of npcs = 20 gave an error so
 # I reduced the number of princicple components for the example data set -> remember to put it back at 20
 # when using real data
@@ -188,12 +186,12 @@ for(i in 1:ncol(betas.rs)){
 # calculate the maximum correlation for each sample with all other samples (except for itself)
 corMax<-apply(snpCor, 1, max, na.rm = TRUE)
 
-pdf("QC/Plots/SNP_Correlations.pdf")
+pdf("QC_GSE105109/Plots/SNP_Correlations.pdf")
 hist(corMax, xlab = "Max. correlation with all other samples", main = "")
 dev.off()
 
 # Check which samples match to their best match 
-pdf("QC/Plots/SNP_Samples.pdf", width = 15, height = 8)
+pdf("QC_GSE105109/Plots/SNP_Samples.pdf", width = 15, height = 8)
 par(mfrow = c(2,4))
 for(i in 1:ncol(betas.rs)){
   val = betas.rs[,i]
@@ -226,7 +224,7 @@ rm(list=removelist)
 gc()
 
 # filter on bad samples and sites (CpGs)
-pdf("QC/Plots/Betas_raw_boxplot.pdf")
+pdf("QC_GSE105109/Plots/Betas_raw_boxplot.pdf")
 boxplot(methylumi::betas(msetEPIC),main="Betas raw betas")
 dev.off()
 
@@ -250,11 +248,11 @@ gc()
 msetEPIC.pf <- dasen(msetEPIC.pf)
 # adding feature/probe annotation information after normalisation because otherwise
 # the dasen function becomes fussy and won't work
-annotation_data <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
+annotation_data <- read.csv("/home/rstudio/GSE105109_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv", header = TRUE)
 retained_annotation <- annotation_data[annotation_data$Probe_ID %in% rownames(betas(msetEPIC.pf)), ]
 fData(msetEPIC.pf) <- retained_annotation
 
-pdf("QC/Plots/Betas_normalized_boxplot.pdf")
+pdf("QC_GSE105109/Plots/Betas_normalized_boxplot.pdf")
 boxplot(betas(msetEPIC.pf),main="Betas normalized")
 dev.off()
 
@@ -366,7 +364,7 @@ temp_CT$SampleID=rownames(CT)
 # format data
 DF <- pivot_longer(temp_CT,cols = 1:dim(CT)[2],names_to = "Celltypes",values_to = "Proportion") %>% group_by(SampleID,Celltypes) #%>%  mutate(name = fct_reorder(name, value)) 
 
-pdf("QC/Plots/Celltype_estimates_barplot.pdf")
+pdf("QC_GSE105109/Plots/Celltype_estimates_barplot.pdf")
 ggplot(DF, aes(x = SampleID, y = Proportion, fill = Celltypes))+
   ggtitle("Celltype composition estimate per sample")  + 
   coord_flip() +
@@ -391,6 +389,6 @@ Small_Pheno$Sentrix_ID <- str_c(temp_Pheno$Sample_sentrix_id, "_", temp_Pheno$Sa
 Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
 
 # save everything
-save(Betas, Small_Pheno, file = "QC\\GSE66351_first20_QCandDasen.RData")
-save(Full_Pheno, file = "QC\\GSE66351_Full_Phenotype_Information.RData")
+save(Betas, Small_Pheno, file = "QC_GSE105109/GSE105109_first20_QCandDasen.RData")
+save(Full_Pheno, file = "QC_GSE105109/GSE105109_Full_Phenotype_Information.RData")
 
