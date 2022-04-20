@@ -36,9 +36,8 @@ install.packages("parallel")
 library(parallel)
 num_cores <- detectCores()
 
-#data1 <- methylumi::methylumIDAT(barcodes = Sample_ID, pdat = pheno1, idatPath = "/home/rstudio/GSE66351_RAW/GSE66351", parallel = TRUE, mc.cores = num_cores)
+
 data2 <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = "/home/rstudio/GSE66351_RAW/GSE66351", parallel = TRUE, mc.cores = num_cores)
-#fData(data1) <- read.csv("F:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
 pheno <- pheno1
 msetEPIC <- data2
