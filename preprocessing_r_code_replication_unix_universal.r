@@ -1,3 +1,12 @@
+##### a little note before running this file: ###########################
+# there are flags starting with #change throughout the file indicating  #
+# where filepaths and identifiers should be changed.                    #
+# in addition look at the columns used from the pheno dataframe         #
+# throughout the file and ensure that these match with the columns      #
+# present in your phenotype document used to create the pheno dataframe #
+#########################################################################
+
+
 ##### Start with installing the required packages ########
 need <- c("wateRmelon", "methylumi", "ChAMP")
 if (!require(need, quietly = TRUE))
@@ -7,13 +16,20 @@ library(ChAMP) # for some reason library only loads this package when it is call
 
 #if (!require("RefFreeEWAS", quietly = TRUE))
 install.packages("/home/rstudio/RefFreeEWAS_2.2.tar.gz", repos = NULL) # not available on CRAN anymore so needs to be downloaded manually from the archive
-# for the workflow probably needs full translation
+# replace with filepath of the local download location of the archieved RefFreeEWAS package
+
 #install.packages("quadprog") # one of the RefFreeEWAS dependencies that I hadn't installed yet
 library(RefFreeEWAS)
+# instal tidyverse for easier dataframe manipulation
+if (!require("tidyverse", quietly = TRUE))
+	install.packages("tidyverse")
+library(tidyverse)
+
 ##### source the Exeter functions needed for the pipeline
 lapply(list.files("/home/rstudio/ExeterEWASPipeline-master/R",pattern = "\\.r$",full.names = T),function(x){source(x)})
+
 ## Set the working directory
-setwd("/home/rstudio") # set working directory
+setwd("/home/rstudio") # set working directory to whatever is relevant
 ## create a folder for the QC output - change the identifier to whatever works for the project
 if(!dir.exists("QC_GSE105109")){
   dir.create("QC_GSE105109")
