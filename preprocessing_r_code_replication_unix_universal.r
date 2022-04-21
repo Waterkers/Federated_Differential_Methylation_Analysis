@@ -1,10 +1,16 @@
 ##### a little note before running this file: ###########################
-# there are flags starting with #change throughout the file indicating  #
-# where filepaths and identifiers should be changed.                    #
-# in addition look at the columns used from the pheno dataframe         #
-# throughout the file and ensure that these match with the columns      #
-# present in your phenotype document used to create the pheno dataframe #
-#########################################################################
+# there are flags starting with #change throughout the file indicating   #
+# where filepaths and identifiers should be changed.                     #
+# in addition look at the columns used from the pheno dataframe          #
+# throughout the file and ensure that these match with the columns       #
+# present in your phenotype document used to create the pheno dataframe: #
+#	sex                                                                  #
+#	age                                                                  #
+#	diagnosis                                                            #
+#  - if these are not present comment lines where they are used -        #
+#	sentrix ID                                                           #
+#	sentrix position                                                     #
+##########################################################################
 
 
 ##### Start with installing the required packages ########
@@ -152,15 +158,15 @@ betas <- methylumi::betas(msetEPIC)
 pheno<-pheno[match(colnames(betas), pheno$Sample_ID),]
 
 pdf("QC_GSE105109/Plots/Gender_Cluster.pdf")
-predSex1<-findGenderPC(betas, pheno$Sample_sex, npcs = 20) # the default setting of npcs = 20 gave an error so
+predSex1<-findGenderPC(betas, pheno$Sex, npcs = 20) # the default setting of npcs = 20 gave an error so
 # I reduced the number of princicple components for the example data set -> remember to put it back at 20
 # when using real data
-predSex2<-clusterGender(betas, pheno$Sample_sex)
+predSex2<-clusterGender(betas, pheno$Sex)
 dev.off()
 
 # Confirm findings
 PCA = prcomp(betas[complete.cases(betas),])
-plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(pheno$Sample_sex=="Sex: M","blue","magenta"), main= "PCA of betas, colored by phenotype trait sex",pch=19)
+plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(pheno$Sex=="Sex: M","blue","magenta"), main= "PCA of betas, colored by phenotype trait sex",pch=19)
 # Check predsex
 plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(predSex1=="Sex: M","blue","magenta"), main= "PCA of betas, colored by predicted trait predSex1",pch=19)
 
@@ -321,7 +327,7 @@ Ysel = temp_data[cpgSelect,]
 rm(temp_data) # clear space in memory
 # as a final step before moving on the cell type decomposition is to double check that there are no sex effects
 # present in the data anymore
-plot((prcomp(t(Ysel))$x),col=ifelse(pheno$Sample_Sex=="Sex: M",1,2))
+plot((prcomp(t(Ysel))$x),col=ifelse(pheno$Sex=="Sex: M",1,2))
 
 # Maximum number of estimatable celltypes set to 5 (this is default and supported by evidence see https://www.nature.com/articles/s41598-018-25311-0 )
 s_maxCelltypes  = 5
@@ -397,10 +403,10 @@ temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
 
 Cell_Types <- CT[match(colnames(Betas), rownames(CT)),]
 
-Small_Pheno <- data.frame(Sample_ID = QCmetrics$Sample_ID, Diagnosis = temp_Pheno$Sample_diagnosis, Sex = temp_Pheno$Sample_sex,
-                          Age = temp_Pheno$Sample_age, Cell_Type = Cell_Types)
+Small_Pheno <- data.frame(Sample_ID = QCmetrics$Sample_ID, Diagnosis = temp_Pheno$Diagnosis, Sex = temp_Pheno$Sex,
+                          Age = temp_Pheno$Age, Cell_Type = Cell_Types)
 # create a column with the full sentrix ID because it seems handy
-Small_Pheno$Sentrix_ID <- str_c(temp_Pheno$Sample_sentrix_id, "_", temp_Pheno$Sample_sentrix_position)
+#Small_Pheno$Sentrix_ID <- str_c(temp_Pheno$Sample_sentrix_id, "_", temp_Pheno$Sample_sentrix_position)
 
 # Create the full phenotype file
 Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
