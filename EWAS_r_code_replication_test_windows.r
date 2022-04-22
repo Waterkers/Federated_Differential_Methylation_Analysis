@@ -31,10 +31,10 @@ rownames(res)<-rownames(betas)
 # removed the smoking score variable from the linear model because not all data was provided to run the 
 # smokingScore function and calculate the smoking score for the samples. 
 for(i in 1:nrow(betas)){
-  model<-lm(betas[i,] ~ Small_Pheno$Diagnosis + as.numeric(Small_Pheno$Age) + factor(Small_Pheno$Sex) + factor(Small_Pheno$Sentrix_ID))
-  res[i,c(1)]<-coefficients(model)["Small_Pheno$Diagnosis CTRL"]
-  res[i,2]<-summary(model)$coefficients["Small_Pheno$Diagnosis CTRL",2]
-  res[i,c(3)]<-summary(model)$coefficients["Small_Pheno$Diagnosis CTRL",4]
+  model<-lm(betas[i,] ~ factor(Small_Pheno$Diagnosis) + as.numeric(Small_Pheno$Age) + factor(Small_Pheno$Sex) + factor(Small_Pheno$Sentrix_ID))
+  res[i,c(1)]<-coefficients(model)["factor(Small_Pheno$Diagnosis) CTRL"]
+  res[i,2]<-summary(model)$coefficients["factor(Small_Pheno$Diagnosis) CTRL",2]
+  res[i,c(3)]<-summary(model)$coefficients["factor(Small_Pheno$Diagnosis) CTRL",4]
 }
 
 # By changing the name of the coefficient to select to its actual name in the table everything now works fine
