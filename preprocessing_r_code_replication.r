@@ -21,14 +21,7 @@ if(!dir.exists("QC")){
 if(!dir.exists("QC/Plots")){
   dir.create("QC/Plots")
 }
-#### import the data using methylumi -> create a MethyLumiSet object
-# for now just using sample data from the methylumi package because the Exeter pipeline requires a
-# methylumiSet object
-samps <- read.table(system.file("extdata/samples.txt",
-                                package = "methylumi"),sep="\t",header=TRUE)
-mldat <- methylumi::methylumiR(system.file('extdata/exampledata.samples.txt',package='methylumi'),
-                    qcfile=system.file('extdata/exampledata.controls.txt',package="methylumi"),
-                    sampleDescriptions=samps)
+
 
 # loading in actual data - GSE66351
 pheno1 <- read.table("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351_pheno_info.txt")
@@ -41,7 +34,7 @@ pheno1 <- cbind(pheno1, Sample_ID)
 pheno1_half <- as.data.frame(pheno1[1:20,])
 
 barcodes_GSE66351_half <- c(Sample_ID[1:20]) # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 80 instead
-data1 <- methylumi::methylumIDAT(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
+#data1 <- methylumi::methylumIDAT(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
 data2 <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
 #fData(data1) <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
@@ -414,4 +407,5 @@ Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type 
 # save everything
 save(Betas, Small_Pheno, file = "QC\\GSE66351_first20_QCandDasen.RData")
 save(Full_Pheno, file = "QC\\GSE66351_Full_Phenotype_Information.RData")
+
 
