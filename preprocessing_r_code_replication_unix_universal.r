@@ -418,8 +418,15 @@ Cell_Types <- CT[match(colnames(Betas), rownames(CT)),]
 
 Small_Pheno <- data.frame(Sample_ID = QCmetrics$Sample_ID, Diagnosis = temp_Pheno$Diagnosis, Sex = temp_Pheno$Sex,
                           Age = temp_Pheno$Age, Cell_Type = Cell_Types)
-# create a column with the full sentrix ID because it seems handy
-#Small_Pheno$Sentrix_ID <- str_c(temp_Pheno$Sample_sentrix_id, "_", temp_Pheno$Sample_sentrix_position)
+# create a column with the sentrix ID and position because it seems handy
+# use this if the information exists in a column of the phenotype information file
+#Small_Pheno$Sentrix_ID <- temp_Pheno$Sample_sentrix_id # this is the correct format of the sentrix ID 
+#Small_Pheno$Sentrix_Position <-temp_Pheno$Sample_sentrix_position
+
+# create a sentrix_id and sentrix_position column based on the Sample_ID - generated form the idat filenames
+# use this if there are not sentrix id and position columns present in the phenotype information file
+
+
 
 # Create the full phenotype file
 Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
