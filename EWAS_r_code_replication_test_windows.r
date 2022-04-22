@@ -42,6 +42,7 @@ for(i in 1:nrow(betas)){
 # it cannot be easilly automated, at least not in a way that I can think of
 
 #save the results to a csv as as
+setwd("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Federated_Differential_Methylation_Analysis")
 write.csv(res, "EWAS_GSE66351/Results_dataset_test.csv")
 
 #add annotation
