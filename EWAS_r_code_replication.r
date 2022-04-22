@@ -54,7 +54,6 @@ res_annotated <- cbind(res, included_annotations)
 
 
 #save the results to a csv as as
-write.csv(res, "EWAS_GSE66351/Results_dataset.csv")
 write.csv(res_annotated, "EWAS_GSE66351/Annotated_Results_dataset.csv")
 
 #save the results in the standard format defined for a BED file - needed for the DMR calling function
