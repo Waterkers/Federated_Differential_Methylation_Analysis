@@ -49,8 +49,8 @@ pheno1 <- read.table("/home/rstudio/GSE105109_RAW/GSE105109_pheno.txt") # change
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
 colnames(pheno1)<- pheno1[1,]
-pheno1 <- pheno1[2:191,]
-Sample_ID <- getBarcodes("/home/rstudio/GSE105109_RAW/GSE105109/idat") # change the filepath to the relevant location of the .idat files
+pheno1 <- pheno1[2:nrow(pheno1),]
+Sample_ID <- getBarcodes("/home/rstudio/GSE105109_RAW/idat") # change the filepath to the relevant location of the .idat files
 pheno1 <- cbind(pheno1, Sample_ID)
 
 # set up the system for parallel processing to make it possible to deal with the dataset
@@ -58,7 +58,7 @@ install.packages("parallel")
 library(parallel)
 num_cores <- detectCores()
 
-idat_path <- "/home/rstudio/GSE105109_RAW/GSE105109/idat" # change the filepath to the relevant location of the .idat files
+idat_path <- "/home/rstudio/GSE105109_RAW/idat" # change the filepath to the relevant location of the .idat files
 data2 <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = idat_path, parallel = TRUE, mc.cores = num_cores)
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
 pheno <- pheno1
@@ -281,8 +281,8 @@ gc()
 msetEPIC.pf <- dasen(msetEPIC.pf)
 # adding feature/probe annotation information after normalisation because otherwise
 # the dasen function becomes fussy and won't work
-annotation_data <- read.csv("/home/rstudio/GSE105109_RAW/GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE) #change to the local location of the annotation data file
-retained_annotation <- annotation_data[annotation_data$Probe_ID %in% rownames(betas(msetEPIC.pf)), ]
+annotation_data <- read.csv("/home/rstudio/GSE105109_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv", header = TRUE) #change to the local location of the annotation data file
+retained_annotation <- annotation_data[annotation_data$IlmnID %in% rownames(betas(msetEPIC.pf)), ]
 fData(msetEPIC.pf) <- retained_annotation
 
 pdf("QC_GSE105109/Plots/Betas_normalized_boxplot.pdf")
