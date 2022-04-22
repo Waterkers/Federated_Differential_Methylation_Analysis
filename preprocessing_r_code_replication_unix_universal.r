@@ -129,7 +129,7 @@ QCmetrics$strict_outliers = QCmetrics$Sample_ID%in%strictoutliers #change column
 chip.M.median<-aggregate(M.median, by = list(unlist(strsplit(colnames(m_intensities), "_"))[seq(from = 1, to = 2*ncol(m_intensities), by = 2)]), FUN = median)
 chip.U.median<-aggregate(U.median, by = list(unlist(strsplit(colnames(m_intensities), "_"))[seq(from = 1, to = 2*ncol(u_intensities), by = 2)]), FUN = median)
 
-if (plate %in% colnames(pheno)) {
+if ("plate" %in% colnames(pheno)) {
 ## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
 # of samples provided
 pdf("QC_GSE105109/Plots/Sample_Intensity_ByPlate_boxplot.pdf")
@@ -266,9 +266,9 @@ pFilterPass<-colnames(betas(msetEPIC)) %in% colnames(betas(msetEPIC.pf))
 QCmetrics<-cbind(QCmetrics, pFilterPass)
 
 # save filtered betas, (un)methylated data as .csv
-write.csv(betas(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Raw_Betas.csv")
-write.csv(methylated(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Raw_Methylated.csv")
-write.csv(unmethylated(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Raw_Unmethylated.csv")
+write.csv(betas(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Filtered_Betas.csv")
+write.csv(methylated(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Filtered_Methylated.csv")
+write.csv(unmethylated(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Filtered_Unmethylated.csv")
 
 # make room in ram
 rm(msetEPIC)
@@ -281,7 +281,7 @@ gc()
 msetEPIC.pf <- dasen(msetEPIC.pf)
 # adding feature/probe annotation information after normalisation because otherwise
 # the dasen function becomes fussy and won't work
-annotation_data <- read.csv("/home/rstudio/GSE105109_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv", header = TRUE) #change to the local location of the annotation data file
+annotation_data <- read.csv("/home/rstudio/GSE105109_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv", skip = 7, header = TRUE) #change to the local location of the annotation data file
 retained_annotation <- annotation_data[annotation_data$IlmnID %in% rownames(betas(msetEPIC.pf)), ]
 fData(msetEPIC.pf) <- retained_annotation
 
@@ -295,7 +295,7 @@ write.csv(betas(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Normalised_Betas.cs
 ##### Cell type estimation ##############
 # start with removing the X-chromosome probes from the dataset if they are there
 # because they can interfere with the cell-type decomposition.
-temp_data = betas(msetEPIC.pf[fData(msetEPIC.pf)$Chromosome_36!="X", ]) #something funky going on here
+temp_data = betas(msetEPIC.pf[fData(msetEPIC.pf)$CHR!="X", ]) #something funky going on here
 
 
 # next transpose the data so the samples become the rows and run signular value decomposition
