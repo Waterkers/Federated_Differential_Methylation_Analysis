@@ -1,6 +1,10 @@
 ############################################################################
 #                         EWAS                                             #
 ###########################################################################
+if (!require("IlluminaHumanMethylation450kanno.ilmn12.hg19", quietly = TRUE))
+  BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
+
 # load the exeter functions
 lapply(list.files("/home/rstudio/ExeterEWASPipeline-master/R",pattern = "\\.r$",full.names = T),function(x){source(x)})
 # setwd("") # set the working directory
@@ -36,6 +40,9 @@ for(i in 1:nrow(betas)){
 # By changing the name of the coefficient to select to its actual name in the table everything now works fine
 # However, the fact that I had to manually copy and paste the name from the coefficients names table probably means
 # it cannot be easilly automated, at least not in a way that I can think of
+
+#save the results to a csv as as
+write.csv(res, "EWAS_GSE66351/Results_dataset.csv")
 
 #add annotation
 data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
