@@ -8,7 +8,7 @@ library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 # load the exeter functions
 lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\ExeterEWASPipeline-master\\R",pattern = "\\.r$",full.names = T),function(x){source(x)})
 # setwd(" E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data") # set the working directory
-load("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Federated_Differential_Methylation_Analysis\\Output\\QC_GSE66351_PythonShell\\Preprocessed_Normalised_MethyLumiSet.RData")
+load("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\R_Pipeline\\QC\\GSE66351_first20_QCandDasen.RData")
 ## create a folder to save EWAS output
 if(!dir.exists("EWAS_GSE66351")){
   dir.create("EWAS_GSE66351")
