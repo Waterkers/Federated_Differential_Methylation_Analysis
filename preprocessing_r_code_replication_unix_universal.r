@@ -266,9 +266,9 @@ pFilterPass<-colnames(betas(msetEPIC)) %in% colnames(betas(msetEPIC.pf))
 QCmetrics<-cbind(QCmetrics, pFilterPass)
 
 # save filtered betas, (un)methylated data as .csv
-write.csv(betas(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Raw_Betas.csv")
-write.csv(methylated(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Raw_Methylated.csv")
-write.csv(unmethylated(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Raw_Unmethylated.csv")
+write.csv(betas(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Filtered_Betas.csv")
+write.csv(methylated(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Filtered_Methylated.csv")
+write.csv(unmethylated(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Filtered_Unmethylated.csv")
 
 # make room in ram
 rm(msetEPIC)
