@@ -18,10 +18,6 @@ if (!require(need, quietly = TRUE))
 library(methylumi)
 library(wateRmelon)
 
-
-##### source the Exeter functions needed for the pipeline
-lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Federated_Differential_Methylation_Analysis\\Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
-
 ## Set the working directory
 setwd(working_dir) # set working directory
 
@@ -30,9 +26,7 @@ QC_output <- paste0("QC_", identifier)
 if(!dir.exists(QC_output)){
 	dir.create(QC_output)
 }
-if(!dir.exists(file.path(QC_output, "Plots"))){
-  dir.create(file.path(QC_output, "Plots"))
-} 
+
 print("Output directories created")
 
 #Creating a function around the code to load the data
