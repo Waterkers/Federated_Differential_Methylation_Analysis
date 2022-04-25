@@ -275,7 +275,12 @@ rm(msetEPIC)
 gc()
 
 ##### Removal of cross-hybridisation probes ###############
-# load the cpgs to be removed - this step should probably be preformed locally
+# load the cpgs to be removed -  based on McCartney et al., 2016 ###
+crosshyb <- read.table("/home/rstudio/Cross_hybridising_CpGTargetting_Probes_McCartneyetal2016.txt")
+snpProbes <- read.table("/home/rstudio/mmc1.txt", header = TRUE)
+betas<-Betas[!(rownames(Betas) %in% crosshyb[,1]), ]
+betas<-filterSNPprobes(betas, population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
+betas<-betas[-grep("rs", rownames(betas)),] ## remove SNP probes
 
 ###### Normalisation ################
 msetEPIC.pf <- dasen(msetEPIC.pf)
