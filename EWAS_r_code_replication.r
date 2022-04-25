@@ -1,3 +1,16 @@
+#### keep in mind before running #######
+# change the variable names of the variables in the linear model
+# to the desired ones present in the phenotype file that is being used
+
+# change the column to be selected from the model summary object so
+# it matches with the system input used in the linear model.
+# The general format for a factor variable - diagnosis in this case is:
+#		variable_name first_level_factor (Diagnosis CTRL)
+# The general format for variables that are converted to numerical variables inline - as defined here is:
+#		as.numeric(variable_name)
+# The general format for a predefined numerical variable is:
+#		variable_name
+
 ############################################################################
 #                         EWAS                                             #
 ###########################################################################
@@ -17,12 +30,8 @@ if(!dir.exists("EWAS_GSE66351/Plots")){
   dir.create("EWAS_GSE66351/Plots")
 }
 
-#### Get rid of cross-hybridising probes, based on McCartney et al., 2016 ###
-crosshyb <- read.table("/home/rstudio/Cross_hybridising_CpGTargetting_Probes_McCartneyetal2016.txt")
-snpProbes <- read.table("/home/rstudio/mmc1.txt", header = TRUE)
-betas<-Betas[!(rownames(Betas) %in% crosshyb[,1]), ]
-betas<-filterSNPprobes(betas, population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
-betas<-betas[-grep("rs", rownames(betas)),] ## remove SNP probes
+#### Get rid of cross-hybridising probes - moved to the preprocessing file
+# before the normalisation of the data
 
 ##### Run the EWAS ##########
 res<-matrix(data = NA, nrow = nrow(betas), ncol = 3)
