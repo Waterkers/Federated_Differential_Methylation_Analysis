@@ -53,8 +53,23 @@ pheno1 <- pheno1[2:nrow(pheno1),]
 Sample_ID <- getBarcodes("/home/rstudio/GSE105109_RAW/idat") # change the filepath to the relevant location of the .idat files
 pheno1 <- cbind(pheno1, Sample_ID)
 
+# add the sentrix id and position information to the phenotype file if it isn't there already
+if (!"sentrix_id" %in% colnames(pheno1)){ #assumes that both id and position are missing if id is missing
+sentrix_id <- character()
+sentrix_position <- character()
+for (i in Sample_ID) {
+  id <- unlist(strsplit(i, split="_"))[2]
+  position <- unlist(strsplit(i, split="_"))[3]
+  sentrix_id[i] <- id
+  sentrix_position[i] <- position
+  }
+pheno1["sentrix_id"] <- sentrix_id
+pheno1["sentrix_position"] <- sentrix_position
+}
+  
+
 # set up the system for parallel processing to make it possible to deal with the dataset
-install.packages("parallel")
+#install.packages("parallel")
 library(parallel)
 num_cores <- detectCores()
 
@@ -425,11 +440,10 @@ Small_Pheno <- data.frame(Sample_ID = QCmetrics$Sample_ID, Diagnosis = temp_Phen
                           Age = temp_Pheno$Age, Cell_Type = Cell_Types)
 # create a column with the sentrix ID and position because it seems handy
 # use this if the information exists in a column of the phenotype information file
-#Small_Pheno$Sentrix_ID <- temp_Pheno$Sample_sentrix_id # this is the correct format of the sentrix ID 
-#Small_Pheno$Sentrix_Position <-temp_Pheno$Sample_sentrix_position
+Small_Pheno$Sentrix_ID <- temp_Pheno$sentrix_id # this is the correct format of the sentrix ID 
+Small_Pheno$Sentrix_Position <-temp_Pheno$sentrix_position
 
-# create a sentrix_id and sentrix_position column based on the Sample_ID - generated form the idat filenames
-# use this if there are not sentrix id and position columns present in the phenotype information file
+
 
 
 
