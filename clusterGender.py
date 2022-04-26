@@ -41,7 +41,7 @@ def clusterGender(betas, sex, npcs = 20, thres = 0.5, makePlot = True, inLine = 
             ax = fig.add_axes([0,0,1,1])
             ax.scatter(pca_results.components_[np.int_(first[0])], pca_results.components_[np.int_(second[0])], c = codes_sex, cmap="Set2")
             
-        else
+        else:
             fig = plt.figure()
             ax = fig.add_axes([0,0,1,1])
             ax.scatter(pca_results.components_[np.int_(first[0])], pca_results.components_[np.int_(second[0])], c = codes_sex, cmap="Set2")
