@@ -17,8 +17,12 @@ install.packages("tidyverse", repos = "https://mirror.lyrahosting.com/CRAN/")
 library(tidyverse)
 
 cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics){
+
+# load in the methylSet object
+	load(msetEPIC.pf)
+	pheno <- QCmetrics
 	annotation_data <- read.csv(manifest_path , skip = 7, header = TRUE)
-	retained_annotation <- annotation_data[annotation_data$IlmnID %in% rownames(betas(msetEPIC.pf)), ]
+	retained_annotation <- annotation_data[annotation_data$IlmnID %in% rownames(methylumi::betas(msetEPIC.pf)), ]
 	fData(msetEPIC.pf)["CHR"] <- retained_annotation["CHR"]
 
 	
