@@ -293,9 +293,9 @@ gc()
 # load the cpgs to be removed -  based on McCartney et al., 2016 ###
 crosshyb <- read.table("/home/rstudio/Cross_hybridising_CpGTargetting_Probes_McCartneyetal2016.txt")
 snpProbes <- read.table("/home/rstudio/mmc1.txt", header = TRUE)
-betas<-Betas[!(rownames(Betas) %in% crosshyb[,1]), ]
-betas<-filterSNPprobes(betas, population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
-betas<-betas[-grep("rs", rownames(betas)),] ## remove SNP probes
+msetEPIC.pf<-msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
+betas(msetEPIC.pf)<-filterSNPprobes(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
+msetEPIC.pf<-msetEPIC.pf[-grep("rs", rownames(msetEPIC.pf@assayData$betas)),] ## remove SNP probes
 
 ###### Normalisation ################
 msetEPIC.pf <- dasen(msetEPIC.pf)
@@ -430,7 +430,7 @@ dev.off()
 #### save the final pre-processed betas with minimal and full phenotype information
 Betas <- betas(msetEPIC.pf)
 
-temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID)]
+temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID), ]
 # remove unnecessary text from the phenotype dataframe cells
 temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
 
