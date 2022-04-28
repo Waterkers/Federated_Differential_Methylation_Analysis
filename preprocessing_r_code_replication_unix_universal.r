@@ -84,6 +84,8 @@ write.csv(betas(msetEPIC), file = "QC_GSE105109/GSE105109_Raw_Betas.csv")
 write.csv(methylated(msetEPIC), file = "QC_GSE105109/GSE105109_Raw_Methylated.csv")
 write.csv(unmethylated(msetEPIC), file = "QC_GSE105109/GSE105109_Raw_Unmethylated.csv")
 
+save(msetEPIC, pheno, file = "QC_GSE105109/GSE105109_Raw.RData")
+
 ########## Start with the QC pipeline from Exeter ##################
 ### checking methylated and unmethylated intensities #############
 ### extract sample intensities 
@@ -311,7 +313,7 @@ dev.off()
 
 # save normalised betas as .csv
 write.csv(betas(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Normalised_Betas.csv")
-
+save(msetEPIC.pf, QCmetrics, file = "QC_GSE105109/GSE105109_Normalised.RData")
 ##### Cell type estimation ##############
 # start with removing the X-chromosome probes from the dataset if they are there
 # because they can interfere with the cell-type decomposition.
@@ -431,12 +433,13 @@ dev.off()
 Betas <- betas(msetEPIC.pf)
 
 temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID), ]
+save(Betas, temp_Pheno, file = "QC_GSE105109/GSE105109_Preprocessed.RData")
 # remove unnecessary text from the phenotype dataframe cells
 temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
 
 Cell_Types <- CT[match(colnames(Betas), rownames(CT)),]
 
-Small_Pheno <- data.frame(Sample_ID = QCmetrics$Sample_ID, Diagnosis = temp_Pheno$Diagnosis, Sex = temp_Pheno$Sex,
+Small_Pheno <- data.frame(Sample_ID = temp_Pheno$Sample_ID, Diagnosis = temp_Pheno$Diagnosis, Sex = temp_Pheno$Sex,
                           Age = temp_Pheno$Age, Cell_Type = Cell_Types)
 # create a column with the sentrix ID and position because it seems handy
 # use this if the information exists in a column of the phenotype information file
