@@ -297,6 +297,8 @@ gc()
 
 ##### Removal of cross-hybridisation probes ###############
 # load the cpgs to be removed -  based on McCartney et al., 2016 ###
+#crosshyb <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt"))
+#snpProbes <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt"), header = TRUE)
 crosshyb <- read.table("/home/rstudio/Cross_hybridising_CpGTargetting_Probes_McCartneyetal2016.txt")
 snpProbes <- read.table("/home/rstudio/mmc1.txt", header = TRUE)
 msetEPIC.pf<-msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
