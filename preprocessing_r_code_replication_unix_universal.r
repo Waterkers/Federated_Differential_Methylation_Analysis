@@ -300,7 +300,8 @@ gc()
 crosshyb <- read.table("/home/rstudio/Cross_hybridising_CpGTargetting_Probes_McCartneyetal2016.txt")
 snpProbes <- read.table("/home/rstudio/mmc1.txt", header = TRUE)
 msetEPIC.pf<-msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
-betas(msetEPIC.pf)<-filterSNPprobes(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
+kept_probes <-filterSNPprobes(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
+msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% kept_probes, ]
 msetEPIC.pf<-msetEPIC.pf[-grep("rs", rownames(msetEPIC.pf@assayData$betas)),] ## remove SNP probes
 
 ###### Normalisation ################
