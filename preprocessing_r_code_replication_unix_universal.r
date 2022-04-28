@@ -36,12 +36,16 @@ lapply(list.files("/home/rstudio/ExeterEWASPipeline-master/R",pattern = "\\.r$",
 
 ## Set the working directory
 setwd("/home/rstudio") # set working directory to whatever is relevant
+
 ## create a folder for the QC output - change the identifier to whatever works for the project
-if(!dir.exists("QC_GSE105109")){
-  dir.create("QC_GSE105109")
+identifier <- "GSE105109"
+QC_output <- paste0("QC_", identifier)
+QC_plots <- file.path(QC_output, "Plots")
+if(!dir.exists(QC_output)){
+  dir.create(QC_output)
 }
-if(!dir.exists("QC_GSE105109/Plots")){
-  dir.create("QC_GSE105109/Plots")
+if(!dir.exists(QC_plots)){
+  dir.create(QC_plots)
 }
 #### import the data using methylumi -> create a MethyLumiSet object
 # loading in actual data - GSE105109
@@ -80,9 +84,9 @@ pheno <- pheno1
 msetEPIC <- data2
 
 # save raw betas, (un)methylated data as .csv
-write.csv(betas(msetEPIC), file = "QC_GSE105109/GSE105109_Raw_Betas.csv")
-write.csv(methylated(msetEPIC), file = "QC_GSE105109/GSE105109_Raw_Methylated.csv")
-write.csv(unmethylated(msetEPIC), file = "QC_GSE105109/GSE105109_Raw_Unmethylated.csv")
+write.csv(betas(msetEPIC), file = file.path(QC_output,"GSE105109_Raw_Betas.csv"))
+write.csv(methylated(msetEPIC), file = file.path(QC_output,"GSE105109_Raw_Methylated.csv"))
+write.csv(unmethylated(msetEPIC), file = file.path(QC_output, "GSE105109_Raw_Unmethylated.csv"))
 
 ########## Start with the QC pipeline from Exeter ##################
 ### checking methylated and unmethylated intensities #############
@@ -115,7 +119,7 @@ U_upper_bound
 intens.Thres<-2000 
 
 # make PDF histogram of sample intensities
-pdf("QC_GSE105109/Plots/Sample_Intensity_histogram.pdf")
+pdf(file.path(QC_plots,"Sample_Intensity_histogram.pdf"))
 par(mfrow = c(1,2))
 hist(M.median, xlab = "Median M intensity")
 abline(v=M_lower_bound,col=alpha("blue",0.3),lty=2)
@@ -147,7 +151,7 @@ chip.U.median<-aggregate(U.median, by = list(unlist(strsplit(colnames(m_intensit
 if ("plate" %in% colnames(pheno)) {
 ## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
 # of samples provided
-pdf("QC_GSE105109/Plots/Sample_Intensity_ByPlate_boxplot.pdf")
+pdf((file.path(QC_plots, "Sample_Intensity_ByPlate_boxplot.pdf"))
 par(mfrow = c(1,2))
 par(mar = c(8, 4, 1, 1))
 nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
@@ -156,7 +160,7 @@ boxplot(U.median ~ pheno$plate, ylab = "Median U intensity", xlab = "Plate", las
 dev.off()
 
 ## alternatively colour points in original scatterplot by Plate
-pdf("QC_GSE105109/Plots/Sample_Intensity_ByPlate_histogram.pdf")
+pdf(file.path(QC_plots,"Sample_Intensity_ByPlate_histogram.pdf"))
 nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
 plot(M.median, U.median, pch = 16, xlab = "Median M intensity", ylab = "Median U intensity", col = rainbow(nCol)[factor(pheno$plate)])
 abline(v = intens.Thres, col = "red")
@@ -167,7 +171,7 @@ dev.off()
 ##### Checking the Bisulfite conversion ################
 bs<-wateRmelon::bscon(msetEPIC) # - doesn't work because of this error "Error in bsI.green[1:2, ] : subscript out of bounds"
 
-pdf("QC_GSE105109/Plots/Bisulphite_Conversion.pdf")
+pdf(file.path(QC_plots,"Bisulphite_Conversion.pdf"))
 hist(bs, xlab = "Median % BS conversion", main = "")
 abline(v = 80, col = "red")
 dev.off()
@@ -177,7 +181,7 @@ QCmetrics<-cbind(QCmetrics, bs)
 betas <- methylumi::betas(msetEPIC)
 pheno<-pheno[match(colnames(betas), pheno$Sample_ID),]
 
-pdf("QC_GSE105109/Plots/Gender_Cluster.pdf")
+pdf(file.path(QC_plots, "Gender_Cluster.pdf"))
 predSex1<-findGenderPC(betas, pheno$Sex, npcs = 20) # the default setting of npcs = 20 gave an error so
 # I reduced the number of princicple components for the example data set -> remember to put it back at 20
 # when using real data
@@ -229,12 +233,12 @@ for(i in 1:ncol(betas.rs)){
 # calculate the maximum correlation for each sample with all other samples (except for itself)
 corMax<-apply(snpCor, 1, max, na.rm = TRUE)
 
-pdf("QC_GSE105109/Plots/SNP_Correlations.pdf")
+pdf(file.path(QC_plots, "SNP_Correlations.pdf"))
 hist(corMax, xlab = "Max. correlation with all other samples", main = "")
 dev.off()
 
 # Check which samples match to their best match 
-pdf("QC_GSE105109/Plots/SNP_Samples.pdf", width = 15, height = 8)
+pdf(file.path(QC_plots,"SNP_Samples.pdf"), width = 15, height = 8)
 par(mfrow = c(2,4))
 for(i in 1:ncol(betas.rs)){
   val = betas.rs[,i]
@@ -267,7 +271,7 @@ rm(list=removelist)
 gc()
 
 # filter on bad samples and sites (CpGs)
-pdf("QC_GSE105109/Plots/Betas_raw_boxplot.pdf")
+pdf(file.path(QC_plots,"Betas_raw_boxplot.pdf"))
 boxplot(methylumi::betas(msetEPIC),main="Betas raw betas")
 dev.off()
 
@@ -281,9 +285,11 @@ pFilterPass<-colnames(betas(msetEPIC)) %in% colnames(betas(msetEPIC.pf))
 QCmetrics<-cbind(QCmetrics, pFilterPass)
 
 # save filtered betas, (un)methylated data as .csv
-write.csv(betas(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Filtered_Betas.csv")
-write.csv(methylated(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Filtered_Methylated.csv")
-write.csv(unmethylated(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Filtered_Unmethylated.csv")
+write.csv(betas(msetEPIC.pf), file = file.path(QC_output, "GSE105109_Filtered_Betas.csv"))
+write.csv(methylated(msetEPIC.pf), file = file.path(QC_output, "GSE105109_Filtered_Methylated.csv"))
+write.csv(unmethylated(msetEPIC.pf), file = file.path(QC_output,"GSE105109_Filtered_Unmethylated.csv"))
+
+save(msetEPIC.pf, QCmetrics, file = file.path(QC_output, "GSE105109_FilteredMethylumisetQCmetrics.RData"))
 
 # make room in ram
 rm(msetEPIC)
@@ -305,12 +311,12 @@ annotation_data <- read.csv("/home/rstudio/GSE105109_RAW/GPL13534_HumanMethylati
 retained_annotation <- annotation_data[annotation_data$IlmnID %in% rownames(betas(msetEPIC.pf)), ]
 fData(msetEPIC.pf) <- retained_annotation
 
-pdf("QC_GSE105109/Plots/Betas_normalized_boxplot.pdf")
+pdf(file.path(QC_plots,"Betas_normalized_boxplot.pdf"))
 boxplot(betas(msetEPIC.pf),main="Betas normalized")
 dev.off()
 
 # save normalised betas as .csv
-write.csv(betas(msetEPIC.pf), file = "QC_GSE105109/GSE105109_Normalised_Betas.csv")
+write.csv(betas(msetEPIC.pf), file = file.path(QC_output("GSE105109_Normalised_Betas.csv"))
 
 ##### Cell type estimation ##############
 # start with removing the X-chromosome probes from the dataset if they are there
@@ -420,7 +426,7 @@ temp_CT$SampleID=rownames(CT)
 # format data
 DF <- pivot_longer(temp_CT,cols = 1:dim(CT)[2],names_to = "Celltypes",values_to = "Proportion") %>% group_by(SampleID,Celltypes) #%>%  mutate(name = fct_reorder(name, value)) 
 
-pdf("QC_GSE105109/Plots/Celltype_estimates_barplot.pdf")
+pdf(file.path(QC_plots, "Celltype_estimates_barplot.pdf"))
 ggplot(DF, aes(x = SampleID, y = Proportion, fill = Celltypes))+
   ggtitle("Celltype composition estimate per sample")  + 
   coord_flip() +
@@ -436,7 +442,7 @@ temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
 
 Cell_Types <- CT[match(colnames(Betas), rownames(CT)),]
 
-Small_Pheno <- data.frame(Sample_ID = QCmetrics$Sample_ID, Diagnosis = temp_Pheno$Diagnosis, Sex = temp_Pheno$Sex,
+Small_Pheno <- data.frame(Sample_ID = temp_Pheno$Sample_ID, Diagnosis = temp_Pheno$Diagnosis, Sex = temp_Pheno$Sex,
                           Age = temp_Pheno$Age, Cell_Type = Cell_Types)
 # create a column with the sentrix ID and position because it seems handy
 # use this if the information exists in a column of the phenotype information file
@@ -451,10 +457,10 @@ Small_Pheno$Sentrix_Position <-temp_Pheno$sentrix_position
 Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
 
 # save everything
-save(Betas, Small_Pheno, file = "QC_GSE105109/GSE105109_Preprocessed_CTD.RData")
-save(Full_Pheno, file = "QC_GSE105109/GSE105109_Full_Phenotype_Information.RData")
+save(Betas, Small_Pheno, file = file.path(QC_output,"GSE105109_Preprocessed_CTD.RData"))
+save(Full_Pheno, file = file.path(QC_output, "GSE105109_Full_Phenotype_Information.RData"))
 
-write.csv(Betas, file = "QC_GSE105109/GSE105109_Preprocessed_CTD_Betas.csv")
-write.csv(Small_Pheno, file = "QC_GSE105109/GSE105109_Reduced_Pheno_Info.csv")
-write.csv(Full_Pheno, file = "QC_GSE105109/GSE105109_Full_Pheno_Info.csv")
+write.csv(Betas, file = file.path(QC_output, "GSE105109_Preprocessed_CTD_Betas.csv"))
+write.csv(Small_Pheno, file = file.path(QC_output, "GSE105109_Reduced_Pheno_Info.csv"))
+write.csv(Full_Pheno, file = file.path(QC_output, "GSE105109_Full_Pheno_Info.csv"))
 
