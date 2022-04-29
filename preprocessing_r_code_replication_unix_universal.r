@@ -44,6 +44,7 @@ if(!dir.exists(QC_output)){
 if(!dir.exists(QC_plots)){
   dir.create(QC_plots)
 }
+
 #### import the data using methylumi -> create a MethyLumiSet object
 # loading in actual data - GSE105109
 pheno1 <- read.table("/home/rstudio/GSE105109_RAW/GSE105109_pheno.txt") # change the filepath to the location of the relevant phenotype file
@@ -81,9 +82,9 @@ pheno <- pheno1
 msetEPIC <- data2
 
 # save raw betas, (un)methylated data as .csv
-write.csv(betas(msetEPIC), file = file.path(QC_output,"GSE105109_Raw_Betas.csv"))
-write.csv(methylated(msetEPIC), file = file.path(QC_output,"GSE105109_Raw_Methylated.csv"))
-write.csv(unmethylated(msetEPIC), file = file.path(QC_output, "GSE105109_Raw_Unmethylated.csv"))
+write.csv(betas(msetEPIC), file = file.path(QC_output,"Raw_Betas.csv"))
+write.csv(methylated(msetEPIC), file = file.path(QC_output,"Raw_Methylated.csv"))
+write.csv(unmethylated(msetEPIC), file = file.path(QC_output, "Raw_Unmethylated.csv"))
 
 ########## Start with the QC pipeline from Exeter ##################
 ### checking methylated and unmethylated intensities #############
@@ -282,11 +283,11 @@ pFilterPass<-colnames(betas(msetEPIC)) %in% colnames(betas(msetEPIC.pf))
 QCmetrics<-cbind(QCmetrics, pFilterPass)
 
 # save filtered betas, (un)methylated data as .csv
-write.csv(betas(msetEPIC.pf), file = file.path(QC_output, "GSE105109_Filtered_Betas.csv"))
-write.csv(methylated(msetEPIC.pf), file = file.path(QC_output, "GSE105109_Filtered_Methylated.csv"))
-write.csv(unmethylated(msetEPIC.pf), file = file.path(QC_output,"GSE105109_Filtered_Unmethylated.csv"))
+write.csv(betas(msetEPIC.pf), file = file.path(QC_output, "Filtered_Betas.csv"))
+write.csv(methylated(msetEPIC.pf), file = file.path(QC_output, "Filtered_Methylated.csv"))
+write.csv(unmethylated(msetEPIC.pf), file = file.path(QC_output,"Filtered_Unmethylated.csv"))
 
-save(msetEPIC.pf, QCmetrics, file = file.path(QC_output, "GSE105109_FilteredMethylumisetQCmetrics.RData"))
+save(msetEPIC.pf, QCmetrics, file = file.path(QC_output, "FilteredMethylumisetQCmetrics.RData"))
 
 # make room in ram
 rm(msetEPIC)
@@ -316,8 +317,8 @@ boxplot(betas(msetEPIC.pf),main="Betas normalized")
 dev.off()
 
 # save normalised betas as .csv
-write.csv(betas(msetEPIC.pf), file = file.path(QC_output, "GSE105109_Normalised_Betas.csv"))
-save(msetEPIC.pf, QCmetrics, file = file.path(QC_output, "GSE105109_Normalised.RData"))
+write.csv(betas(msetEPIC.pf), file = file.path(QC_output, "Normalised_Betas.csv"))
+save(msetEPIC.pf, QCmetrics, file = file.path(QC_output, "Normalised.RData"))
 ##### Cell type estimation ##############
 # start with removing the X-chromosome probes from the dataset if they are there
 # because they can interfere with the cell-type decomposition.
@@ -443,24 +444,16 @@ temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
 Cell_Types <- CT[match(colnames(Betas), rownames(CT)),]
 
 Small_Pheno <- data.frame(Sample_ID = temp_Pheno$Sample_ID, Diagnosis = temp_Pheno$Diagnosis, Sex = temp_Pheno$Sex,
-                          Age = temp_Pheno$Age, Cell_Type = Cell_Types)
-# create a column with the sentrix ID and position because it seems handy
-# use this if the information exists in a column of the phenotype information file
-Small_Pheno$Sentrix_ID <- temp_Pheno$sentrix_id # this is the correct format of the sentrix ID 
-Small_Pheno$Sentrix_Position <-temp_Pheno$sentrix_position
-
-
-
-
+                          Age = temp_Pheno$Age, Sentrix_ID = temp_Pheno$sentrix_id, Sentrix_Position = temp_Pheno$sentrix_position, Cell_Type = Cell_Types)
 
 # Create the full phenotype file
 Full_Pheno <- data.frame(temp_Pheno, Cell_Type = Cell_Types)
 
 # save everything
-save(Betas, Small_Pheno, file = file.path(QC_output,"GSE105109_Preprocessed_CTD.RData"))
-save(Full_Pheno, file = file.path(QC_output, "GSE105109_Full_Phenotype_Information.RData"))
+save(Betas, Small_Pheno, file = file.path(QC_output,"Preprocessed_CTD.RData"))
+save(Full_Pheno, file = file.path(QC_output, "Full_Phenotype_Information.RData"))
 
-write.csv(Betas, file = file.path(QC_output, "GSE105109_Preprocessed_CTD_Betas.csv"))
-write.csv(Small_Pheno, file = file.path(QC_output, "GSE105109_Reduced_Pheno_Info.csv"))
-write.csv(Full_Pheno, file = file.path(QC_output, "GSE105109_Full_Pheno_Info.csv"))
+write.csv(Betas, file = file.path(QC_output, "Preprocessed_CTD_Betas.csv"))
+write.csv(Small_Pheno, file = file.path(QC_output, "Reduced_Pheno_Info.csv"))
+write.csv(Full_Pheno, file = file.path(QC_output, "Full_Pheno_Info.csv"))
 
