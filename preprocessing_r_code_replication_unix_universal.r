@@ -149,7 +149,7 @@ chip.U.median<-aggregate(U.median, by = list(unlist(strsplit(colnames(m_intensit
 if ("plate" %in% colnames(pheno)) {
 ## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
 # of samples provided
-pdf((file.path(QC_plots, "Sample_Intensity_ByPlate_boxplot.pdf"))
+pdf(file.path(QC_plots, "Sample_Intensity_ByPlate_boxplot.pdf"))
 par(mfrow = c(1,2))
 par(mar = c(8, 4, 1, 1))
 nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
