@@ -58,17 +58,21 @@ pheno1 <- cbind(pheno1, Sample_ID)
 # add the sentrix id and position information to the phenotype file if it isn't there already
 if (!"sentrix_id" %in% colnames(pheno1)){ #assumes that both id and position are missing if id is missing
 sentrix_id <- character()
-sentrix_position <- character()
 for (i in Sample_ID) {
   id <- unlist(strsplit(i, split="_"))[2]
-  position <- unlist(strsplit(i, split="_"))[3]
   sentrix_id[i] <- id
-  sentrix_position[i] <- position
   }
 pheno1["sentrix_id"] <- sentrix_id
-pheno1["sentrix_position"] <- sentrix_position
 }
-  
+
+if (!"sentrix_position" %in% colnames(pheno1)){ #assumes that both id and position are missing if id is missing
+sentrix_position <- character()
+for (i in Sample_ID) {
+  position <- unlist(strsplit(i, split="_"))[3]
+  sentrix_position[i] <- position
+  }
+pheno1["sentrix_position"] <- sentrix_position
+}  
 
 # set up the system for parallel processing to make it possible to deal with the dataset
 #install.packages("parallel")
@@ -288,10 +292,8 @@ gc()
 
 ##### Removal of cross-hybridisation probes ###############
 # load the cpgs to be removed -  based on McCartney et al., 2016 ###
-#crosshyb <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt"))
-#snpProbes <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt"), header = TRUE)
-crosshyb <- read.table("/home/rstudio/Cross_hybridising_CpGTargetting_Probes_McCartneyetal2016.txt")
-snpProbes <- read.table("/home/rstudio/mmc1.txt", header = TRUE)
+crosshyb <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt"))
+snpProbes <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt"), header = TRUE)
 msetEPIC.pf<-msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
 kept_probes <-filterSNPprobes(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
 msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]
