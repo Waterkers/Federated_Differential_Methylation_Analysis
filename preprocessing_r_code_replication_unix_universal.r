@@ -282,13 +282,6 @@ retained_probes <- rownames(betas(msetEPIC)) %in% rownames(betas(msetEPIC.pf))
 pFilterPass<-colnames(betas(msetEPIC)) %in% colnames(betas(msetEPIC.pf))
 QCmetrics<-cbind(QCmetrics, pFilterPass)
 
-# save filtered betas, (un)methylated data as .csv
-write.csv(betas(msetEPIC.pf), file = file.path(QC_output, "Filtered_Betas.csv"))
-write.csv(methylated(msetEPIC.pf), file = file.path(QC_output, "Filtered_Methylated.csv"))
-write.csv(unmethylated(msetEPIC.pf), file = file.path(QC_output,"Filtered_Unmethylated.csv"))
-
-save(msetEPIC.pf, QCmetrics, file = file.path(QC_output, "FilteredMethylumisetQCmetrics.RData"))
-
 # make room in ram
 rm(msetEPIC)
 gc()
@@ -303,6 +296,13 @@ msetEPIC.pf<-msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,
 kept_probes <-filterSNPprobes(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
 msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]
 msetEPIC.pf<-msetEPIC.pf[-grep("rs", rownames(msetEPIC.pf@assayData$betas)),] ## remove SNP probes
+
+# save filtered betas, (un)methylated data as .csv
+write.csv(betas(msetEPIC.pf), file = file.path(QC_output, "Filtered_Betas.csv"))
+write.csv(methylated(msetEPIC.pf), file = file.path(QC_output, "Filtered_Methylated.csv"))
+write.csv(unmethylated(msetEPIC.pf), file = file.path(QC_output,"Filtered_Unmethylated.csv"))
+
+save(msetEPIC.pf, QCmetrics, file = file.path(QC_output, "FilteredMethylumisetQCmetrics.RData"))
 
 ###### Normalisation ################
 msetEPIC.pf <- dasen(msetEPIC.pf)
