@@ -18,32 +18,30 @@ if (!require("IlluminaHumanMethylation450kanno.ilmn12.hg19", quietly = TRUE))
   BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
 library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 
-# load the exeter functions
-lapply(list.files("/home/rstudio/ExeterEWASPipeline-master/R",pattern = "\\.r$",full.names = T),function(x){source(x)})
-# setwd("") # set the working directory
+
+setwd("/home/rstudio") # set the working directory
 load("/home/rstudio/QC_GSE66351/GSE66351_Preprocessed_CTD.RData")
+identifier = "GSE105109"
 ## create a folder to save EWAS output
-if(!dir.exists("EWAS_GSE66351")){
-  dir.create("EWAS_GSE66351")
+if(!dir.exists(paste0("EWAS_", identifier))){
+  dir.create(paste0("EWAS_", identifier))
 }
-if(!dir.exists("EWAS_GSE66351/Plots")){
-  dir.create("EWAS_GSE66351/Plots")
+if(!dir.exists(file.path(paste0("EWAS_", idenfitier), "Plots"))){
+  dir.create(file.path(paste0("EWAS_", idenfitier), "Plots"))
 }
 
-#### Get rid of cross-hybridising probes - moved to the preprocessing file
-# before the normalisation of the data
 
 ##### Run the EWAS ##########
-res<-matrix(data = NA, nrow = nrow(betas), ncol = 3)
+res<-matrix(data = NA, nrow = nrow(Betas), ncol = 3)
 colnames(res)<-c("Diagnosis_Beta", "Diagnosis_SE", "Diagnosis_P")
-rownames(res)<-rownames(betas)
+rownames(res)<-rownames(Betas)
 # removed the smoking score variable from the linear model because not all data was provided to run the 
 # smokingScore function and calculate the smoking score for the samples. 
-for(i in 1:nrow(betas)){
+for(i in 1:nrow(Betas)){
   model<-lm(betas[i,] ~ Small_Pheno$Diagnosis + as.numeric(Small_Pheno$Age) + factor(Small_Pheno$Sex) + as.numeric(Small_Pheno$Cell_Type.CT1)+ as.numeric(Small_Pheno$Cell_Type.CT2) + as.numeric(Small_Pheno$Cell_Type.CT3)+ factor(Small_Pheno$Sentrix_ID))
-  res[i,c(1)]<-coefficients(model)["Small_Pheno$Diagnosis CTRL"]
-  res[i,2]<-summary(model)$coefficients["Small_Pheno$Diagnosis CTRL",2]
-  res[i,c(3)]<-summary(model)$coefficients["Small_Pheno$Diagnosis CTRL",4]
+  res[i,c(1)]<-coefficients(model)["Small_Pheno$Diagnosis Control"]
+  res[i,2]<-summary(model)$coefficients["Small_Pheno$Diagnosis Control",2]
+  res[i,c(3)]<-summary(model)$coefficients["Small_Pheno$Diagnosis Control",4]
 }
 
 # By changing the name of the coefficient to select to its actual name in the table everything now works fine
@@ -51,7 +49,7 @@ for(i in 1:nrow(betas)){
 # it cannot be easilly automated, at least not in a way that I can think of
 
 #save the results to a csv as as
-write.csv(res, "EWAS_GSE66351/Results_dataset.csv")
+write.csv(res, file.path(paste0("EWAS_", idenfitier), "Results_dataset.csv"))
 
 #add annotation
 data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
@@ -63,7 +61,7 @@ res_annotated <- cbind(res, included_annotations)
 
 
 #save the results to a csv as as
-write.csv(res_annotated, "EWAS_GSE66351/Annotated_Results_dataset.csv")
+write.csv(res_annotated, file.path(paste0("EWAS_", idenfitier), "Annotated_Results_dataset.csv"))
 
 #save the results in the standard format defined for a BED file - needed for the DMR calling function
 # standard format that requires the first three columns to be: chrom, start and end. 
@@ -75,4 +73,4 @@ standard_bed_columns <- standard_bed_columns[ ,c(1,2,3,4)]
 res_bed <- merge(standard_bed_columns, res, by.x = 4, by.y = "row.names", all.y = TRUE)
 
 res_bed <- data.frame(chrom = res_bed[2], start = res_bed[3], stop = res_bed[4], p_value = res_bed$Diagnosis_P, coeffi = res_bed$Diagnosis_Beta, stan_er = res_bed$Diagnosis_SE, Illumina_ID = res_bed[1])
-write.table(res_bed, "EWAS_GSE66351/results.bed")
+write.table(res_bed, file.path(paste0("EWAS_", idenfitier), "results.bed"))
