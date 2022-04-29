@@ -4,12 +4,9 @@
 # in addition look at the columns used from the pheno dataframe          #
 # throughout the file and ensure that these match with the columns       #
 # present in your phenotype document used to create the pheno dataframe: #
-#	sex                                                                  #
-#	age                                                                  #
-#	diagnosis                                                            #
-#  - if these are not present comment lines where they are used -        #
-#	sentrix ID                                                           #
-#	sentrix position                                                     #
+#	Sex                                                                  #
+#	Age                                                                  #
+#	Diagnosis                                                            #
 ##########################################################################
 
 
@@ -303,7 +300,7 @@ crosshyb <- read.table("/home/rstudio/Cross_hybridising_CpGTargetting_Probes_McC
 snpProbes <- read.table("/home/rstudio/mmc1.txt", header = TRUE)
 msetEPIC.pf<-msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
 kept_probes <-filterSNPprobes(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
-msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% kept_probes, ]
+msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]
 msetEPIC.pf<-msetEPIC.pf[-grep("rs", rownames(msetEPIC.pf@assayData$betas)),] ## remove SNP probes
 
 ###### Normalisation ################
@@ -319,8 +316,8 @@ boxplot(betas(msetEPIC.pf),main="Betas normalized")
 dev.off()
 
 # save normalised betas as .csv
-write.csv(betas(msetEPIC.pf), file = file.path(QC_output("GSE105109_Normalised_Betas.csv"))
-
+write.csv(betas(msetEPIC.pf), file = file.path(QC_output, "GSE105109_Normalised_Betas.csv"))
+save(msetEPIC.pf, QCmetrics, file = file.path(QC_output, "GSE105109_Normalised.RData"))
 ##### Cell type estimation ##############
 # start with removing the X-chromosome probes from the dataset if they are there
 # because they can interfere with the cell-type decomposition.
@@ -457,7 +454,7 @@ Small_Pheno$Sentrix_Position <-temp_Pheno$sentrix_position
 
 
 # Create the full phenotype file
-Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
+Full_Pheno <- data.frame(temp_Pheno, Cell_Type = Cell_Types)
 
 # save everything
 save(Betas, Small_Pheno, file = file.path(QC_output,"GSE105109_Preprocessed_CTD.RData"))
