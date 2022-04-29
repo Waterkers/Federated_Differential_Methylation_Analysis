@@ -8,18 +8,21 @@ library(ChAMP) # for some reason library only loads this package when it is call
 #if (!require("RefFreeEWAS", quietly = TRUE))
 install.packages("C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2.tar.gz", repos = NULL) # not available on CRAN anymore so needs to be downloaded manually from the archive
 # for the workflow probably needs full translation
-install.packages("quadprog") # one of the RefFreeEWAS dependencies that I hadn't installed yet
+
 library(RefFreeEWAS)
 ##### source the Exeter functions needed for the pipeline
 lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\ExeterEWASPipeline-master\\R",pattern = "\\.r$",full.names = T),function(x){source(x)})
 ## Set the working directory
 setwd("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\R_Pipeline") # set working directory
 ## create a folder for the QC output
-if(!dir.exists("QC")){
-  dir.create("QC")
+identifier <- "GSE66351"
+QC_output <- paste0("QC_", identifier)
+QC_plots <- file.path(QC_output, "Plots")
+if(!dir.exists(QC_output)){
+  dir.create(QC_output)
 }
-if(!dir.exists("QC/Plots")){
-  dir.create("QC/Plots")
+if(!dir.exists(QC_plots)){
+  dir.create(QC_plots)
 }
 
 
@@ -31,30 +34,30 @@ colnames(pheno1)<- pheno1[1,]
 pheno1 <- pheno1[2:191,]
 Sample_ID <- getBarcodes("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
 pheno1 <- cbind(pheno1, Sample_ID)
-pheno1_half <- as.data.frame(pheno1[1:20,])
 
-barcodes_GSE66351_half <- c(Sample_ID[1:20]) # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 80 instead
-#data1 <- methylumi::methylumIDAT(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
+
+# add the sentrix id and position information to the phenotype file if it isn't there already
+if (!"sentrix_id" %in% colnames(pheno1)){ #assumes that both id and position are missing if id is missing
+sentrix_id <- character()
+sentrix_position <- character()
+for (i in Sample_ID) {
+  id <- unlist(strsplit(i, split="_"))[2]
+  position <- unlist(strsplit(i, split="_"))[3]
+  sentrix_id[i] <- id
+  sentrix_position[i] <- position
+  }
+pheno1["sentrix_id"] <- sentrix_id
+pheno1["sentrix_position"] <- sentrix_position
+}
+# my personal laptop cannot deal with all 190 samples so I'm trying it with the first 80 instead 
+pheno1_half <- as.data.frame(pheno1[1:20,])
+barcodes_GSE66351_half <- c(Sample_ID[1:20]) 
+# Load data
 data2 <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
-#fData(data1) <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
+
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
 pheno <- pheno1_half
 msetEPIC <- data2
-
-### adding the annotations using the Illumia450kManifest package ####
-#library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
-#data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
-#data("Locations")
-#force(Locations)
-#annotation_bleh <- Locations
-#fData(msetEPIC) <- annotation_bleh
-#fData(msetEPIC)["CHR"]<- Locations # not the same length as the data
-
-# find out which probes are missing in the annotation information compared to the data
-#not_in_annotation <- fData(msetEPIC)[!rownames(fData(msetEPIC)) %in% rownames(Locations),]
-# the SNP probes are missing in the annotation file
-
-
 
 ########## Start with the QC pipeline from Exeter ##################
 ### checking methylated and unmethylated intensities #############
@@ -87,7 +90,7 @@ U_upper_bound
 intens.Thres<-2000 
 
 # make PDF histogram of sample intensities
-pdf("QC/Plots/Sample_Intensity_histogram.pdf")
+pdf(file.path(QC_plots, "Sample_Intensity_histogram.pdf"))
 par(mfrow = c(1,2))
 hist(M.median, xlab = "Median M intensity")
 abline(v=M_lower_bound,col=alpha("blue",0.3),lty=2)
@@ -119,27 +122,31 @@ chip.U.median<-aggregate(U.median, by = list(unlist(strsplit(colnames(m_intensit
 
 ## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
 # of samples provided
-pdf("QC/Plots/Sample_Intensity_ByPlate_boxplot.pdf")
+if ("plate" %in% colnames(pheno)) {
+## plot each plate as a boxplot - this does not work for the sample data since there is only a small set
+# of samples provided
+pdf((file.path(QC_plots, "Sample_Intensity_ByPlate_boxplot.pdf"))
 par(mfrow = c(1,2))
 par(mar = c(8, 4, 1, 1))
 nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
 boxplot(M.median ~ pheno$plate, ylab = "Median M intensity", xlab = "Plate", las = 2, col = rainbow(nCol)) 
 boxplot(U.median ~ pheno$plate, ylab = "Median U intensity", xlab = "Plate", las = 2, col = rainbow(nCol))
 dev.off()
-# 
-# ## alternatively colour points in original scatterplot by Plate
-# pdf("QC/Plots/Sample_Intensity_ByPlate_histogram.pdf")
-# nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
-# plot(M.median, U.median, pch = 16, xlab = "Median M intensity", ylab = "Median U intensity", col = rainbow(nCol)[factor(pheno$plate)])
-# abline(v = intens.Thres, col = "red")
-# abline(h = intens.Thres, col = "red") 
-# legend("topright", levels(factor(pheno$plate)), col = rainbow(nCol), pch = 16)
-# dev.off()
+
+## alternatively colour points in original scatterplot by Plate
+pdf(file.path(QC_plots,"Sample_Intensity_ByPlate_histogram.pdf"))
+nCol<-length(unique(pheno$plate))## assumes there is a column called Plate in your phenotype file
+plot(M.median, U.median, pch = 16, xlab = "Median M intensity", ylab = "Median U intensity", col = rainbow(nCol)[factor(pheno$plate)])
+abline(v = intens.Thres, col = "red")
+abline(h = intens.Thres, col = "red") 
+legend("topright", levels(factor(pheno$plate)), col = rainbow(nCol), pch = 16)
+dev.off()
+}
 
 ##### Checking the Bisulfite conversion ################
 bs<-wateRmelon::bscon(msetEPIC) # - doesn't work because of this error "Error in bsI.green[1:2, ] : subscript out of bounds"
 
-pdf("QC/Plots/Bisulphite_Conversion.pdf")
+pdf(file.path(QC_plots, "Bisulphite_Conversion.pdf"))
 hist(bs, xlab = "Median % BS conversion", main = "")
 abline(v = 80, col = "red")
 dev.off()
@@ -149,7 +156,7 @@ QCmetrics<-cbind(QCmetrics, bs)
 betas <- methylumi::betas(msetEPIC)
 pheno<-pheno[match(colnames(betas), pheno$Sample_ID),]
 
-pdf("QC/Plots/Gender_Cluster.pdf")
+pdf(file.path(QC_plots, "Gender_Cluster.pdf"))
 predSex1<-findGenderPC(betas, pheno$Sample_sex, npcs = 20) # the default setting of npcs = 20 gave an error so
 # I reduced the number of princicple components for the example data set -> remember to put it back at 20
 # when using real data
@@ -201,12 +208,12 @@ for(i in 1:ncol(betas.rs)){
 # calculate the maximum correlation for each sample with all other samples (except for itself)
 corMax<-apply(snpCor, 1, max, na.rm = TRUE)
 
-pdf("QC/Plots/SNP_Correlations.pdf")
+pdf(file.path(QC_plots, "SNP_Correlations.pdf"))
 hist(corMax, xlab = "Max. correlation with all other samples", main = "")
 dev.off()
 
 # Check which samples match to their best match 
-pdf("QC/Plots/SNP_Samples.pdf", width = 15, height = 8)
+pdf(file.path(QC_plots, "SNP_Samples.pdf"), width = 15, height = 8)
 par(mfrow = c(2,4))
 for(i in 1:ncol(betas.rs)){
   val = betas.rs[,i]
@@ -239,7 +246,7 @@ rm(list=removelist)
 gc()
 
 # filter on bad samples and sites (CpGs)
-pdf("QC/Plots/Betas_raw_boxplot.pdf")
+pdf(file.path(QC_plots, "Betas_raw_boxplot.pdf"))
 boxplot(methylumi::betas(msetEPIC),main="Betas raw betas")
 dev.off()
 
@@ -258,21 +265,24 @@ gc()
 
 ##### Removal of cross-hybridisation probes ###############
 # load the cpgs to be removed -  based on McCartney et al., 2016 ###
+#crosshyb <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt"))
+#snpProbes <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt"), header = TRUE)
 crosshyb <- read.table("/home/rstudio/Cross_hybridising_CpGTargetting_Probes_McCartneyetal2016.txt")
 snpProbes <- read.table("/home/rstudio/mmc1.txt", header = TRUE)
-betas<-Betas[!(rownames(Betas) %in% crosshyb[,1]), ]
-betas<-filterSNPprobes(betas, population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
-betas<-betas[-grep("rs", rownames(betas)),] ## remove SNP probes
+msetEPIC.pf<-msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
+kept_probes <-filterSNPprobes(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
+msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]
+msetEPIC.pf<-msetEPIC.pf[-grep("rs", rownames(msetEPIC.pf@assayData$betas)),] ## remove SNP probes
 
 ###### Normalisation ################
 msetEPIC.pf <- dasen(msetEPIC.pf)
 # adding feature/probe annotation information after normalisation because otherwise
 # the dasen function becomes fussy and won't work
-annotation_data <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1_edit.csv", header = TRUE)
-retained_annotation <- annotation_data[annotation_data$Probe_ID %in% rownames(betas(msetEPIC.pf)), ]
-fData(msetEPIC.pf)["CHR"] <- retained_annotation["Chromosome_36"]
+annotation_data <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1.csv", skip = 7, header = TRUE) #change to the local location of the annotation data file
+retained_annotation <- annotation_data[annotation_data$IlmnID %in% rownames(betas(msetEPIC.pf)), ]
+fData(msetEPIC.pf) <- retained_annotation
 
-pdf("QC/Plots/Betas_normalized_boxplot.pdf")
+pdf(file.path(QC_plots,"Betas_normalized_boxplot.pdf"))
 boxplot(betas(msetEPIC.pf),main="Betas normalized")
 dev.off()
 
@@ -384,7 +394,7 @@ temp_CT$SampleID=rownames(CT)
 # format data
 DF <- pivot_longer(temp_CT,cols = 1:dim(CT)[2],names_to = "Celltypes",values_to = "Proportion") %>% group_by(SampleID,Celltypes) #%>%  mutate(name = fct_reorder(name, value)) 
 
-pdf("QC/Plots/Celltype_estimates_barplot.pdf")
+pdf(file.path(OC_plots,"Celltype_estimates_barplot.pdf"))
 ggplot(DF, aes(x = SampleID, y = Proportion, fill = Celltypes))+
   ggtitle("Celltype composition estimate per sample")  + 
   coord_flip() +
@@ -400,17 +410,15 @@ temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
 
 Cell_Types <- CT[match(colnames(Betas), rownames(CT)),]
 
-Small_Pheno <- data.frame(Sample_ID = QCmetrics$Sample_ID, Diagnosis = temp_Pheno$Sample_diagnosis, Sex = temp_Pheno$Sample_sex,
-                          Age = temp_Pheno$Sample_age, Cell_Type = Cell_Types)
-# create a column with the sentrix ID and position because it seems handy
-Small_Pheno$Sentrix_ID <- temp_Pheno$Sample_sentrix_id # this is the correct format of the sentrix ID
-Small_Pheno$Sentrix_Position <-temp_Pheno$Sample_sentrix_position
+Small_Pheno <- data.frame(Sample_ID = temp_Pheno$Sample_ID, Diagnosis = temp_Pheno$Sample_diagnosis, Sex = temp_Pheno$Sample_sex,
+                          Age = temp_Pheno$Sample_age, Cell_Type = Cell_Types, Sentrix_ID = temp_Pheno$sentrix_id, Sentrix_Position = temp_Pheno$sentrix_position)
+
 
 # Create the full phenotype file
-Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
+Full_Pheno <- data.frame(temp_Pheno, Cell_Type = Cell_Types)
 
 # save everything
-save(Betas, Small_Pheno, file = "QC\\GSE66351_first20_QCandDasen.RData")
-save(Full_Pheno, file = "QC\\GSE66351_Full_Phenotype_Information.RData")
+save(Betas, Small_Pheno, file = file.path(QC_output, "Normalised_CTD.RData"))
+save(Full_Pheno, file = file.path(QC_output, "Full_Phenotype_Information.RData"))
 
 
