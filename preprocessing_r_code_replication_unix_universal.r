@@ -18,7 +18,9 @@ library(wateRmelon, methylumi)
 library(ChAMP) # for some reason library only loads this package when it is called on its own
 
 #if (!require("RefFreeEWAS", quietly = TRUE))
-install.packages("/home/rstudio/RefFreeEWAS_2.2.tar.gz", repos = NULL) # not available on CRAN anymore so needs to be downloaded manually from the archive
+# not available on CRAN anymore so needs to be downloaded manually from the archive
+install.packages("https://cran.r-project.org/src/contrib/Archive/RefFreeEWAS/RefFreeEWAS_2.2.tar.gz", repos = NULL, type = "source")
+#install.packages("/home/rstudio/RefFreeEWAS_2.2.tar.gz", repos = NULL) 
 # replace with filepath of the local download location of the archieved RefFreeEWAS package
 
 #install.packages("quadprog") # one of the RefFreeEWAS dependencies that I hadn't installed yet
@@ -45,14 +47,19 @@ if(!dir.exists(QC_plots)){
   dir.create(QC_plots)
 }
 
+#change filepaths to necessary files here
+phenotype_information_file <- "/home/rstudio/GSE105109_RAW/GSE105109_pheno.txt"
+idat_file_path <- "/home/rstudio/GSE105109_RAW/idat"
+annotation_information_manifest_file <- "/home/rstudio/GSE105109_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv"
+
 #### import the data using methylumi -> create a MethyLumiSet object
 # loading in actual data - GSE105109
-pheno1 <- read.table("/home/rstudio/GSE105109_RAW/GSE105109_pheno.txt") # change the filepath to the location of the relevant phenotype file
+pheno1 <- read.table(phenotype_information_file) 
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
 colnames(pheno1)<- pheno1[1,]
 pheno1 <- pheno1[2:nrow(pheno1),]
-Sample_ID <- getBarcodes("/home/rstudio/GSE105109_RAW/idat") # change the filepath to the relevant location of the .idat files
+Sample_ID <- getBarcodes(idat_file_path) 
 pheno1 <- cbind(pheno1, Sample_ID)
 
 # add the sentrix id and position information to the phenotype file if it isn't there already
@@ -79,8 +86,7 @@ pheno1["sentrix_position"] <- sentrix_position
 library(parallel)
 num_cores <- detectCores()
 
-idat_path <- "/home/rstudio/GSE105109_RAW/idat" # change the filepath to the relevant location of the .idat files
-data2 <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = idat_path, parallel = TRUE, mc.cores = num_cores)
+data2 <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = idat_file_path, parallel = TRUE, mc.cores = num_cores)
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
 pheno <- pheno1
 msetEPIC <- data2
@@ -310,7 +316,7 @@ save(msetEPIC.pf, QCmetrics, file = file.path(QC_output, "FilteredMethylumisetQC
 msetEPIC.pf <- dasen(msetEPIC.pf)
 # adding feature/probe annotation information after normalisation because otherwise
 # the dasen function becomes fussy and won't work
-annotation_data <- read.csv("/home/rstudio/GSE105109_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv", skip = 7, header = TRUE) #change to the local location of the annotation data file
+annotation_data <- read.csv(annotation_information_manifest_file, skip = 7, header = TRUE) 
 retained_annotation <- annotation_data[annotation_data$IlmnID %in% rownames(betas(msetEPIC.pf)), ]
 fData(msetEPIC.pf) <- retained_annotation
 
