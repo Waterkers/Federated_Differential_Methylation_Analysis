@@ -3,9 +3,10 @@ input <- commandArgs(trailingOnly = TRUE)
 msetEPIC.pf <- input[1]
 QCmetrics <- input[2]
 manifest_path <- input[3]
+output_dir <- input[4]
 
 
-install.packages("C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2.tar.gz", repos = NULL) # not available on CRAN anymore so needs to be downloaded manually from the archive
+install.packages("https://cran.r-project.org/src/contrib/Archive/RefFreeEWAS/RefFreeEWAS_2.2.tar.gz", repos = NULL, type = "source") # not available on CRAN anymore so needs to be downloaded manually from the archive
 # add the filepath to where the archived version of RefFreeEWAS was downloaded above
 install.packages("quadprog", repos = "https://mirror.lyrahosting.com/CRAN/") # one of the RefFreeEWAS dependencies that I hadn't installed yet
 library(RefFreeEWAS)
@@ -16,7 +17,7 @@ library(wateRmelon, methylumi)
 install.packages("tidyverse", repos = "https://mirror.lyrahosting.com/CRAN/")
 library(tidyverse)
 
-cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics){
+cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics, output_dir){
 
 # load in the methylSet object
 	load(msetEPIC.pf)
@@ -135,7 +136,7 @@ cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics){
 # format data
 	DF <- pivot_longer(temp_CT,cols = 1:dim(CT)[2],names_to = "Celltypes",values_to = "Proportion") %>% group_by(SampleID,Celltypes) #%>%  mutate(name = fct_reorder(name, value)) 
 
-	pdf("QC/Plots/Celltype_estimates_barplot.pdf")
+	pdf(file.path(output_dir, "Celltype_estimates_barplot.pdf"))
 	ggplot(DF, aes(x = SampleID, y = Proportion, fill = Celltypes))+
 		ggtitle("Celltype composition estimate per sample")  + 
 		coord_flip() +
@@ -160,19 +161,19 @@ cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics){
 	Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
 
 # save everything
-	save(Betas, Small_Pheno, file = "QC\\GSE66351_first20_QCandDasen.RData")
+	save(Betas, Small_Pheno, file = file.path(output_dir, "Post_RefFreeEWAS.RData"))
 
-	save(Full_Pheno, file = "QC\\GSE66351_Full_Phenotype_Information.RData")
+	save(Full_Pheno, file = file.path(output_dir, "Full_Phenotype_Information.RData"))
 
 #save the information stored in the data2 object (the MethylumiSet object thing) into seperate dataframes
-	setwd(working_dir)
+	
 # betas
-	write.csv(Betas, "QC_GSE66351_PythonShell\\Final_preprocessed_betas.csv")
+	write.csv(Betas, file.path(output_dir, "Final_preprocessed_betas.csv"))
 
 # full phenotype information
-	write.csv(Full_Pheno, "QC_GSE66351_PythonShell\\Full_pheno_information.csv")
+	write.csv(Full_Pheno, file.path(output_dir, "Full_pheno_information.csv"))
 
 	print("Preprocessed data, short and full phenotype information saved")
 }
 
-cell_decomp_RefFreeEWAS(manifest_path, msetEPIC.pf, QCmetrics)
+cell_decomp_RefFreeEWAS(manifest_path, msetEPIC.pf, QCmetrics, output_dir)
