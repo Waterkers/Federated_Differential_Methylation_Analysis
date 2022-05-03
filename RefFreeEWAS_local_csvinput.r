@@ -14,7 +14,7 @@ library(RefFreeEWAS)
 
 need <- c("wateRmelon", "methylumi")
 if (!require(need, quietly = TRUE))
-  BiocManager::install(need)
+  BiocManager::install(need, update = FALSE)
 library(wateRmelon, methylumi)
 
 if (!require("tidyverse")){
@@ -182,6 +182,7 @@ cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics, outpu
 	write.csv(Full_Pheno, file.path(output_dir, "Full_pheno_information.csv"))
 
 	print("Preprocessed data, short and full phenotype information saved")
+	quit(0, save = "no")
 }
 
 cell_decomp_RefFreeEWAS(manifest_path, msetEPIC.pf, QCmetrics, output_dir)
