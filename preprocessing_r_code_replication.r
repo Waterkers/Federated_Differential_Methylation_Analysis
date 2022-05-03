@@ -1,19 +1,35 @@
+##### a little note before running this file: ###########################
+# there are flags starting with #change throughout the file indicating   #
+# where filepaths and identifiers should be changed.                     #
+# in addition look at the columns used from the pheno dataframe          #
+# throughout the file and ensure that these match with the columns       #
+# present in your phenotype document used to create the pheno dataframe: #
+#	Sex                                                                  #
+#	Age                                                                  #
+#	Diagnosis                                                            #
+##########################################################################
+
 ##### Start with installing the required packages ########
 need <- c("wateRmelon", "methylumi", "ChAMP")
 if (!require(need, quietly = TRUE))
-  BiocManager::install(need)
+  BiocManager::install(need, update = FALSE)
 library(wateRmelon, methylumi)
 library(ChAMP) # for some reason library only loads this package when it is called on its own
 
+if (!require("tidyverse", quietly = TRUE))
+	install.packages("tidyverse")
+library(tidyverse)
+
 #if (!require("RefFreeEWAS", quietly = TRUE))
-install.packages("C:\\Users\\Silke\\OneDrive\\Documenten\\R\\win-library\\4.1\\RefFreeEWAS_2.2.tar.gz", repos = NULL) # not available on CRAN anymore so needs to be downloaded manually from the archive
-# for the workflow probably needs full translation
+# not available on CRAN anymore so needs to be downloaded manually from the archive
+install.packages("https://cran.r-project.org/src/contrib/Archive/RefFreeEWAS/RefFreeEWAS_2.2.tar.gz", repos = NULL, type = "source")
+
 
 library(RefFreeEWAS)
 ##### source the Exeter functions needed for the pipeline
 lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\ExeterEWASPipeline-master\\R",pattern = "\\.r$",full.names = T),function(x){source(x)})
 ## Set the working directory
-setwd("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\R_Pipeline") # set working directory
+setwd("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\R_Pipeline") # set working directory where output file structure should be created
 ## create a folder for the QC output
 identifier <- "GSE66351"
 QC_output <- paste0("QC_", identifier)
@@ -25,35 +41,45 @@ if(!dir.exists(QC_plots)){
   dir.create(QC_plots)
 }
 
+#change filepaths to necessary files here
+phenotype_information_file <- "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351_pheno_info.txt"
+idat_file_path <- "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\idat"
+annotation_information_manifest_file <- "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1.csv"
 
 # loading in actual data - GSE66351
-pheno1 <- read.table("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351_pheno_info.txt")
+pheno1 <- read.table(phenotype_information_file)
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
 colnames(pheno1)<- pheno1[1,]
 pheno1 <- pheno1[2:191,]
-Sample_ID <- getBarcodes("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
+Sample_ID <- getBarcodes(idat_file_path)
 pheno1 <- cbind(pheno1, Sample_ID)
 
 
 # add the sentrix id and position information to the phenotype file if it isn't there already
-if (!"sentrix_id" %in% colnames(pheno1)){ #assumes that both id and position are missing if id is missing
+if (!"sentrix_id" %in% colnames(pheno1)){ 
 sentrix_id <- character()
-sentrix_position <- character()
 for (i in Sample_ID) {
   id <- unlist(strsplit(i, split="_"))[2]
-  position <- unlist(strsplit(i, split="_"))[3]
   sentrix_id[i] <- id
-  sentrix_position[i] <- position
   }
 pheno1["sentrix_id"] <- sentrix_id
-pheno1["sentrix_position"] <- sentrix_position
 }
+
+if (!"sentrix_position" %in% colnames(pheno1)){ 
+sentrix_position <- character()
+for (i in Sample_ID) {
+  position <- unlist(strsplit(i, split="_"))[3]
+  sentrix_position[i] <- position
+  }
+pheno1["sentrix_position"] <- sentrix_position
+}  
 # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 80 instead 
 pheno1_half <- as.data.frame(pheno1[1:20,])
 barcodes_GSE66351_half <- c(Sample_ID[1:20]) 
+
 # Load data
-data2 <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GSE66351")
+data2 <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = idat_file_path)
 
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
 pheno <- pheno1_half
@@ -265,10 +291,8 @@ gc()
 
 ##### Removal of cross-hybridisation probes ###############
 # load the cpgs to be removed -  based on McCartney et al., 2016 ###
-#crosshyb <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt"))
-#snpProbes <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt"), header = TRUE)
-crosshyb <- read.table("/home/rstudio/Cross_hybridising_CpGTargetting_Probes_McCartneyetal2016.txt")
-snpProbes <- read.table("/home/rstudio/mmc1.txt", header = TRUE)
+crosshyb <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt"))
+snpProbes <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt"), header = TRUE)
 msetEPIC.pf<-msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
 kept_probes <-filterSNPprobes(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
 msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]
@@ -278,7 +302,7 @@ msetEPIC.pf<-msetEPIC.pf[-grep("rs", rownames(msetEPIC.pf@assayData$betas)),] ##
 msetEPIC.pf <- dasen(msetEPIC.pf)
 # adding feature/probe annotation information after normalisation because otherwise
 # the dasen function becomes fussy and won't work
-annotation_data <- read.csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_RAW\\GPL13534_HumanMethylation450_15017482_v.1.1.csv", skip = 7, header = TRUE) #change to the local location of the annotation data file
+annotation_data <- read.csv(annotation_information_manifest_file, skip = 7, header = TRUE) #change to the local location of the annotation data file
 retained_annotation <- annotation_data[annotation_data$IlmnID %in% rownames(betas(msetEPIC.pf)), ]
 fData(msetEPIC.pf) <- retained_annotation
 
@@ -404,7 +428,7 @@ dev.off()
 #### save the final pre-processed betas with minimal and full phenotype information
 Betas <- betas(msetEPIC.pf)
 
-temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID)]
+temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID), ]
 # remove unnecessary text from the phenotype dataframe cells
 temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
 
