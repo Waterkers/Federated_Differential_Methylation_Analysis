@@ -87,37 +87,19 @@ class Server:
         
             #probe_type_means.append(global_means)
         return gmethI, gmethII, gunmethI, gunmethII
-
-        """ n = len(local_sums)
-        if n == 0:
-            print("Requires at least 1 local sum list to function", file=sys.stderr)
-        elif n == 1:
-            global_means = local_sums[1] # return row means back to the client
-        else:
-            probe_type_means = []
-            for i in range(len(local_sums)):
-                methI, methII, unmethI, unmethII = local_sums[i]
-                data = [methI, methII, unmethI, unmethII]
-        
-                s = data[0][1]
-                obs = data[0][2]
-                for list in range(1,len(data)):
-                    s = s + list[1]
-                    obs = obs + list[2]
-                    global_means = obs/s
-                probe_type_means.append(global_means)
-        return probe_type_means """
     
     
     def global_regression_parameter(self, *local_xt_matrices):
         '''
         aggregate local xt_x to global xt_x matrix for linear regression
         '''
-        n = self.global_probes
-        m = (self.variables + self.confounders)
+        #n = len(self.global_probes)
+        #m = (len(self.variables) + len(self.confounders))
+        n,m = local_xt_matrices[0][1].shape # get the dimension of the first xty matrix
         self.global_xtx = np.zeros((n,m,m))
-        for matrix in local_xt_matrices:
-            local_xtx, local_xty = local_xt_matrices[matrix]
+        self.global_xty = np.zeros((n,m))
+        for i in range(0,len(local_xt_matrices)):
+            local_xtx, local_xty = local_xt_matrices[i]
             self.global_xtx += local_xtx
             self.global_xty += local_xty
         return self.global_xtx, self.global_xty
