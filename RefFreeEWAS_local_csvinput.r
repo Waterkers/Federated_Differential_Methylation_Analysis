@@ -150,7 +150,7 @@ cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics, outpu
 	dev.off()
 
 #### save the final pre-processed betas with minimal and full phenotype information
-	Betas <- betas(msetEPIC.pf)
+	Betas <- betas
 
 	temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID), ]
 # remove unnecessary text from the phenotype dataframe cells
@@ -158,10 +158,8 @@ cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics, outpu
 
 	Cell_Types <- CT[match(colnames(Betas), rownames(CT)),]
 
-	Small_Pheno <- data.frame(Sample_ID = temp_Pheno$Sample_ID, Diagnosis = temp_Pheno$Sample_diagnosis, Sex = temp_Pheno$Sample_sex,
-                          Age = temp_Pheno$Sample_age, Cell_Type = Cell_Types)
-# create a column with the full sentrix ID because it seems handy
-	Small_Pheno$Sentrix_ID <- str_c(temp_Pheno$Sample_sentrix_id, "_", temp_Pheno$Sample_sentrix_position)
+	Small_Pheno <- data.frame(Sample_ID = temp_Pheno$Sample_ID, Diagnosis = temp_Pheno$Diagnosis, Sex = temp_Pheno$Sex,
+                          Age = temp_Pheno$Age, Cell_Type = Cell_Types)
 
 # Create the full phenotype file
 	Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
