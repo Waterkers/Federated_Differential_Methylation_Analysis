@@ -6,15 +6,21 @@ manifest_path <- input[3]
 output_dir <- input[4]
 
 
-install.packages("https://cran.r-project.org/src/contrib/Archive/RefFreeEWAS/RefFreeEWAS_2.2.tar.gz", repos = NULL, type = "source") # not available on CRAN anymore so needs to be downloaded manually from the archive
+if (!require("RefFreeEWAS")) {
+	install.packages("https://cran.r-project.org/src/contrib/Archive/RefFreeEWAS/RefFreeEWAS_2.2.tar.gz", repos = NULL, type = "source") # not available on CRAN anymore so needs to be downloaded manually from the archive
 # add the filepath to where the archived version of RefFreeEWAS was downloaded above
-install.packages("quadprog", repos = "https://mirror.lyrahosting.com/CRAN/") # one of the RefFreeEWAS dependencies that I hadn't installed yet
+	install.packages("quadprog", repos = "https://mirror.lyrahosting.com/CRAN/") # one of the RefFreeEWAS dependencies that I hadn't installed yet
+}
 library(RefFreeEWAS)
+
 need <- c("wateRmelon", "methylumi")
 if (!require(need, quietly = TRUE))
-  BiocManager::install(need)
+  BiocManager::install(need, update = FALSE)
 library(wateRmelon, methylumi)
-install.packages("tidyverse", repos = "https://mirror.lyrahosting.com/CRAN/")
+
+if (!require("tidyverse")){
+	install.packages("tidyverse", repos = "https://mirror.lyrahosting.com/CRAN/")
+}
 library(tidyverse)
 
 cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics, output_dir){
@@ -172,6 +178,7 @@ cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics, outpu
 	write.csv(Full_Pheno, file.path(output_dir, "Full_pheno_information.csv"))
 
 	print("Preprocessed data, short and full phenotype information saved")
+	quit(0, save = "no")
 }
 
 cell_decomp_RefFreeEWAS(manifest_path, msetEPIC.pf, QCmetrics, output_dir)
