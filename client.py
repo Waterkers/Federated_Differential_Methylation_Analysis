@@ -254,7 +254,7 @@ class Client:
         data_out[1].columns = self.sample_names
         self.methnorm = pd.concat([data_out[0], data_out[1]])
         self.methnorm.sort_index(inplace=True)
-        
+
         #save the normalised unmethylated intensities
         data_out[2].set_index(self.methylated_dist[self.probe_annotation.squeeze() =="I"].index, inplace = True)
         data_out[2].columns = self.sample_names
@@ -263,19 +263,6 @@ class Client:
         data_out[3].columns = self.sample_names
         self.unmethnorm = pd.concat([data_out[2], data_out[3]])
         self.unmethnorm.sort_index(inplace=True)
-        """ self.methnorm = self.raw_methylated
-        self.methnorm.loc[self.probe_annotation.squeeze() == "I"] = data_out[0]
-        #pd.DataFrame(data_out[0], columns=self.sample_names, index=self.methylated_dist[self.probe_annotation.values =="I"].index)
-        self.methnorm.loc[self.probe_annotation.squeeze() == "II"] = data_out[1]
-        #pd.DataFrame(data_out[1], columns=self.sample_names, index=self.methylated_dist[self.probe_annotation.values =="II"].index)
-        
-        #save the normalised unmethylated intensities
-        self.unmethnorm = self.raw_unmethylated
-        self.unmethnorm.loc[self.probe_annotation.squeeze() == "I"] = data_out[2]
-        #pd.DataFrame(data_out[2], columns=self.sample_names, index=self.unmethylated_dist[self.probe_annotation.values =="I"].index)
-        self.unmethnorm.loc[self.probe_annotation.squeeze() == "II"] = data_out[3]
-        #pd.DataFrame(data_out[3], columns=self.sample_names, index=self.unmethylated_dist[self.probe_annotation.values =="II"].index)
-        #calculated the normalised betas """
         self.betas = self.methnorm/(self.methnorm + self.unmethnorm + 100)
         return self.betas
 
@@ -286,7 +273,7 @@ class Client:
         where they are used to calculate the global intermediates
         '''
         x_matrix = self.designmatrix.values
-        y_matrix = self.betas
+        y_matrix = self.betas.values
         n = y_matrix.shape[0] # number of genes
         m = x_matrix.shape[1] # number of conditions
         self.xtx = np.zeros((n,m,m)) # create zeroes array with space to hold the xt_x matrix (m,m) for each probe (n)
@@ -307,15 +294,10 @@ class Client:
             xtx_inv = np.linalg.inv(global_xtx[i,:,:])
             self.coef[i,:] = xtx_inv @ global_xty[i,:]
             self.stnd_err[i,:] = np.diag(xtx_inv)
-            t = self.coef/self.stnd_err
+            t = self.coef[i,:]/self.stnd_err[i,:]
             df = m-2
             self.p_value[i,:] = scipy.stats.t.sf(t, df)
         # create EWAS results dataframe with all information grouped by variable/confounder
-        EWAS_results = np.zeros((n,(3*m))) #3 columns in results for each column in design
-        for i in range(0,m):
-            EWAS_results[:,i] = self.coef[:,i]
-            EWAS_results[:,(i+1)] = self.stnd_err[:,i]
-            EWAS_results[:,(i+2)] = self.p_value[:,i]
         coef = pd.DataFrame(self.coef,index=self.probes, columns= self.designcolumns)
         stnErr = pd.DataFrame(self.stnd_err, index=self.probes, columns= self.designcolumns)
         p_val = pd.DataFrame(self.p_value, index=self.probes, columns= self.designcolumns)
