@@ -10,11 +10,13 @@ identifier <- input[5]
 ##### Start with installing the required packages ########
 need <- c("wateRmelon", "methylumi", "ChAMP")
 if (!require(need, quietly = TRUE))
-  BiocManager::install(need)
+  BiocManager::install(need, updata = FALSE)
 library(wateRmelon, methylumi)
 library(ChAMP) # for some reason library only loads this package when it is called on its own
 
-
+if (!require("tidyverse", quietly = TRUE))
+	install.packages("tidyverse")
+library(tidyverse)
 ##### source the Exeter functions needed for the pipeline - Change to the local filepath that contains these functions
 lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Federated_Differential_Methylation_Analysis\\Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
 ## Set the working directory
@@ -42,13 +44,7 @@ Sample_ID <- getBarcodes(idat)
 
 pheno1 <- cbind(pheno1, Sample_ID)
 
-
-pheno1_half <- as.data.frame(pheno1[1:20,])
-
-
-barcodes_GSE66351_half <- pheno1_half$Sample_ID # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 20 instead
-
-data <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = idat)
+data <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = idat)
 
 save(data, pheno1, file = file.path(QC_output, "methylumiSet_PhenoDatafrma.RData"))
 print("Finished reading and saving .idat files")
@@ -66,7 +62,7 @@ raw_unmethylated <- methylumi::unmethylated(data)
 write.csv(raw_unmethylated, file.path(QC_output, "Raw_unmethylated_intensities.csv"))
 
 msetEPIC <- data
-pheno <- pheno1_half
+pheno <- pheno1
 
 ########## Start with the QC pipeline from Exeter ##################
 ### checking methylated and unmethylated intensities #############
@@ -279,7 +275,8 @@ gc()
 crosshyb <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt"))
 snpProbes <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt"), header = TRUE)
 msetEPIC.pf <- msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
-msetEPIC.pf <- filterSNPprobesEdit(msetEPIC.pf, population = "EUR", maf = 0.05)
+kept_probes <- filterSNPprobesEdit(msetEPIC.pf, population = "EUR", maf = 0.05)
+msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]
 msetEPIC.pf <- msetEPIC.pf[-grep("rs", rownames(msetEPIC.pf@assayData$betas)), ]
 
 #save the information stored in the data2 object (the MethylumiSet object thing) into seperate dataframes
