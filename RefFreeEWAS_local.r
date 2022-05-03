@@ -146,7 +146,7 @@ cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics, outpu
 #### save the final pre-processed betas with minimal and full phenotype information
 	Betas <- betas(msetEPIC.pf)
 
-	temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID)]
+	temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID), ]
 # remove unnecessary text from the phenotype dataframe cells
 	temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
 
