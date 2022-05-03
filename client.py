@@ -18,10 +18,10 @@ def dfs2_python(x, probe_type):
 
     # new code version that should work on one column at a time
     x_copy = x.copy()
-    KD_one = sm.nonparametric.KDEUnivariate(x_copy[probe_type == "I"])
+    KD_one = sm.nonparametric.KDEUnivariate(x_copy[probe_type.squeeze() == "I"])
     KD_one.fit(gridsize=5000)
     one = int(KD_one.support[np.where(np.max(KD_one.density))])
-    KD_two = sm.nonparametric.KDEUnivariate(x_copy[probe_type == "II"])
+    KD_two = sm.nonparametric.KDEUnivariate(x_copy[probe_type.squeeze() == "II"])
     KD_two.fit(gridsize=5000)
     two = int(KD_two.support[np.where(np.max(KD_two.density))])
     out = np.max(one) - np.max(two) #not quite sure if any of this is correct
@@ -47,9 +47,9 @@ def dfsfit_python(x, probe_type):
     
     fit_dist = sm.OLS.from_formula("dis_diff ~ scol + srow", dis_diff).fit()
     dis_diff = [fit_dist.fittedvalues]
-
-    tI_correction = np.tile(np.array(dis_diff), (3,1))
-    x[probe_type == "I"] = x[probe_type == "I"] - tI_correction
+    n = probe_type.squeeze() == "I"
+    tI_correction = np.tile(np.array(dis_diff), (sum(n),1))
+    x[probe_type.squeeze() == "I"] = x[probe_type.squeeze() == "I"] - tI_correction
     return x
 
 class Client:
@@ -75,7 +75,7 @@ class Client:
         self.unmethII_local_norm_par = None
         self.methnorm = None
         self.unmethnorm = None
-        self.dasen_betas
+        self.betas = None
 
         # EWAS
         self.xtx = None
@@ -102,6 +102,15 @@ class Client:
         # design
         self.designmatrix = pd.read_csv(design_matrix_filepath, index_col=0)
         self.designcolumns = list(self.designmatrix.columns.values)
+
+        # check that the indexes of the methylated and unmethylated dataframes are the same
+        # and use one of them to set the probes attribute
+        if np.all(self.raw_methylated.index == self.raw_unmethylated.index):
+            self.probes = list(self.raw_methylated.index.values)
+            
+        else:
+            print("Probe names in the methylated and unmethylated files don't match", file=sys.stderr)
+            exit(1)
 
         # set the sample names - sanity check that the same samples are in the methylated and unmethylated files
         if np.all(self.raw_methylated.columns.values == self.raw_unmethylated.columns.values):
@@ -132,16 +141,7 @@ class Client:
                 -if all the global conditions (specified at server level) are present in the local design matrix
                 -if there are any additional conditions to the globally specified conditions in the local design
                 matrix and removes these
-        '''
-        # check that the indexes of the methylated and unmethylated dataframes are the same
-        # and use one of them to set the probes attribute
-        if np.all(self.raw_methylated.index == self.raw_unmethylated.index):
-            self.probes = list(self.raw_methylated.index.values)
-            
-        else:
-            print("Probe names in the methylated and unmethylated files don't match", file=sys.stderr)
-            exit(1)
-        
+        '''      
         # check probe type annotation data
         if not np.all(self.probes == self.probe_annotation.index.values):
             data_probes = set(self.probes)
@@ -161,17 +161,17 @@ class Client:
         if not np.all(self.designcolumns == global_conditions):
             no_local = global_conditions.difference(local_conditions)
             no_global = local_conditions.difference(global_conditions)
-            if no_local > 0:
+            if len(no_local) > 0:
                 print("%s global conditions are not present in the local design matrix"%(len(no_local)), file=stderr)
                 exit(1)
-            if no_global > 0:
+            if len(no_global) > 0:
                 print("%s conditions in the design matrix are not specified in the global conditions and will be removed"%(len(no_global)), file=stderr)
-                conditions_to_keep = local_conditions.intersection(global_conditions)
+                conditions_to_keep = list(local_conditions.intersection(global_conditions))
                 self.designmatrix = self.designmatrix.loc[:,conditions_to_keep]
                 self.designcolumns = list(self.designmatrix.columns.values)
     
     def cohort_effects(self, cohort_names):
-        for cohort in cohort_names[:,-1]:
+        for cohort in cohort_names:
             if self.cohort_name == cohort:
                 self.designmatrix[cohort] = 1
             else:
@@ -186,10 +186,10 @@ class Client:
     
     def local_normalisation_parameters(self):
         # for the methylated type I probes, methylated type II, unmethylated type I and unmethylated type II        
-        methI_data = self.methylated_dist[self.probe_annotation == "I"].to_numpy()
-        methII_data = self.methylated_dist[self.probe_annotation == "II"].to_numpy()
-        unmethI_data = self.unmethylated_dist[self.probe_annotation == "I"].to_numpy()
-        unmethII_data = self.unmethylated_dist[self.probe_annotation == "II"].to_numpy()
+        methI_data = self.methylated_dist[self.probe_annotation.values == "I"].to_numpy() # not working as expected
+        methII_data = self.methylated_dist[self.probe_annotation.values == "II"].to_numpy()
+        unmethI_data = self.unmethylated_dist[self.probe_annotation.values == "I"].to_numpy()
+        unmethII_data = self.unmethylated_dist[self.probe_annotation.values == "II"].to_numpy()
         data_list = [methI_data, methII_data, unmethI_data, unmethII_data]
         observations = []
         row_sums = []
@@ -202,15 +202,15 @@ class Client:
             idx_array[:] = np.nan
             sorted = idx_array.copy()
             for col in range(0,m):
-                col_s = np.sort(methI_data[:,col]) # sort the column data
+                col_s = np.sort(data[:,col]) # sort the column data
                 #create a dataframe with the indices
-                col_id = methI_data[:,col]
+                col_id = data[:,col]
                 bla = np.argsort(col_id)
                 col_idx = np.empty_like(col_id)
                 col_idx[bla] = np.arange(len(col_id))
 
-                obs_col = len(col) - np.count_nonzero(np.isnan(methI_data))
-                if len(obs_col) < n:
+                obs_col = len(col_s) - np.count_nonzero(np.isnan(data))
+                if obs_col < n:
                     None
                 else:
                     sorted[:,col] = col_s
@@ -229,10 +229,10 @@ class Client:
         
 
     def final_normalisation(self, probe_type_means):
-        methI_data = self.methylated_dist[self.probe_annotation == "I"].to_numpy()
-        methII_data = self.methylated_dist[self.probe_annotation == "II"].to_numpy()
-        unmethI_data = self.unmethylated_dist[self.probe_annotation == "I"].to_numpy()
-        unmethII_data = self.unmethylated_dist[self.probe_annotation == "II"].to_numpy()
+        methI_data = self.methylated_dist[self.probe_annotation.values == "I"].to_numpy()
+        methII_data = self.methylated_dist[self.probe_annotation.values == "II"].to_numpy()
+        unmethI_data = self.unmethylated_dist[self.probe_annotation.values == "I"].to_numpy()
+        unmethII_data = self.unmethylated_dist[self.probe_annotation.values == "II"].to_numpy()
         data_list = [methI_data, methII_data, unmethI_data, unmethII_data]
 
         data_out = []
@@ -241,23 +241,43 @@ class Client:
             k = np.arange(n)/(n-1)
             results = np.empty((n,m))
             results[:] = np.nan
-            for col in range(0,len(m)):
+            for col in range(0,m):
                 rank = rankdata(data_list[i][:,col], method="average")
                 f = scipy.interpolate.interp1d(k, probe_type_means[i])
                 results[:,col] = f((rank - 1)/(n-1))
-                data_out.append(results)
+            data_out.append(pd.DataFrame(results))
         #save the normalised methylated intensities
-        self.methnorm = self.methylated_dist
-        self.methnorm[self.probe_annotation == "I"] = data_out[0]
-        self.methnorm[self.probe_annotation == "II"] = data_out[1]
-        #save the normalised unmethylated intensities
-        self.unmethnorm = self.unmethylated_dist
-        self.unmethnorm[self.probe_annotation == "I"] = data_out[2]
-        self.unmethnorm[self.probe_annotation == "II"] = data_out[3]
-        #calculated the normalised betas
-        self.dasen_betas = self.methnorm/(self.methnorm + self.unmethnorm + 100)
-        return self.betas
+        data_out[0].set_index(self.methylated_dist[self.probe_annotation.squeeze() =="I"].index, inplace = True)
+        data_out[0].columns = self.sample_names
 
+        data_out[1].set_index(self.methylated_dist[self.probe_annotation.squeeze() =="II"].index, inplace = True)
+        data_out[1].columns = self.sample_names
+        self.methnorm = pd.concat([data_out[0], data_out[1]])
+        self.methnorm.sort_index(inplace=True)
+        
+        #save the normalised unmethylated intensities
+        data_out[2].set_index(self.methylated_dist[self.probe_annotation.squeeze() =="I"].index, inplace = True)
+        data_out[2].columns = self.sample_names
+
+        data_out[3].set_index(self.methylated_dist[self.probe_annotation.squeeze() =="II"].index, inplace = True)
+        data_out[3].columns = self.sample_names
+        self.unmethnorm = pd.concat([data_out[2], data_out[3]])
+        self.unmethnorm.sort_index(inplace=True)
+        """ self.methnorm = self.raw_methylated
+        self.methnorm.loc[self.probe_annotation.squeeze() == "I"] = data_out[0]
+        #pd.DataFrame(data_out[0], columns=self.sample_names, index=self.methylated_dist[self.probe_annotation.values =="I"].index)
+        self.methnorm.loc[self.probe_annotation.squeeze() == "II"] = data_out[1]
+        #pd.DataFrame(data_out[1], columns=self.sample_names, index=self.methylated_dist[self.probe_annotation.values =="II"].index)
+        
+        #save the normalised unmethylated intensities
+        self.unmethnorm = self.raw_unmethylated
+        self.unmethnorm.loc[self.probe_annotation.squeeze() == "I"] = data_out[2]
+        #pd.DataFrame(data_out[2], columns=self.sample_names, index=self.unmethylated_dist[self.probe_annotation.values =="I"].index)
+        self.unmethnorm.loc[self.probe_annotation.squeeze() == "II"] = data_out[3]
+        #pd.DataFrame(data_out[3], columns=self.sample_names, index=self.unmethylated_dist[self.probe_annotation.values =="II"].index)
+        #calculated the normalised betas """
+        self.betas = self.methnorm/(self.methnorm + self.unmethnorm + 100)
+        return self.betas
 
     # client level computations for EWAS based on simple linear model
     def local_xtx_xty(self):
@@ -277,17 +297,17 @@ class Client:
             self.xty[i,:] = x_matrix.T @ y
         return self.xtx, self.xty
     
-    def calculate_EWAS_results(self, global_xtx):
-        n,m = self.xty.shape
+    def calculate_EWAS_results(self, global_xtx, global_xty):
+        n,m = global_xty.shape
         self.coef = np.zeros((n,m))
         self.stnd_err = np.zeros((n,m))
         self.p_value = np.zeros((n,m))
 
         for i in range(0,n):
             xtx_inv = np.linalg.inv(global_xtx[i,:,:])
-            self.coef[i,:] = xtx_inv @ self.xty[i,:]
+            self.coef[i,:] = xtx_inv @ global_xty[i,:]
             self.stnd_err[i,:] = np.diag(xtx_inv)
-            t = None
+            t = self.coef/self.stnd_err
             df = m-2
             self.p_value[i,:] = scipy.stats.t.sf(t, df)
         # create EWAS results dataframe with all information grouped by variable/confounder
