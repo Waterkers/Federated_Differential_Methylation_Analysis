@@ -5,17 +5,21 @@ QCmetrics <- input[2]
 manifest_path <- input[3]
 output_dir <- input[4]
 
-
-install.packages("https://cran.r-project.org/src/contrib/Archive/RefFreeEWAS/RefFreeEWAS_2.2.tar.gz", repos = NULL, type = "source") # not available on CRAN anymore so needs to be downloaded manually from the archive
+if (!require("RefFreeEWAS")) {
+	install.packages("https://cran.r-project.org/src/contrib/Archive/RefFreeEWAS/RefFreeEWAS_2.2.tar.gz", repos = NULL, type = "source") # not available on CRAN anymore so needs to be downloaded manually from the archive
 # add the filepath to where the archived version of RefFreeEWAS was downloaded above
-install.packages("quadprog", repos = "https://mirror.lyrahosting.com/CRAN/") # one of the RefFreeEWAS dependencies that I hadn't installed yet
+	install.packages("quadprog", repos = "https://mirror.lyrahosting.com/CRAN/") # one of the RefFreeEWAS dependencies that I hadn't installed yet
+}
 library(RefFreeEWAS)
+
 need <- c("wateRmelon", "methylumi")
 if (!require(need, quietly = TRUE))
   BiocManager::install(need)
 library(wateRmelon, methylumi)
 
-install.packages("tidyverse", repos = "https://mirror.lyrahosting.com/CRAN/")
+if (!require("tidyverse")){
+	install.packages("tidyverse", repos = "https://mirror.lyrahosting.com/CRAN/")
+}
 library(tidyverse)
 
 cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics, output_dir){
@@ -152,7 +156,7 @@ cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics, outpu
 #### save the final pre-processed betas with minimal and full phenotype information
 	Betas <- betas
 
-	temp_Pheno <- QCmetrics[match(colnames(Betas), QCmetrics$Sample_ID), ]
+	temp_Pheno <- pheno[match(colnames(Betas), pheno$Sample_ID), ]
 # remove unnecessary text from the phenotype dataframe cells
 	temp_Pheno <- lapply(temp_Pheno, sub, pattern = "^[^:]*:", replacement = "")
 
@@ -162,7 +166,7 @@ cell_decomp_RefFreeEWAS <- function(manifest_path, msetEPIC.pf, QCmetrics, outpu
                           Age = temp_Pheno$Age, Cell_Type = Cell_Types)
 
 # Create the full phenotype file
-	Full_Pheno <- data.frame(temp_Pheno, Sample_ID = QCmetrics$Sample_ID, Cell_Type = Cell_Types)
+	Full_Pheno <- data.frame(temp_Pheno, Cell_Type = Cell_Types)
 
 # save everything
 	save(Betas, Small_Pheno, file = file.path(output_dir, "Post_RefFreeEWAS.RData"))
