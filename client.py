@@ -297,10 +297,6 @@ class Client:
             t = self.coef[i,:]/self.stnd_err[i,:]
             df = m-2
             self.p_value[i,:] = scipy.stats.t.sf(t, df)
-        # transpose the ouput matrices so the probes are the rows and the independent variables/design column are the columns
-        self.coef = self.coef.T
-        self.stnd_err = self.stnd_err.T
-        self.p_value = self.p_value.T
         # create EWAS results dataframe with all information grouped by variable/confounder
         coef = pd.DataFrame(self.coef,index=self.probes, columns= self.designcolumns)
         stnErr = pd.DataFrame(self.stnd_err, index=self.probes, columns= self.designcolumns)
