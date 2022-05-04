@@ -57,14 +57,14 @@ class Client:
         self.cohort_name = cohort_name
         self.probes = None
         self.sample_names = None
-        self.read_data(design_matrix_filepath, methylated_filepath, unmethylated_filepath, probe_annotation_path)
-        
+                
         #data slots
         self.raw_methylated = None
         self.raw_unmethylated = None
         self.probe_annotation = None
         self.designmatrix = None
         self.designcolumns = None
+        self.read_data(design_matrix_filepath, methylated_filepath, unmethylated_filepath, probe_annotation_path)
 
         # (dasen) normalisation
         self.methylated_dist = None
