@@ -36,10 +36,10 @@ def dfs2_python(x, probe_type):
     # new code version that should work on one column at a time
     x_copy = x.copy()
     KD_one = sm.nonparametric.KDEUnivariate(x_copy[probe_type == "I"])
-    KD_one.fit(bw = "silverman", gridsize=5000)
+    KD_one.fit(bw = "silverman", gridsize=2**15)
     one = int(KD_one.support[np.where(np.max(KD_one.density))])
     KD_two = sm.nonparametric.KDEUnivariate(x_copy[probe_type == "II"])
-    KD_two.fit(bw = "silverman", gridsize=5000)
+    KD_two.fit(bw = "silverman", gridsize=2**15)
     two = int(KD_two.support[np.where(np.max(KD_two.density))])
     out = np.max(one) - np.max(two) #not quite sure if any of this is correct
     return out
