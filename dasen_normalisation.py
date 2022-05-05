@@ -32,14 +32,16 @@ def dasen_normalisation(unmethylated, methylated, probe_type, base = 100):
 def dfs2_python(x, probe_type):
     import statsmodels.api as sm
     from statsmodels.distributions.mixture_rvs import mixture_rvs
+    import KdensityR
+    
 
     # new code version that should work on one column at a time
     x_copy = x.copy()
-    KD_one = sm.nonparametric.KDEUnivariate(x_copy[probe_type == "I"])
-    KD_one.fit(bw = "silverman", gridsize=2**15)
+    KD_one = KdensityR.KDEUnivariate_rDensity(x_copy[probe_type == "I"])
+    KD_one.fit(gridsize=2**15, low=0, high=5000)
     one = int(KD_one.support[np.where(np.max(KD_one.density))])
-    KD_two = sm.nonparametric.KDEUnivariate(x_copy[probe_type == "II"])
-    KD_two.fit(bw = "silverman", gridsize=2**15)
+    KD_two = KdensityR.KDEUnivariate_rDensity(x_copy[probe_type == "II"])
+    KD_two.fit(gridsize=2**15, low=0, high=5000)
     two = int(KD_two.support[np.where(np.max(KD_two.density))])
     out = np.max(one) - np.max(two) #not quite sure if any of this is correct
     return out
