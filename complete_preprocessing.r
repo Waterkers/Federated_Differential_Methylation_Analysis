@@ -375,7 +375,7 @@ Ysel = temp_data[cpgSelect,]
 rm(temp_data) # clear space in memory
 # as a final step before moving on the cell type decomposition is to double check that there are no sex effects
 # present in the data anymore
-plot((prcomp(t(Ysel))$x),col=ifelse(pheno$Sex=="Sex: M",1,2))
+plot((prcomp(t(Ysel))$x),col=ifelse(QCmetrics$Sex=="Sex: M",1,2))
 
 # Maximum number of estimatable celltypes set to 5 (this is default and supported by evidence see https://www.nature.com/articles/s41598-018-25311-0 )
 s_maxCelltypes  = 5
