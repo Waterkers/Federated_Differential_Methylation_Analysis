@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 from statsmodels.distributions.mixture_rvs import mixture_rvs
+from statsmodels.stats.multitest import multipletests
 import statsmodels.api as sm
 import scipy
 import scipy.stats
@@ -289,6 +290,7 @@ class Client:
         self.coef = np.zeros((n,m))
         self.stnd_err = np.zeros((n,m))
         self.p_value = np.zeros((n,m))
+        self.p_value_cor = np.zeros((n,m))
 
         for i in range(0,n):
             xtx_inv = np.linalg.inv(global_xtx[i,:,:])
@@ -297,11 +299,15 @@ class Client:
             t = self.coef[i,:]/self.stnd_err[i,:]
             df = m-2
             self.p_value[i,:] = scipy.stats.t.sf(t, df)
+            self.p_value_cor[i,:] = multipletests(self.p_value[i,:], method="fdr_bh")[1]
         # create EWAS results dataframe with all information grouped by variable/confounder
         coef = pd.DataFrame(self.coef,index=self.probes, columns= self.designcolumns)
         stnErr = pd.DataFrame(self.stnd_err, index=self.probes, columns= self.designcolumns)
         p_val = pd.DataFrame(self.p_value, index=self.probes, columns= self.designcolumns)
-        self.EWAS_results = pd.concat([coef, stnErr, p_val], axis = 1, keys = ["Coefficient", "StandardError", "P-value"])
+        p_val_corrected = pd.DataFrame(self.p_value_cor, index=self.probes, columns= self.designcolumns)
+        # create a dataframe with the corrected p-values
+        
+        self.EWAS_results = pd.concat([coef, stnErr, p_val, p_val_corrected], axis = 1, keys = ["Coefficient", "StandardError", "P-value", "Corrected P-value"])
         
         return self.EWAS_results
 

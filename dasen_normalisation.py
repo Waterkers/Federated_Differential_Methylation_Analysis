@@ -18,11 +18,11 @@ def dasen_normalisation(unmethylated, methylated, probe_type, base = 100):
     methylated_fit = dfsfit_python(methylated, probe_type)
 
     # calculate the quantile normalised values for the methylated and unmethylated probe intensities based on the estimated distribution values
-    unmethylated[probe_type == "I"] = quantile_normalise(unmethylated_fit[probe_type == "I"])
-    unmethylated[probe_type == "II"] = quantile_normalise(unmethylated_fit[probe_type == "II"])
+    unmethylated.loc[probe_type == "I"] = quantile_normalise(unmethylated_fit.loc[probe_type == "I"])
+    unmethylated.loc[probe_type == "II"] = quantile_normalise(unmethylated_fit.loc[probe_type == "II"])
 
-    methylated[probe_type == "I"] = quantile_normalise(methylated_fit[probe_type == "I"])
-    methylated[probe_type == "II"] = quantile_normalise(methylated_fit[probe_type == "II"])
+    methylated.loc[probe_type == "I"] = quantile_normalise(methylated_fit.loc[probe_type == "I"])
+    methylated.loc[probe_type == "II"] = quantile_normalise(methylated_fit.loc[probe_type == "II"])
 
     # calculate the new beta values based on the per probe normalised methylated and unmethylated probe intentisity values
     betas = methylated/(methylated + unmethylated + base) 
@@ -32,21 +32,24 @@ def dasen_normalisation(unmethylated, methylated, probe_type, base = 100):
 def dfs2_python(x, probe_type):
     import statsmodels.api as sm
     from statsmodels.distributions.mixture_rvs import mixture_rvs
+    import KdensityR
+    
 
     # new code version that should work on one column at a time
     x_copy = x.copy()
-    KD_one = sm.nonparametric.KDEUnivariate(x_copy[probe_type == "I"])
-    KD_one.fit(gridsize=5000)
-    one = int(KD_one.support[np.where(np.max(KD_one.density))])
-    KD_two = sm.nonparametric.KDEUnivariate(x_copy[probe_type == "II"])
-    KD_two.fit(gridsize=5000)
-    two = int(KD_two.support[np.where(np.max(KD_two.density))])
+    KD_one = KdensityR.KDEUnivariate_rDensity(x_copy[probe_type == "I"])
+    KD_one.fit(gridsize=2**15, low=0, high=5000)
+    one = int(KD_one.support[np.argmax(KD_one.density)])
+    KD_two = KdensityR.KDEUnivariate_rDensity(x_copy[probe_type == "II"])
+    KD_two.fit(gridsize=2**15, low=0, high=5000)
+    two = int(KD_two.support[np.argmax(KD_two.density)])
     out = np.max(one) - np.max(two) #not quite sure if any of this is correct
     return out
 
 def dfsfit_python(x, probe_type):
     import statsmodels.api as sm
     import re
+    
     dis_diff = x.apply(dfs2_python, args = (probe_type,), axis=0) #create a dataframe/array of the values when dfs2 is applied to each column
     
     roco = []
@@ -65,8 +68,8 @@ def dfsfit_python(x, probe_type):
     fit_dist = sm.OLS.from_formula("dis_diff ~ scol + srow", dis_diff).fit()
     dis_diff = [fit_dist.fittedvalues]
 
-    tI_correction = np.tile(np.array(dis_diff), (3,1))
-    x[probe_type == "I"] = x[probe_type == "I"] - tI_correction
+    tI_correction = np.tile(np.array(dis_diff), (len(dis_diff),1))
+    x.loc[probe_type == "I"] = x.loc[probe_type == "I"] - tI_correction
     return x
 
 def quantile_normalise(input_data):
