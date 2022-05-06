@@ -55,7 +55,7 @@ data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
 data("Locations")
 force(Locations)
 included_annotations <- cbind(c(Locations["chr"], Islands.UCSC, Other[c("UCSC_RefGene_Name", "UCSC_RefGene_Accession", "UCSC_RefGene_Group", "HMM_Island")]))
-included_annotations <- included_annotations[match(rownames(betas), rownames(included_annotations)),]
+included_annotations <- included_annotations[match(rownames(Betas), rownames(included_annotations)),]
 res_annotated <- cbind(res, included_annotations)
 
 
