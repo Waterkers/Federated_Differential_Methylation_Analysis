@@ -134,11 +134,11 @@ class Client:
             self.raw_methylated = self.raw_methylated.loc[:,samples_keep]
             self.raw_unmethylated = self.raw_unmethylated.loc[:,samples_keep]
     
-    def input_validation(self, global_conditions):
+    def input_validation(self, global_conditions, global_probes):
         ''' Checks the input for the following:
-                -if the same probes are included in both the methylated and unmethylated dataframe
                 -if the probe type annotation data of all probes in the data is present and remove the annotation
                 for any probes not present in the data
+                - retain only the probes that are present in all datasets analysed in the project
                 -if all the global conditions (specified at server level) are present in the local design matrix
                 -if there are any additional conditions to the globally specified conditions in the local design
                 matrix and removes these
@@ -170,15 +170,55 @@ class Client:
                 conditions_to_keep = list(local_conditions.intersection(global_conditions))
                 self.designmatrix = self.designmatrix.loc[:,conditions_to_keep]
                 self.designcolumns = list(self.designmatrix.columns.values)
+        
+        #check the local probes against the global probes and remove any local probes that are not present in the global dataset of the project
+            # could later be changed to impute the missing probes in each dataset based on the values of these in the datasets that do have them?
+        local_probes = set(self.probes)
+        global_probes = set(global_probes)
+        if not np.all(local_probes == global_probes):
+            not_local = global_probes.difference(local_probes)
+            not_global = local_probes.difference(global_probes)
+            if len(not_local) > 0:
+                print("%s of global probes not present in local dataset - check global probe definition"%(len(not_local)), file=stderr)
+            if len(not_global) > 0:
+                print("%s probes are not present in the global dataset and will be removed before analysis"%(len(not_global)), file=stderr)
+                probes_to_keep = list(local_probes.intersection(global_probes))
+                self.raw_methylated = self.raw_methylated.loc[probes_to_keep, :]
+                self.raw_unmethylated = self.raw_unmethylated.loc[probes_to_keep, :]
+                self.probes = probes_to_keep
+
+    def find_unique_SentrixIDS(self):
+        sentrix_ids = self.designmatrix.loc[:, "Sentrix_ID"]
+        self.unique_SentrixIDS = list(set(sentrix_ids))
     
-    def cohort_effects(self, cohort_names):
-        for cohort in cohort_names:
+    def find_unique_PlateIDS(self):
+        plate_ids = self.designmatrix.loc[:, "plate_id"]
+        self.unique_PlateIDS = list(set(plate_ids))
+
+    def cohort_effects(self, cohort_effects):
+        for cohort in cohort_effects:
             if self.cohort_name == cohort:
                 self.designmatrix[cohort] = 1
             else:
                 self.designmatrix[cohort] = 0
         self.designcolumns = list(self.designmatrix.columns.values)
         
+    def SentrixID_effects(self, global_SentrixID):
+        for ID in global_SentrixID:
+            if ID in self.unique_SentrixIDS:
+                self.designmatrix[ID] = 1
+            else:
+                self.designmatrix[ID] = 0
+        self.designcolumns = list(self.designmatrix.columns.values)
+
+    def PlateID_effects(self, global_PlateID):
+        for ID in global_PlateID:
+            if ID in self.unique_PlateIDS:
+                self.designmatrix[ID] = 1
+            else:
+                self.designmatrix[ID] = 0
+        self.designcolumns = list(self.designmatrix.columns.values)
+
     # client level computation for (dasen)normalisation
     def intensity_distributions(self):
         self.methylated_dist = dfsfit_python(self.raw_methylated, self.probe_annotation)

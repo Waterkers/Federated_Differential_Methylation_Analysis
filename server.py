@@ -15,6 +15,8 @@ class Server:
         self.samples_per_client = []
         self.client_total_probes = []
         self.global_probes = []
+        self.cohort_effects = []
+        self.global_SentrixID = []
 
         self.global_xtx = None
         self.global_xty = None
@@ -26,13 +28,20 @@ class Server:
         '''
         self.client_names.append(cohort_name)
         self.samples_per_client.append(len(client_n_samples))
-        self.client_total_probes.extend(client_probes)
+        self.client_total_probes.append(client_probes)
+        self.cohort_effects = sorted(self.client_names)[:-1]
     
            
     def find_global_probes(self):
         '''
         find the probes that are present in the data held by the clients 
         '''
+        global_probes = set(self.client_total_probes[0])
+        for probe_list in self.client_total_probes[1:]:
+            global_probes = global_probes.intersection(set(probe_list))
+        self.global_probes = list(global_probes)
+        return self.global_probes
+        """ 
         n_clients = len(self.client_names)
         #common_index = []
         for probe in self.client_total_probes:
@@ -41,11 +50,43 @@ class Server:
             else: 
                 pass  
         return self.global_probes
-
+ """
     def return_global_conditions(self):
+        '''
+        send the global conditions (variables and confounders) included in the analysis to the client
+        '''
         self.confounders.extend(self.variables)
         global_conditions = self.confounders
         return global_conditions
+
+    def return_global_SentrixID(self, *local_SentrixID):
+        '''
+        send all but one sentrixIDs present across all clients back to each client so they can be included as
+        confounders in the design matrix
+
+        This function will only be used if SentrixID is inlcuded in the global conditions when initialising
+        the project.  
+        '''
+        sentrix_ID = local_SentrixID[0]
+        for ids in local_SentrixID[1:]:
+            sentrix_ID.extend(ids)
+        self.global_SentrixID = list(set(sentrix_ID))[:-1]
+        return self.global_SentrixID
+
+    def return_global_PlateID(self, *local_PlateID):
+        '''
+        send all but one plateIDs present across all clients back to each client so they can be included as
+        confounders in the design matrix
+
+        This function will only be used if PlateID is inlcuded in the global conditions when initialising
+        the project.  
+        '''
+        plate_ID = local_PlateID[0]
+        for ids in local_PlateID[1:]:
+            plate_ID.extend(ids)
+        self.global_PlateID = list(set(plate_ID))[:-1]
+        return self.global_PlateID
+           
     
     def aggregate_QN_means(self, *local_sums):
         '''
