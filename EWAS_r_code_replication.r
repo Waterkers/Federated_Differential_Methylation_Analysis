@@ -44,7 +44,8 @@ for(i in 1:nrow(Betas)){
 }
 
 # adding a column  for with the corrected p-values (Benjanimi-Hochberg)
-res["Diagnosis_CorP"] <- p.adjust(c(res["Diagnosis_P"]), method = "BH")
+corr_pval <- p.adjust(c(res[ ,3]), method = "BH")
+res <- cbind(res, corr_pval)
 
 #save the results to a csv as as
 write.csv(res, file.path(paste0("EWAS_", identifier), "Results_dataset.csv"))
