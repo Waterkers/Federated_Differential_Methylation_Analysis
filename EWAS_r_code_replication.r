@@ -20,7 +20,7 @@ library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 
 
 setwd("/home/rstudio") # set the working directory
-load("/home/rstudio/QC_GSE66351/GSE66351_Preprocessed_CTD.RData") # change to the relevant input file location
+load("/home/rstudio/QC_GSE105109/GSE105109_Preprocessed_CTD.RData") # change to the relevant input file location
 identifier = "GSE105109"
 ## create a folder to save EWAS output
 if(!dir.exists(paste0("EWAS_", identifier))){
@@ -43,9 +43,8 @@ for(i in 1:nrow(Betas)){
   res[i,c(3)]<-summary(model)$coefficients["Small_Pheno$Diagnosis Control",4]
 }
 
-# By changing the name of the coefficient to select to its actual name in the table everything now works fine
-# However, the fact that I had to manually copy and paste the name from the coefficients names table probably means
-# it cannot be easilly automated, at least not in a way that I can think of
+# adding a column  for with the corrected p-values (Benjanimi-Hochberg)
+res["Diagnosis_CorP"] <- p.adjust(c(res["Diagnosis_P"]), method = "BH")
 
 #save the results to a csv as as
 write.csv(res, file.path(paste0("EWAS_", identifier), "Results_dataset.csv"))
