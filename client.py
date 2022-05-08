@@ -111,7 +111,7 @@ class Client:
             
         else:
             print("Probe names in the methylated and unmethylated files don't match", file=sys.stderr)
-            exit(1)
+            sys.exit(1)
 
         # set the sample names - sanity check that the same samples are in the methylated and unmethylated files
         if np.all(self.raw_methylated.columns.values == self.raw_unmethylated.columns.values):
@@ -150,7 +150,7 @@ class Client:
             no_annotation = data_probes.difference(annotation_probes)
             if no_annotation > 0:
                 print("Probe type annotation for %s probes in data is missing"%(len(no_annotation)), file = stderr)
-                exit(1)
+                sys.exit(1)
             no_data = annotation_probes.difference(data_probes)
             if no_data > 0:
                 keep_annotation = annotation_probes.intersection(data_probes)
@@ -164,7 +164,7 @@ class Client:
             no_global = local_conditions.difference(global_conditions)
             if len(no_local) > 0:
                 print("%s global conditions are not present in the local design matrix"%(len(no_local)), file=stderr)
-                exit(1)
+                sys.exit(1)
             if len(no_global) > 0:
                 print("%s conditions in the design matrix are not specified in the global conditions and will be removed"%(len(no_global)), file=stderr)
                 conditions_to_keep = list(local_conditions.intersection(global_conditions))
@@ -331,7 +331,7 @@ class Client:
         self.stnd_err = np.zeros((n,m))
         self.p_value = np.zeros((n,m))
         self.p_value_cor = np.zeros((n,m))
-
+        
         for i in range(0,n):
             xtx_inv = np.linalg.inv(global_xtx[i,:,:])
             self.coef[i,:] = xtx_inv @ global_xty[i,:]
@@ -339,8 +339,10 @@ class Client:
             t = self.coef[i,:]/self.stnd_err[i,:]
             df = m-2
             self.p_value[i,:] = scipy.stats.t.sf(t, df)
-            self.p_value_cor[i,:] = multipletests(self.p_value[i,:], method="fdr_bh")[1]
+            #self.p_value_cor[i,:] = multipletests(self.p_value[i,:], method="fdr_bh")[1]
         # create EWAS results dataframe with all information grouped by variable/confounder
+        for i in range(0,m):
+            self.p_value_cor[:,i] = multipletests(self.p_value[:,i], method="fdr_bh")[1]
         coef = pd.DataFrame(self.coef,index=self.probes, columns= self.designcolumns)
         stnErr = pd.DataFrame(self.stnd_err, index=self.probes, columns= self.designcolumns)
         p_val = pd.DataFrame(self.p_value, index=self.probes, columns= self.designcolumns)
