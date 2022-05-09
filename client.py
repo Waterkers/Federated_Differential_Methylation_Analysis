@@ -332,6 +332,7 @@ class Client:
         self.stnd_err = np.zeros((n,m))
         self.p_value = np.zeros((n,m))
         self.p_value_cor = np.zeros((n,m))
+        self.mchange = np.zeros((n,m))
         
         for i in range(0,n):
             xtx_inv = np.linalg.inv(global_xtx[i,:,:])
@@ -346,7 +347,7 @@ class Client:
             self.p_value_cor[:,i] = multipletests(self.p_value[:,i], method="fdr_bh")[1]
         
         for i in range(0,m):
-            self.mchange[:,i] = self.coef.iloc[:,i]
+            self.mchange[:,i] = self.coef[:,i]
         coef = pd.DataFrame(self.coef,index=self.probes, columns= self.designcolumns)
         stnErr = pd.DataFrame(self.stnd_err, index=self.probes, columns= self.designcolumns)
         p_val = pd.DataFrame(self.p_value, index=self.probes, columns= self.designcolumns)
