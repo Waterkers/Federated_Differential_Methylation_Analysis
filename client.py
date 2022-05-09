@@ -305,6 +305,7 @@ class Client:
         self.unmethnorm = pd.concat([data_out[2], data_out[3]])
         self.unmethnorm.sort_index(inplace=True)
         self.betas = self.methnorm/(self.methnorm + self.unmethnorm + 100)
+
         return self.betas
 
     # client level computations for EWAS based on simple linear model
@@ -343,13 +344,18 @@ class Client:
         # create EWAS results dataframe with all information grouped by variable/confounder
         for i in range(0,m):
             self.p_value_cor[:,i] = multipletests(self.p_value[:,i], method="fdr_bh")[1]
+        
+        for i in range(0,m):
+            self.mchange[:,i] = self.coef.iloc[:,i]
         coef = pd.DataFrame(self.coef,index=self.probes, columns= self.designcolumns)
         stnErr = pd.DataFrame(self.stnd_err, index=self.probes, columns= self.designcolumns)
         p_val = pd.DataFrame(self.p_value, index=self.probes, columns= self.designcolumns)
         p_val_corrected = pd.DataFrame(self.p_value_cor, index=self.probes, columns= self.designcolumns)
+        mchange = pd.DataFrame(self.mchange, index = self.probes, columns=self.designcolumns)
         # create a dataframe with the corrected p-values
         
-        self.EWAS_results = pd.concat([coef, stnErr, p_val, p_val_corrected], axis = 1, keys = ["Coefficient", "StandardError", "P-value", "Corrected P-value"])
+        self.EWAS_results = pd.concat([coef, stnErr, p_val, p_val_corrected, mchange], axis = 1, keys = ["Coefficient", "StandardError", "P-value", "Corrected P-value",
+        "Methylation change"])
         
         return self.EWAS_results
 
