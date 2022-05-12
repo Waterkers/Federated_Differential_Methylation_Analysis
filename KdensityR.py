@@ -39,7 +39,7 @@ class KDEUnivariate_rDensity:
         self.kernel = kernel_switch[kernel](h=bw)
         return self
     
-def kdensityfft_rDensity(x, kernel="gau", bw="normal_reference", weights=None, gridsize=None, adjust=1, clip=(-np.inf, np.inf), low = None, high = None, cut=3, retgrid=True):
+def kdensityfft_rDensity(x, kernel="gau", bw="silverman", weights=None, gridsize=None, adjust=1, clip=(-np.inf, np.inf), low = None, high = None, cut=3, retgrid=True):
     """
         Rosenblatt-Parzen univariate kernel density estimator - with input parameters that match those in the Density() function in the stats package in r.
 
