@@ -207,16 +207,15 @@ class Client:
         for ID in global_SentrixID:
             if ID in self.unique_SentrixIDS:
                 self.designmatrix[ID] = 1
-            else:
-                self.designmatrix[ID] = 0
+                self.designmatrix[ID].loc[self.designmatrix["Sentrix_ID"] != ID] = 0
         self.designcolumns = list(self.designmatrix.columns.values)
 
     def PlateID_effects(self, global_PlateID):
         for ID in global_PlateID:
             if ID in self.unique_PlateIDS:
                 self.designmatrix[ID] = 1
-            else:
-                self.designmatrix[ID] = 0
+                self.designmatrix[ID] = 1
+                self.designmatrix[ID].loc[self.designmatrix["Plate_ID"] != ID] = 0
         self.designcolumns = list(self.designmatrix.columns.values)
 
     # client level computation for (dasen)normalisation
