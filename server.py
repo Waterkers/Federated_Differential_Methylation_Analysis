@@ -17,6 +17,7 @@ class Server:
         self.global_probes = []
         self.cohort_effects = []
         self.global_SentrixID = []
+        self.global_PlateID = []
 
         self.global_xtx = None
         self.global_xty = None
@@ -30,7 +31,10 @@ class Server:
         self.samples_per_client.append(len(client_n_samples))
         self.client_total_probes.append(client_probes)
         self.cohort_effects = sorted(self.client_names)[:-1]
-    
+        
+    def find_cohort_effects(self):
+        self.cohort_effects = sorted(self.client_names)[:-1]
+        return self.cohort_effects
            
     def find_global_probes(self):
         '''
@@ -71,6 +75,7 @@ class Server:
         for ids in local_SentrixID[1:]:
             sentrix_ID.extend(ids)
         self.global_SentrixID = list(set(sentrix_ID))[:-1]
+        
         return self.global_SentrixID
 
     def return_global_PlateID(self, *local_PlateID):
@@ -85,6 +90,7 @@ class Server:
         for ids in local_PlateID[1:]:
             plate_ID.extend(ids)
         self.global_PlateID = list(set(plate_ID))[:-1]
+        
         return self.global_PlateID
            
     
@@ -134,9 +140,14 @@ class Server:
         '''
         aggregate local xt_x to global xt_x matrix for linear regression
         '''
-        #n = len(self.global_probes)
-        #m = (len(self.variables) + len(self.confounders))
-        n,m = local_xt_matrices[0][1].shape # get the dimension of the first xty matrix
+        
+        self.confounders.extend(self.cohort_effects)
+        if self.global_SentrixID:
+            self.confounders.extend(self.global_SentrixID)
+        if self.global_PlateID:
+            self.confounders.extend(self.global_PlateID)
+        n = len(self.global_probes)
+        m = (len(self.variables) + len(self.confounders))
         self.global_xtx = np.zeros((n,m,m))
         self.global_xty = np.zeros((n,m))
         for i in range(0,len(local_xt_matrices)):
