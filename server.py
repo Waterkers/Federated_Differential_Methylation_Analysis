@@ -1,7 +1,8 @@
 from threading import local
 import pandas as pd
 import numpy as np
-#import scipy
+import scipy
+from statsmodels.stats.multitest import multipletests
 #from scipy.stats import rankdata
 #from scipy import interpolate
 import re
@@ -144,8 +145,10 @@ class Server:
         self.confounders.extend(self.cohort_effects)
         if self.global_SentrixID:
             self.confounders.extend(self.global_SentrixID)
+            self.confounders.remove("Sentrix_ID")
         if self.global_PlateID:
             self.confounders.extend(self.global_PlateID)
+            self.confounders.remove("Plate_ID")
         n = len(self.global_probes)
         m = (len(self.variables) + len(self.confounders))
         self.global_xtx = np.zeros((n,m,m))
@@ -155,4 +158,40 @@ class Server:
             self.global_xtx += local_xtx
             self.global_xty += local_xty
         return self.global_xtx, self.global_xty
+
+    def calculate_EWAS_results(self):
+        n,m = self.global_xty.shape
+        coef = np.zeros((n,m))
+        stnd_err = np.zeros((n,m))
+        p_value = np.zeros((n,m))
+        p_value_cor = np.zeros((n,m))
+        mchange = np.zeros((n,m))
+        
+        for i in range(0,n):
+            xtx_inv = np.linalg.inv(self.global_xtx[i,:,:])
+            coef[i,:] = xtx_inv @ self.global_xty[i,:]
+            stnd_err[i,:] = np.diag(xtx_inv)
+            t = np.abs(coef[i,:]/stnd_err[i,:])
+            df = m-2
+            for j in range(0,m):
+                p_value[i,j] = scipy.stats.t.sf(t[j], df) # using the absolute t value
+            #self.p_value_cor[i,:] = multipletests(self.p_value[i,:], method="fdr_bh")[1]
+        # create EWAS results dataframe with all information grouped by variable/confounder
+        for i in range(0,m):
+            p_value_cor[:,i] = multipletests(p_value[:,i], method="fdr_bh")[1]
+        
+        for i in range(0,m):
+            mchange[:,i] = coef[:,i]
+        #coef = pd.DataFrame(self.coef,index=self.probes, columns= self.designcolumns)
+        #stnErr = pd.DataFrame(self.stnd_err, index=self.probes, columns= self.designcolumns)
+        #p_val = pd.DataFrame(self.p_value, index=self.probes, columns= self.designcolumns)
+        #p_val_corrected = pd.DataFrame(self.p_value_cor, index=self.probes, columns= self.designcolumns)
+        #mchange = pd.DataFrame(self.mchange, index = self.probes, columns=self.designcolumns)
+        # create a dataframe with the corrected p-values
+        
+        self.EWAS_results = pd.DataFrame({"Coefficient":coef[:,0], "Standard Error":stnd_err[:,0], 
+            "P-value":p_value[:,0], "Corrected P-value":p_value_cor[:,0], "Methylation Change": mchange[:,0]},
+            index=self.global_probes)
+        
+        return self.EWAS_results
 
