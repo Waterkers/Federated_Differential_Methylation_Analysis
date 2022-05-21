@@ -154,10 +154,10 @@ def kdensityfft_rDensity(x, kernel="gau", bw="normal_reference", weights=None, g
     gridsize = 2 ** np.ceil(np.log2(gridsize))  # round to next power of 2
     if low is None:
         a = np.min(x) - cut * bw
-    a = low
+    a = low - 4 * bw
     if high is None:
         b = np.max(x) + cut * bw
-    b = high
+    b = high + 4 * bw
     grid, delta = np.linspace(a, b, int(gridsize), retstep=True)
     RANGE = b - a
 
@@ -191,8 +191,10 @@ def kdensityfft_rDensity(x, kernel="gau", bw="normal_reference", weights=None, g
     # 3.49 in Silverman
     # 3.50 w Gaussian kernel
     f = revrt(zstar)
+    grid_user, delta = np.linspace(a, b, int(gridsize), retstep=True)
+    f_int = np.interp(grid_user, grid, f)
     if retgrid:
-        return f, grid, bw
+        return f_int, grid, bw
     else:
-        return f, bw
+        return f_int, bw
 
