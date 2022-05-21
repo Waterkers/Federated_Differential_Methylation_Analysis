@@ -16,15 +16,24 @@ import sys
 def dfs2_python(x, probe_type):
     import statsmodels.api as sm
     from statsmodels.distributions.mixture_rvs import mixture_rvs
+    from statsmodels.nonparametric.kde import KDEUnivariate
+    import KdensityR
+    from scipy.stats import scoreatpercentile
+    from sklearn.neighbors import KernelDensity
+
 
     # new code version that should work on one column at a time
     x_copy = x.copy()
-    KD_one = sm.nonparametric.KDEUnivariate(x_copy[probe_type.squeeze() == "I"])
-    KD_one.fit(bw = "silverman", gridsize=5000)
-    one = int(KD_one.support[np.where(np.max(KD_one.density))])
-    KD_two = sm.nonparametric.KDEUnivariate(x_copy[probe_type.squeeze() == "II"])
-    KD_two.fit(bw = "silverman", gridsize=5000)
-    two = int(KD_two.support[np.where(np.max(KD_two.density))])
+    # KDEUnivariate attempt to match r
+    KD_one = KdensityR.KDEUnivariate_rDensity(x_copy[probe_type.squeeze() == "I"])
+    KD_one.fit(gridsize=2**15, low=0, high=5000)
+    one = KD_one.support[np.argmax(KD_one.density)]
+
+    # KDEUnivariate attempt to match r
+    KD_two = KdensityR.KDEUnivariate_rDensity(x_copy[probe_type.squeeze() == "II"])
+    KD_two.fit(gridsize=2**15, low=0, high=5000)
+    two = KD_two.support[np.argmax(KD_two.density)]
+    
     out = np.max(one) - np.max(two) #not quite sure if any of this is correct
     return out
 
@@ -45,8 +54,11 @@ def dfsfit_python(x, probe_type):
         srow.append(row)
         col = int(ro[5])
         scol.append(col)
-    
-    fit_dist = sm.OLS.from_formula("dis_diff ~ scol + srow", dis_diff).fit()
+    roco_zip = list(zip(srow, scol))
+    data = pd.DataFrame(roco_zip, index = x.columns.values, columns = ["srow", "scol"])
+    data.insert(loc = 0, column="dis_diff", value=dis_diff)
+
+    fit_dist = sm.OLS.from_formula("dis_diff ~ scol + srow", data).fit()
     dis_diff = [fit_dist.fittedvalues]
     n = probe_type.squeeze() == "I"
     tI_correction = np.tile(np.array(dis_diff), (sum(n),1))
@@ -209,6 +221,7 @@ class Client:
             self.designmatrix[ID] = 0
             self.designmatrix[ID].loc[self.designmatrix["Sentrix_ID"] == ID] = 1
             #self.designmatrix[ID].loc[self.designmatrix["Sentrix_ID"] != ID] = 0
+        self.designmatrix.drop(columns="Sentrix_ID", inplace=True)
         self.designcolumns = list(self.designmatrix.columns.values)
 
     def PlateID_effects(self, global_PlateID):
@@ -216,6 +229,7 @@ class Client:
             #if ID in self.unique_PlateIDS:
             self.designmatrix[ID] = 0
             self.designmatrix[ID].loc[self.designmatrix["Plate_ID"] == ID] = 1
+        self.designmatrix.drop(columns="Plate_ID", inplace=True)
         self.designcolumns = list(self.designmatrix.columns.values)
 
     # client level computation for (dasen)normalisation
@@ -354,8 +368,8 @@ class Client:
         mchange = pd.DataFrame(self.mchange, index = self.probes, columns=self.designcolumns)
         # create a dataframe with the corrected p-values
         
-        self.EWAS_results = pd.concat([coef, stnErr, p_val, p_val_corrected, mchange], axis = 1, keys = ["Coefficient", "StandardError", "P-value", "Corrected P-value",
-        "Methylation change"])
+        self.EWAS_results = pd.DataFrame([coef["Diagnosis"], stnErr["Diagnosis"], p_val["Diagnosis"], p_val_corrected["Diagnosis"], mchange["Diagnosis"]],
+            columns=["Coefficient", "Standar Error", "P-value", "Corrected P-value", "Methylation Change"])
         
         return self.EWAS_results
 
