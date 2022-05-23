@@ -8,8 +8,12 @@ from statsmodels.tools.decorators import cache_readonly
 from statsmodels.tools.validation import array_like, float_like
 import statsmodels.nonparametric.bandwidths
 from statsmodels.nonparametric.kdetools import silverman_transform, forrt, revrt
-from statsmodels.nonparametric.linbin import fast_linbin
+#from statsmodels.nonparametric.linbin import fast_linbin
 from statsmodels.sandbox.nonparametric import kernels
+
+import pyximport
+pyximport.install(setup_args={"script_args" : ["--verbose"]})
+from linbinR import fast_linbin
 
 # Kernels Switch for estimators
 
@@ -29,7 +33,7 @@ class KDEUnivariate_rDensity:
     def __init__(self, endog):
         self.endog = array_like(endog, "endog", ndim=1, contiguous=True)
     
-    def fit(self, kernel="gau", bw="silverman", fft=True, weights=None, gridsize=None, adjust=1, low = None, high = None, cut=3, clip=(-np.inf, np.inf)):
+    def fit(self, kernel="gau", bw="silverman_r", fft=True, weights=None, gridsize=None, adjust=1, low = None, high = None, cut=3, clip=(-np.inf, np.inf)):
         self.bw_method = bw
         endog = self.endog
         density, grid, bw = kdensityfft_rDensity(endog, kernel=kernel, bw=bw, adjust=adjust, weights=weights, gridsize=gridsize, clip=clip, low = low, high = high, cut = cut)
@@ -39,7 +43,7 @@ class KDEUnivariate_rDensity:
         self.kernel = kernel_switch[kernel](h=bw)
         return self
     
-def kdensityfft_rDensity(x, kernel="gau", bw="normal_reference", weights=None, gridsize=None, adjust=1, clip=(-np.inf, np.inf), low = None, high = None, cut=3, retgrid=True):
+def kdensityfft_rDensity(x, kernel="gau", bw="silverman_r", weights=None, gridsize=None, adjust=1, clip=(-np.inf, np.inf), low = None, high = None, cut=3, retgrid=True):
     """
         Rosenblatt-Parzen univariate kernel density estimator - with input parameters that match those in the Density() function in the stats package in r.
 
@@ -49,14 +53,7 @@ def kdensityfft_rDensity(x, kernel="gau", bw="normal_reference", weights=None, g
             The variable for which the density estimate is desired.
         kernel : str
             ONLY GAUSSIAN IS CURRENTLY IMPLEMENTED.
-            "bi" for biweight
-            "cos" for cosine
-            "epa" for Epanechnikov, default
-            "epa2" for alternative Epanechnikov
             "gau" for Gaussian.
-            "par" for Parzen
-            "rect" for rectangular
-            "tri" for triangular
         bw : str, float, callable
             The bandwidth to use. Choices are:
 
@@ -138,9 +135,20 @@ def kdensityfft_rDensity(x, kernel="gau", bw="normal_reference", weights=None, g
         bw = float(bw(x, kern))
         # user passed a callable custom bandwidth function
     elif isinstance(bw, str):
-        # if bw is None, select optimal bandwidth for kernel
-        bw = statsmodels.nonparametric.bandwidths.select_bandwidth(x, bw, kern)
-        # will cross-val fit this pattern?
+        if bw == "silverman_r":
+            from scipy.stats import scoreatpercentile
+            normalize = 1.34
+            IQR = (scoreatpercentile(x, 75) - scoreatpercentile(x, 25)) / normalize
+            std_dev = np.std(x, axis=0, ddof=1)
+            if IQR > 0:
+                signma = np.minimum(std_dev, IQR)
+            else:
+                signma = std_dev
+
+            bw = 0.9*signma*(len(x)**(-0.2))
+        else:
+            bw = statsmodels.nonparametric.bandwidths.select_bandwidth(x, bw, kern)
+        
     else:
         bw = float_like(bw, "bw")
 
@@ -161,40 +169,31 @@ def kdensityfft_rDensity(x, kernel="gau", bw="normal_reference", weights=None, g
     grid, delta = np.linspace(a, b, int(gridsize), retstep=True)
     RANGE = b - a
 
-    # TODO: Fix this?
-    # This is the Silverman binning function, but I believe it's buggy (SS)
-    # weighting according to Silverman
-    #    count = counts(x,grid)
-    #    binned = np.zeros_like(grid)    #xi_{k} in Silverman
-    #    j = 0
-    #    for k in range(int(gridsize-1)):
-    #        if count[k]>0: # there are points of x in the grid here
-    #            Xingrid = x[j:j+count[k]] # get all these points
-    #            # get weights at grid[k],grid[k+1]
-    #            binned[k] += np.sum(grid[k+1]-Xingrid)
-    #            binned[k+1] += np.sum(Xingrid-grid[k])
-    #            j += count[k]
-    #    binned /= (nobs)*delta**2 # normalize binned to sum to 1/delta
+    weights = np.repeat((1/len(x)), len(x))
+   
+    binned = fast_linbin(x, a, b, gridsize, weights) 
 
-    # NOTE: THE ABOVE IS WRONG, JUST TRY WITH LINEAR BINNING
-    binned = fast_linbin(x, a, b, gridsize) / (delta * nobs)
+    grid_cords = np.linspace(0, 2*(b-a), num=int(2*gridsize))
+    grid_cords_rev = grid_cords[::-1].copy()
+    set_with = np.negative(grid_cords_rev[int(gridsize):-1]) # get the negative of the 2 to the nth 
+    #element of grid_cords in the reverse order
+    grid_cords[(int(gridsize)+1):(2*(int(gridsize+1)))+1] = set_with
+    from scipy.stats import norm
+    grid_cords_dist = norm.pdf(grid_cords, scale = bw)
+    dens_fft = np.fft.fft(binned)
+    kords_fft = np.fft.fft(grid_cords_dist)
+    kords_fft_con = np.conj(kords_fft)
+    kords_fft = np.fft.fft(grid_cords_dist)
+    kords_fft_con = np.conj(kords_fft)
 
-    # step 2 compute FFT of the weights, using Munro (1976) FFT convention
-    y = forrt(binned)
-
-    # step 3 and 4 for optimal bw compute zstar and the density estimate f
-    # do not have to redo the above if just changing bw, ie., for cross val
-
-    # NOTE: silverman_transform is the closed form solution of the FFT of the
-    # gaussian kernel. Not yet sure how to generalize it.
-    zstar = silverman_transform(bw, gridsize, RANGE) * y
-    # 3.49 in Silverman
-    # 3.50 w Gaussian kernel
-    f = revrt(zstar)
-    grid_user, delta = np.linspace(a, b, int(gridsize), retstep=True)
-    f_int = np.interp(grid_user, grid, f)
+    combined = np.fft.ifft(dens_fft*kords_fft_con) * len(binned) 
+    
+    final_kord = np.maximum(0, np.real(combined)[:int(gridsize)])
+    xcords = np.linspace(0,5000, num=int(gridsize))
+    out = np.interp(xcords, grid, final_kord)
+    
     if retgrid:
-        return f_int, grid, bw
+        return out, xcords, bw
     else:
-        return f_int, bw
+        return out, bw
 
