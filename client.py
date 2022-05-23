@@ -17,20 +17,19 @@ def dfs2_python(x, probe_type):
     import statsmodels.api as sm
     from statsmodels.distributions.mixture_rvs import mixture_rvs
     from statsmodels.nonparametric.kde import KDEUnivariate
-    import KdensityR
+    import DensityR
     from scipy.stats import scoreatpercentile
-    from sklearn.neighbors import KernelDensity
 
 
     # new code version that should work on one column at a time
     x_copy = x.copy()
     # KDEUnivariate attempt to match r
-    KD_one = KdensityR.KDEUnivariate_rDensity(x_copy[probe_type.squeeze() == "I"])
+    KD_one = DensityR.KDEUnivariate_rDensity(x_copy[probe_type.squeeze() == "I"])
     KD_one.fit(gridsize=2**15, low=0, high=5000)
     one = KD_one.support[np.argmax(KD_one.density)]
 
     # KDEUnivariate attempt to match r
-    KD_two = KdensityR.KDEUnivariate_rDensity(x_copy[probe_type.squeeze() == "II"])
+    KD_two = DensityR.KDEUnivariate_rDensity(x_copy[probe_type.squeeze() == "II"])
     KD_two.fit(gridsize=2**15, low=0, high=5000)
     two = KD_two.support[np.argmax(KD_two.density)]
     
@@ -40,6 +39,7 @@ def dfs2_python(x, probe_type):
 def dfsfit_python(x, probe_type):
     import statsmodels.api as sm
     import re
+    x = x.copy()
     dis_diff = x.apply(dfs2_python, args = (probe_type,), axis=0) #create a dataframe/array of the values when dfs2 is applied to each column
     
     roco = []
