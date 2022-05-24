@@ -20,8 +20,9 @@ library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 
 
 setwd("/home/rstudio") # set the working directory
-load("/home/rstudio/QC_GSE105109/GSE105109_Preprocessed_CTD.RData") # change to the relevant input file location
-identifier = "GSE105109"
+load("/home/rstudio/QC_GSE66351/Preprocessed_CTD.RData")
+load("/home/rstudio/QC_GSE66351/Full_Phenotype_Information.RData")# change to the relevant input file location
+identifier = "GSE66351"
 ## create a folder to save EWAS output
 if(!dir.exists(paste0("EWAS_", identifier))){
   dir.create(paste0("EWAS_", identifier))
@@ -36,21 +37,21 @@ if (identifier == "GSE66351") {
 } else {
   tissue_column = "Source_tissue"
 }
-tissues <- unique(Betas[tissue_column])
-for (i in 1:length(tissues)) {
-  Betas <- Betas[Betas[tissue_column] == tissues[i], ]
-
+tissues <- unique(Full_Pheno[tissue_column])
+for (i in 1:dim(tissues)[1]) {
+  Betas_t <- Betas[ ,Full_Pheno[tissue_column] == tissues[i,1]]
+  Small_Pheno_t <- Small_Pheno[match(colnames(Betas_t), rownames(Small_Pheno)),]
   
 ##### Run the EWAS ##########
-  res<-matrix(data = NA, nrow = nrow(Betas), ncol = 3)
+  res<-matrix(data = NA, nrow = nrow(Betas_t), ncol = 3)
   colnames(res)<-c("Diagnosis_Beta", "Diagnosis_SE", "Diagnosis_P")
-  rownames(res)<-rownames(Betas)
+  rownames(res)<-rownames(Betas_t)
 
-  for(i in 1:nrow(Betas)){
-    model<-lm(Betas[i,] ~ Small_Pheno$Diagnosis + as.numeric(Small_Pheno$Age) + factor(Small_Pheno$Sex) + as.numeric(Small_Pheno$Cell_Type.CT1)+ as.numeric(Small_Pheno$Cell_Type.CT2) + as.numeric(Small_Pheno$Cell_Type.CT3)+ factor(Small_Pheno$Sentrix_ID))
-    res[i,c(1)]<-coefficients(model)["Small_Pheno$Diagnosis Control"]
-    res[i,2]<-summary(model)$coefficients["Small_Pheno$Diagnosis Control",2]
-    res[i,c(3)]<-summary(model)$coefficients["Small_Pheno$Diagnosis Control",4]
+  for(j in 1:nrow(Betas_t)){
+    model<-lm(Betas_t[i,] ~ Small_Pheno_t$Diagnosis + as.numeric(Small_Pheno_t$Age) + factor(Small_Pheno_t$Sex) + as.numeric(Small_Pheno_t$Cell_Type.CT1)+ as.numeric(Small_Pheno_t$Cell_Type.CT2) + as.numeric(Small_Pheno_t$Cell_Type.CT3)+ factor(Small_Pheno_t$Sentrix_ID))
+    res[j,c(1)]<-coefficients(model)["Small_Pheno_t$Diagnosis CTRL"]
+    res[j,2]<-summary(model)$coefficients["Small_Pheno_t$Diagnosis CTRL",2]
+    res[j,c(3)]<-summary(model)$coefficients["Small_Pheno_t$Diagnosis CTRL",4]
   }
 
 # adding a column  for with the corrected p-values (Benjanimi-Hochberg)
@@ -58,19 +59,19 @@ for (i in 1:length(tissues)) {
   res <- cbind(res, corr_pval)
 
 #save the results to a csv as as
-  write.csv(res, file.path(paste0("EWAS_", identifier, "_", tissues[i]), "Results_dataset.csv"))
+  write.csv(res, file.path(paste0("EWAS_", identifier), paste0(tissues[i,1], "_","Results_dataset.csv")))
 
 #add annotation
   data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
   data("Locations")
   force(Locations)
   included_annotations <- cbind(c(Locations["chr"], Islands.UCSC, Other[c("UCSC_RefGene_Name", "UCSC_RefGene_Accession", "UCSC_RefGene_Group", "HMM_Island")]))
-  included_annotations <- included_annotations[match(rownames(Betas), rownames(included_annotations)),]
+  included_annotations <- included_annotations[match(rownames(Betas_t), rownames(included_annotations)),]
   res_annotated <- cbind(res, included_annotations)
 
 
 #save the results to a csv as as
-  write.csv(res_annotated, file.path(paste0("EWAS_", identifier, "_", tissues[i]), "Annotated_Results_dataset.csv"))
+  write.csv(res_annotated, file.path(paste0("EWAS_", identifier), paste0(tissues[i,1], "_", "Annotated_Results_dataset.csv")))
 
 #save the results in the standard format defined for a BED file - needed for the DMR calling function
 # standard format that requires the first three columns to be: chrom, start and end. 
@@ -82,5 +83,5 @@ for (i in 1:length(tissues)) {
   res_bed <- merge(standard_bed_columns, res, by.x = 4, by.y = "row.names", all.y = TRUE)
 
   res_bed <- data.frame(chrom = res_bed[2], start = res_bed[3], stop = res_bed[4], p_value = res_bed$Diagnosis_P, coeffi = res_bed$Diagnosis_Beta, stan_er = res_bed$Diagnosis_SE, Illumina_ID = res_bed[1])
-  write.table(res_bed, file.path(paste0("EWAS_", identifier, "_", tissues[i]), "results.bed"))
+  write.table(res_bed, file.path(paste0("EWAS_", identifier), paste0(tissues[i,1], "_", "results.bed")))
 }
