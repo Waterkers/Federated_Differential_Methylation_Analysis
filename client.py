@@ -240,10 +240,10 @@ class Client:
     
     def local_normalisation_parameters(self):
         # for the methylated type I probes, methylated type II, unmethylated type I and unmethylated type II        
-        methI_data = self.methylated_dist[self.probe_annotation.values == "I"].to_numpy() # not working as expected
-        methII_data = self.methylated_dist[self.probe_annotation.values == "II"].to_numpy()
-        unmethI_data = self.unmethylated_dist[self.probe_annotation.values == "I"].to_numpy()
-        unmethII_data = self.unmethylated_dist[self.probe_annotation.values == "II"].to_numpy()
+        methI_data = self.methylated_dist[self.probe_annotation.values == "I"].copy().to_numpy() # not working as expected
+        methII_data = self.methylated_dist[self.probe_annotation.values == "II"].copy().to_numpy()
+        unmethI_data = self.unmethylated_dist[self.probe_annotation.values == "I"].copy().to_numpy()
+        unmethII_data = self.unmethylated_dist[self.probe_annotation.values == "II"].copy().to_numpy()
         data_list = [methI_data, methII_data, unmethI_data, unmethII_data]
         observations = []
         row_sums = []
@@ -283,10 +283,10 @@ class Client:
         
 
     def final_normalisation(self, probe_type_means):
-        methI_data = self.methylated_dist[self.probe_annotation.values == "I"].to_numpy()
-        methII_data = self.methylated_dist[self.probe_annotation.values == "II"].to_numpy()
-        unmethI_data = self.unmethylated_dist[self.probe_annotation.values == "I"].to_numpy()
-        unmethII_data = self.unmethylated_dist[self.probe_annotation.values == "II"].to_numpy()
+        methI_data = self.methylated_dist[self.probe_annotation.values == "I"].copy().to_numpy()
+        methII_data = self.methylated_dist[self.probe_annotation.values == "II"].copy().to_numpy()
+        unmethI_data = self.unmethylated_dist[self.probe_annotation.values == "I"].copy().to_numpy()
+        unmethII_data = self.unmethylated_dist[self.probe_annotation.values == "II"].copy().to_numpy()
         data_list = [methI_data, methII_data, unmethI_data, unmethII_data]
 
         data_out = []
