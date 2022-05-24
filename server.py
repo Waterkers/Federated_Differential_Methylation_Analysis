@@ -170,11 +170,11 @@ class Server:
         for i in range(0,n):
             xtx_inv = np.linalg.inv(self.global_xtx[i,:,:])
             coef[i,:] = xtx_inv @ self.global_xty[i,:]
-            stnd_err[i,:] = np.diag(xtx_inv)
-            t = np.abs(coef[i,:]/stnd_err[i,:])
+            stnd_err[i,:] = np.sqrt(np.diag(xtx_inv))
+            t = coef[i,:]/stnd_err[i,:]
             df = m-2
-            for j in range(0,m):
-                p_value[i,j] = scipy.stats.t.sf(t[j], df) # using the absolute t value
+            #for j in range(0,m):
+            p_value[i,:] = scipy.stats.t.sf(t, df)#*2 # using the absolute t value
             #self.p_value_cor[i,:] = multipletests(self.p_value[i,:], method="fdr_bh")[1]
         # create EWAS results dataframe with all information grouped by variable/confounder
         for i in range(0,m):
