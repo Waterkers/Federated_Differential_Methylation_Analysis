@@ -281,7 +281,7 @@ class Client:
         self.unmethI_local_norm_par = [observations[2], row_sums[2], n_columns[2]]
         self.unmethII_local_norm_par = [observations[3], row_sums[3], n_columns[3]]
 
-        #return self.methI_local_norm_par, self.methII_local_norm_par, self.unmethI_local_norm_par, self.unmethII_local_norm_par
+        return self.methI_local_norm_par, self.methII_local_norm_par, self.unmethI_local_norm_par, self.unmethII_local_norm_par
         #return observations, row_sums, n_columns
         
 
@@ -359,7 +359,7 @@ class Client:
         n = y_matrix.shape[0]
         m = x_matrix.shape[1]
         self.SSE = np.zeros(n)
-        self.mu = np.zeros(m)
+        self.mu = np.zeros(y_matrix.shape)
         if weighted:
             W = np.sqrt(self.weights)
             y_matrix = np.multiply(y_matrix,W)

@@ -181,8 +181,8 @@ class Server:
         self.rank = np.ones(n)*m
     
         for i in range(0,n):
-            invXtX  = np.linalg.inv(self.XtX_glob[i,:,:])
-            self.beta[i,:] = invXtX @ self.XtY_glob[i,:]
+            invXtX  = np.linalg.inv(self.global_xtx[i,:,:])
+            self.beta[i,:] = invXtX @ self.global_xty[i,:]
             self.stdev_unscaled[i,:] = np.sqrt(np.diag(invXtX ))
         #return self.global_xtx, self.global_xty
 
@@ -508,7 +508,7 @@ class Server:
         self.results = self.moderatedT(covariate=covariate,robust=robust, winsor_tail_p=winsor_tail_p)
         #self.results = moderatedT(self.var,self.df_residual,self.beta,self.stdev_unscaled,
         #                         covariate=covariate,robust=robust, winsor_tail_p=winsor_tail_p)
-        self.results["AveExpr"] = self.Amean
+        #self.results["AveExpr"] = self.Amean
         
         self.Bstat(stdev_coef_lim = np.array([0.1,4]),proportion = 0.01)
         
