@@ -63,9 +63,9 @@ for (i in 1:dim(tissues)[1]) {
     contrastMatrics <- makeContrasts(AD - CTRL,levels = colnames(model$coefficients))
     contrast_fit <- contrasts.fit(model, contrastMatrics)
     result <- eBayes(contrast_fit)
-    res[i, 1] <- result$coefficients[1]
-    res[i,2] <- result$stdev.unscaled[1]
-    res[i,3] <- result$p.value[1]
+    res[j, 1] <- result$coefficients[1]
+    res[j,2] <- result$stdev.unscaled[1]
+    res[j,3] <- result$p.value[1]
   }
 # adding a column  for with the corrected p-values (Benjanimi-Hochberg)
   corr_pval <- p.adjust(c(res[ ,3]), method = "BH")
