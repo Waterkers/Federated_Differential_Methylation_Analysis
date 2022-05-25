@@ -1,3 +1,4 @@
+from copy import copy
 from threading import local
 import sys
 import pandas as pd
@@ -476,7 +477,7 @@ class Server:
         self.results["lods"] = np.log(proportion/(1-proportion))-np.log(r)/2+kernel.T
     
     def topTableT(self,adjust="fdr_bh", p_value=1.0,lfc=0,confint=0.95):
-        feature_names = self.global_genes
+        feature_names = self.global_probes
         self.results["logFC"] = pd.Series(self.beta[:,0],index=feature_names)
         
         # confidence intervals for LogFC
@@ -491,7 +492,7 @@ class Server:
         self.results["adj.P.Val"] = pd.Series(adj_pval,index=feature_names)
         self.results["P.Value"] = pd.Series(self.results["p_value"][:,0],index=feature_names)
         # make table 
-        self.table = np.copy(self.results)
+        self.table = copy(self.results)
         # remove 'df_prior', 's2_prior', 's2_post', 'df_total','var_prior'
         for key in ['df_prior', 's2_prior', 's2_post', 'var_prior',"p_value"]:        
             del self.table[key]
