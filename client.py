@@ -91,12 +91,15 @@ class Client:
         self.betas = None
 
         # EWAS
+        self.mu = None
         self.xtx = None
         self.xty = None
-        self.coef = None
-        self.stnd_err = None
-        self.p_value = None
+        self.SSE = None
+        self.cov_coef = None
+        """ self.p_value = None
         self.EWAS_results = None
+        self.coef = None
+        self.stnd_err = None """
 
     def read_data(self, design_matrix_filepath, methylated_filepath, unmethylated_filepath, probe_annotation_path):
         '''
@@ -278,7 +281,7 @@ class Client:
         self.unmethI_local_norm_par = [observations[2], row_sums[2], n_columns[2]]
         self.unmethII_local_norm_par = [observations[3], row_sums[3], n_columns[3]]
 
-        return self.methI_local_norm_par, self.methII_local_norm_par, self.unmethI_local_norm_par, self.unmethII_local_norm_par
+        #return self.methI_local_norm_par, self.methII_local_norm_par, self.unmethI_local_norm_par, self.unmethII_local_norm_par
         #return observations, row_sums, n_columns
         
 
@@ -322,7 +325,7 @@ class Client:
         return self.betas
 
     # client level computations for EWAS based on simple linear model
-    def local_xtx_xty(self):
+    def local_xtx_xty(self, weighted = False):
         '''
         Calculate the local intermediate matrices that are sent to the server
         where they are used to calculate the global intermediates
@@ -333,13 +336,49 @@ class Client:
         m = x_matrix.shape[1] # number of conditions
         self.xtx = np.zeros((n,m,m)) # create zeroes array with space to hold the xt_x matrix (m,m) for each probe (n)
         self.xty = np.zeros((n,m)) # create zeroes array with space to hold the xt_y matrix (1,m) for each probe (n)
+        
+        if weighted:
+            weighted = True
+            W = np.sqrt(self.weights)
+            y_matrix = np.multiply(y_matrix,W) 
+
         for i in range(0,n):
             y = y_matrix[i,:]
-            self.xtx[i,:,:] = x_matrix.T @ x_matrix
-            self.xty[i,:] = x_matrix.T @ y
+            if weighted:
+                Xw = np.multiply(x_matrix,W[i,:].reshape(-1, 1)) # algebraic multiplications by W
+                self.XtX[i,:,:] = Xw.T @ Xw 
+                self.XtY[i,:] = Xw.T @ y  
+            else: 
+                self.xtx[i,:,:] = x_matrix.T @ x_matrix
+                self.xty[i,:] = x_matrix.T @ y
         return self.xtx, self.xty
     
-    def calculate_EWAS_results(self, global_xtx, global_xty):
+    def compute_SSE_and_cov_coef(self,beta, weighted = False):
+        x_matrix = self.designmatrix.values
+        y_matrix = self.betas.values 
+        n = y_matrix.shape[0]
+        m = x_matrix.shape[1]
+        self.SSE = np.zeros(n)
+        self.mu = np.zeros(m)
+        if weighted:
+            W = np.sqrt(self.weights)
+            y_matrix = np.multiply(y_matrix,W)
+        for i in range(0,n): 
+            y = y_matrix[i,:]
+            if weighted:
+                Xw = np.multiply(x_matrix,W[i,:].reshape(-1, 1))
+                self.mu[i,] =  Xw @ beta[i,:] # fitted logCPM 
+            else:
+                self.mu[i,] =  x_matrix @ beta[i,:] # fitted logCPM 
+
+            self.SSE[i] = np.sum((y - self.mu[i,])**2) # local SSE
+        #print("mu:",self.mu.shape)
+        Q,R = np.linalg.qr(x_matrix)
+        self.cov_coef = R.T @ R
+        self.cov_coef = x_matrix.T @ x_matrix
+        return self.SSE, self.cov_coef
+
+    """ def calculate_EWAS_results(self, global_xtx, global_xty):
         n,m = global_xty.shape
         self.coef = np.zeros((n,m))
         self.stnd_err = np.zeros((n,m))
@@ -371,7 +410,7 @@ class Client:
         self.EWAS_results = pd.DataFrame([coef["Diagnosis"], stnErr["Diagnosis"], p_val["Diagnosis"], p_val_corrected["Diagnosis"], mchange["Diagnosis"]],
             columns=["Coefficient", "Standar Error", "P-value", "Corrected P-value", "Methylation Change"])
         
-        return self.EWAS_results
+        return self.EWAS_results """
 
 
         
