@@ -22,6 +22,7 @@ library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 setwd("/home/rstudio") # set the working directory
 load("/home/rstudio/QC_GSE66351/Preprocessed_CTD.RData")
 load("/home/rstudio/QC_GSE66351/Full_Phenotype_Information.RData")# change to the relevant input file location
+design <- read.csv("/home/rstudio/QC_GSE66351/full_design_matrix.csv", row.names = 1)
 identifier = "GSE66351"
 ## create a folder to save EWAS output
 if(!dir.exists(paste0("EWAS_", identifier))){
@@ -37,15 +38,17 @@ if (identifier == "GSE66351") {
 } else {
   tissue_column = "Source_tissue"
 }
+Betas_set <- Betas[1:20, ]
+
 tissues <- unique(Full_Pheno[tissue_column])
 for (i in 1:dim(tissues)[1]) {
   Betas_t <- Betas[ ,Full_Pheno[tissue_column] == tissues[i,1]]
   Small_Pheno_t <- Small_Pheno[match(colnames(Betas_t), rownames(Small_Pheno)),]
   
 ##### Run the EWAS ##########
-  res<-matrix(data = NA, nrow = nrow(Betas_t), ncol = 3)
+  res<-matrix(data = NA, nrow = nrow(Betas_set), ncol = 3)
   colnames(res)<-c("Diagnosis_Beta", "Diagnosis_SE", "Diagnosis_P")
-  rownames(res)<-rownames(Betas_t)
+  rownames(res)<-rownames(Betas_set)
 
   for(j in 1:nrow(Betas_t)){
     model<-lm(Betas_t[i,] ~ Small_Pheno_t$Diagnosis + as.numeric(Small_Pheno_t$Age) + factor(Small_Pheno_t$Sex) + as.numeric(Small_Pheno_t$Cell_Type.CT1)+ as.numeric(Small_Pheno_t$Cell_Type.CT2) + as.numeric(Small_Pheno_t$Cell_Type.CT3)+ factor(Small_Pheno_t$Sentrix_ID))
@@ -54,6 +57,16 @@ for (i in 1:dim(tissues)[1]) {
     res[j,c(3)]<-summary(model)$coefficients["Small_Pheno_t$Diagnosis CTRL",4]
   }
 
+  # limma version of linear model
+  for (j in 1:nrow(Betas_set)){
+    model <- lmFit(Betas_set[j,], design)
+    contrastMatrics <- makeContrasts(AD - CTRL,levels = colnames(model$coefficients))
+    contrast_fit <- contrasts.fit(model, contrastMatrics)
+    result <- eBayes(contrast_fit)
+    res[i, 1] <- result$coefficients[1]
+    res[i,2] <- result$stdev.unscaled[1]
+    res[i,3] <- result$p.value[1]
+  }
 # adding a column  for with the corrected p-values (Benjanimi-Hochberg)
   corr_pval <- p.adjust(c(res[ ,3]), method = "BH")
   res <- cbind(res, corr_pval)
