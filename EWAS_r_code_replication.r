@@ -17,12 +17,12 @@
 if (!require("IlluminaHumanMethylation450kanno.ilmn12.hg19", quietly = TRUE))
   BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
 library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
-
+library(limma)
 
 setwd("/home/rstudio") # set the working directory
 load("/home/rstudio/QC_GSE66351/Preprocessed_CTD.RData")
 load("/home/rstudio/QC_GSE66351/Full_Phenotype_Information.RData")# change to the relevant input file location
-design <- read.csv("/home/rstudio/QC_GSE66351/full_design_matrix.csv", row.names = 1)
+design <- read.csv("/home/rstudio/design_mat/Small_EWAS_design_local.csv", row.names = 1)
 identifier = "GSE66351"
 ## create a folder to save EWAS output
 if(!dir.exists(paste0("EWAS_", identifier))){
@@ -32,47 +32,55 @@ if(!dir.exists(file.path(paste0("EWAS_", identifier), "Plots"))){
   dir.create(file.path(paste0("EWAS_", identifier), "Plots"))
 }
 
+#EWAS on the full dataset
+model <- lmFit(Betas, design)
+contrastMatrics <- makeContrasts(AD - CTRL,levels = colnames(model$coefficients))
+contrast_fit <- contrasts.fit(model, contrastMatrics)
+result <- eBayes(contrast_fit)
+table_res <- topTable(result, adjust="BH",resort.by="P",p.value=1,confint=TRUE,number=dim(Betas)[1])
+#save the results to a csv as as
+write.csv(table_res, file.path(paste0("EWAS_", identifier),"Results_dataset.csv"))
+
+#add annotation
+data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+data("Locations")
+force(Locations)
+included_annotations <- cbind(c(Locations["chr"], Islands.UCSC, Other[c("UCSC_RefGene_Name", "UCSC_RefGene_Accession", "UCSC_RefGene_Group", "HMM_Island")]))
+included_annotations <- included_annotations[match(rownames(Betas_t), rownames(included_annotations)),]
+res_annotated <- cbind(table_res, included_annotations)
+
+
+#save the results to a csv as as
+write.csv(res_annotated, file.path(paste0("EWAS_", identifier), "Annotated_Results_dataset.csv"))
+
+
 # split datasets based on source tissue
 if (identifier == "GSE66351") {
   tissue_column = "Brain_region"
 } else {
   tissue_column = "Source_tissue"
 }
-Betas_set <- Betas[1:20, ]
 
+oc_design <- read.csv("design_mat/Small_Occipitalcortex_EWAS_design_local.csv", row.names = 1)
+ft_design <- read.csv("design_mat/Small_Frontalcortex_EWAS_design_local.csv", row.names = 1)
+tc_design <- read.csv("design_mat/Small_Temporalcortex_EWAS_design_local.csv", row.names = 1)
 tissues <- unique(Full_Pheno[tissue_column])
+tissue_design <- list(oc_design, ft_design, tc_design)
 for (i in 1:dim(tissues)[1]) {
   Betas_t <- Betas[ ,Full_Pheno[tissue_column] == tissues[i,1]]
-  Small_Pheno_t <- Small_Pheno[match(colnames(Betas_t), rownames(Small_Pheno)),]
+  design_t <- tissue_design[i]
   
 ##### Run the EWAS ##########
-  res<-matrix(data = NA, nrow = nrow(Betas_set), ncol = 3)
-  colnames(res)<-c("Diagnosis_Beta", "Diagnosis_SE", "Diagnosis_P")
-  rownames(res)<-rownames(Betas_set)
-
-  for(j in 1:nrow(Betas_t)){
-    model<-lm(Betas_t[i,] ~ Small_Pheno_t$Diagnosis + as.numeric(Small_Pheno_t$Age) + factor(Small_Pheno_t$Sex) + as.numeric(Small_Pheno_t$Cell_Type.CT1)+ as.numeric(Small_Pheno_t$Cell_Type.CT2) + as.numeric(Small_Pheno_t$Cell_Type.CT3)+ factor(Small_Pheno_t$Sentrix_ID))
-    res[j,c(1)]<-coefficients(model)["Small_Pheno_t$Diagnosis CTRL"]
-    res[j,2]<-summary(model)$coefficients["Small_Pheno_t$Diagnosis CTRL",2]
-    res[j,c(3)]<-summary(model)$coefficients["Small_Pheno_t$Diagnosis CTRL",4]
-  }
 
   # limma version of linear model
-  for (j in 1:nrow(Betas_set)){
-    model <- lmFit(Betas_set[j,], design)
+  
+    model <- lmFit(Betas_t, design_t[[1]])
     contrastMatrics <- makeContrasts(AD - CTRL,levels = colnames(model$coefficients))
     contrast_fit <- contrasts.fit(model, contrastMatrics)
     result <- eBayes(contrast_fit)
-    res[j, 1] <- result$coefficients[1]
-    res[j,2] <- result$stdev.unscaled[1]
-    res[j,3] <- result$p.value[1]
-  }
-# adding a column  for with the corrected p-values (Benjanimi-Hochberg)
-  corr_pval <- p.adjust(c(res[ ,3]), method = "BH")
-  res <- cbind(res, corr_pval)
-
+    table_res <- topTable(result, adjust="BH",resort.by="P",p.value=1,confint=TRUE,number=dim(Betas)[1])
 #save the results to a csv as as
-  write.csv(res, file.path(paste0("EWAS_", identifier), paste0(tissues[i,1], "_","Results_dataset.csv")))
+    write.csv(table_res, file.path(paste0("EWAS_", identifier), paste0(tissues[i,1], "_","Results_dataset.csv")))
 
 #add annotation
   data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
@@ -80,12 +88,12 @@ for (i in 1:dim(tissues)[1]) {
   force(Locations)
   included_annotations <- cbind(c(Locations["chr"], Islands.UCSC, Other[c("UCSC_RefGene_Name", "UCSC_RefGene_Accession", "UCSC_RefGene_Group", "HMM_Island")]))
   included_annotations <- included_annotations[match(rownames(Betas_t), rownames(included_annotations)),]
-  res_annotated <- cbind(res, included_annotations)
+  res_annotated <- cbind(table_res, included_annotations)
 
 
 #save the results to a csv as as
   write.csv(res_annotated, file.path(paste0("EWAS_", identifier), paste0(tissues[i,1], "_", "Annotated_Results_dataset.csv")))
-
+}
 #save the results in the standard format defined for a BED file - needed for the DMR calling function
 # standard format that requires the first three columns to be: chrom, start and end. 
 # This information was downloaded from http://hgdownload.soe.ucsc.edu/goldenPath/hg19/encodeDCC/wgEncodeHaibMethyl450/
@@ -93,8 +101,8 @@ for (i in 1:dim(tissues)[1]) {
   standard_bed_columns <- read.table("/home/rstudio/HAIB.A549.EtOH.Rep.3.bed")
   standard_bed_columns <- standard_bed_columns[ ,c(1,2,3,4)]
 
-  res_bed <- merge(standard_bed_columns, res, by.x = 4, by.y = "row.names", all.y = TRUE)
+  res_bed <- merge(standard_bed_columns, table_res, by.x = 4, by.y = "row.names", all.y = TRUE)
 
   res_bed <- data.frame(chrom = res_bed[2], start = res_bed[3], stop = res_bed[4], p_value = res_bed$Diagnosis_P, coeffi = res_bed$Diagnosis_Beta, stan_er = res_bed$Diagnosis_SE, Illumina_ID = res_bed[1])
-  write.table(res_bed, file.path(paste0("EWAS_", identifier), paste0(tissues[i,1], "_", "results.bed")))
-}
+  write.table(res_bed, file.path(paste0("EWAS_", identifier), "results.bed"))
+
