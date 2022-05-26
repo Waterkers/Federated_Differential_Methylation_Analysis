@@ -32,6 +32,28 @@ if(!dir.exists(file.path(paste0("EWAS_", identifier), "Plots"))){
   dir.create(file.path(paste0("EWAS_", identifier), "Plots"))
 }
 
+#EWAS on the full dataset
+model <- lmFit(Betas, design)
+contrastMatrics <- makeContrasts(AD - CTRL,levels = colnames(model$coefficients))
+contrast_fit <- contrasts.fit(model, contrastMatrics)
+result <- eBayes(contrast_fit)
+table_res <- topTable(result, adjust="BH",resort.by="P",p.value=1,confint=TRUE,number=dim(Betas)[1])
+#save the results to a csv as as
+write.csv(table_res, file.path(paste0("EWAS_", identifier),"Results_dataset.csv"))
+
+#add annotation
+data("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+data("Locations")
+force(Locations)
+included_annotations <- cbind(c(Locations["chr"], Islands.UCSC, Other[c("UCSC_RefGene_Name", "UCSC_RefGene_Accession", "UCSC_RefGene_Group", "HMM_Island")]))
+included_annotations <- included_annotations[match(rownames(Betas_t), rownames(included_annotations)),]
+res_annotated <- cbind(table_res, included_annotations)
+
+
+#save the results to a csv as as
+write.csv(res_annotated, file.path(paste0("EWAS_", identifier), "Annotated_Results_dataset.csv"))
+
+
 # split datasets based on source tissue
 if (identifier == "GSE66351") {
   tissue_column = "Brain_region"
