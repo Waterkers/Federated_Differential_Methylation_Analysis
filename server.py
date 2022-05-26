@@ -63,6 +63,7 @@ class Server:
         for probe_list in self.client_total_probes[1:]:
             global_probes = global_probes.intersection(set(probe_list))
         self.global_probes = list(global_probes)
+        self.global_probes.sort()
         return self.global_probes
         """ 
         n_clients = len(self.client_names)
@@ -163,7 +164,7 @@ class Server:
         self.confounders.extend(self.cohort_effects)
         if self.global_SentrixID:
             self.confounders.extend(self.global_SentrixID)
-            self.confounders.remove("Sentrix_ID")
+            self.confounders.remove("sentrix_id")
         if self.global_PlateID:
             self.confounders.extend(self.global_PlateID)
             self.confounders.remove("Plate_ID")

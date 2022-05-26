@@ -197,13 +197,13 @@ class Client:
                 print("%s of global probes not present in local dataset - check global probe definition"%(len(not_local)), file=stderr)
             if len(not_global) > 0:
                 print("%s probes are not present in the global dataset and will be removed before analysis"%(len(not_global)), file=stderr)
-                probes_to_keep = list(local_probes.intersection(global_probes))
+                probes_to_keep = list(local_probes.intersection(global_probes)).sort()
                 self.raw_methylated = self.raw_methylated.loc[probes_to_keep, :]
                 self.raw_unmethylated = self.raw_unmethylated.loc[probes_to_keep, :]
                 self.probes = probes_to_keep
 
     def find_unique_SentrixIDS(self):
-        sentrix_ids = self.designmatrix.loc[:, "Sentrix_ID"]
+        sentrix_ids = self.designmatrix.loc[:, "sentrix_id"]
         self.unique_SentrixIDS = list(set(sentrix_ids))
     
     def find_unique_PlateIDS(self):
@@ -222,9 +222,9 @@ class Client:
         for ID in global_SentrixID:
             #if ID in self.unique_SentrixIDS:
             self.designmatrix[ID] = 0
-            self.designmatrix[ID].loc[self.designmatrix["Sentrix_ID"] == ID] = 1
+            self.designmatrix[ID].loc[self.designmatrix["sentrix_id"] == ID] = 1
             #self.designmatrix[ID].loc[self.designmatrix["Sentrix_ID"] != ID] = 0
-        self.designmatrix.drop(columns="Sentrix_ID", inplace=True)
+        self.designmatrix.drop(columns="sentrix_id", inplace=True)
         self.designcolumns = list(self.designmatrix.columns.values)
 
     def PlateID_effects(self, global_PlateID):
