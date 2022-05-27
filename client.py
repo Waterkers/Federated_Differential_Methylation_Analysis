@@ -197,7 +197,8 @@ class Client:
                 print("%s of global probes not present in local dataset - check global probe definition"%(len(not_local)), file=stderr)
             if len(not_global) > 0:
                 print("%s probes are not present in the global dataset and will be removed before analysis"%(len(not_global)), file=stderr)
-                probes_to_keep = list(local_probes.intersection(global_probes)).sort()
+                probes_to_keep = list(local_probes.intersection(global_probes))
+                probes_to_keep.sort()
                 self.raw_methylated = self.raw_methylated.loc[probes_to_keep, :]
                 self.raw_unmethylated = self.raw_unmethylated.loc[probes_to_keep, :]
                 self.probes = probes_to_keep
