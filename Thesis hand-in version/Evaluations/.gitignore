@@ -1,0 +1,14 @@
+# ignore RData files
+.RData
+
+# ignore RHistory files
+.RHistory
+
+# ignore text files
+.txt
+
+#ignore pycache
+__pycache__/
+# specific files
+EWAS_PerformanceMetrics.xlsx
+
