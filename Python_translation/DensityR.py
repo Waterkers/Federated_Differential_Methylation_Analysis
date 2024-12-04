@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import pandas as pd
 from scipy import integrate, stats
 
@@ -13,8 +14,11 @@ from statsmodels.sandbox.nonparametric import kernels
 
 import pyximport
 pyximport.install(setup_args={"script_args" : ["--verbose"]})
-from linbinR import fast_linbin
-
+try:
+    from linbinR import fast_linbin
+except ModuleNotFoundError:
+    sys.path.append('/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Python_translation')
+    from linbinR import fast_linbin
 # Kernels Switch for estimators
 
 kernel_switch = dict(

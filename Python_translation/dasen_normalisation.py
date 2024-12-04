@@ -1,8 +1,13 @@
 import numpy as np
 import pandas as pd
+import sys
 import statsmodels.api as sm
 from statsmodels.distributions.mixture_rvs import mixture_rvs
-import DensityR
+try:
+    import DensityR
+except ModuleNotFoundError:
+    sys.path.append("/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Python_translation")
+    import DensityR
 import statsmodels.api as sm
 import re
 
