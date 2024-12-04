@@ -1,16 +1,16 @@
-input <- commandArgs(trailingOnly = TRUE)
+#input <- commandArgs(trailingOnly = TRUE)
 
 ## save input commands as local objects
-idat <- input[1]
-pheno_info <- input[2]
-working_dir <- input[3]
-manifest_path <- input[4]
-identifier <- input[5]
+idat <- '/home/silke/Documents/Fed_EWAS/Data/GSE66351_RAW/idat'# input[1]
+pheno_info <- '/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files/GSE66351_pheno.txt'#input[2]
+working_dir <- '/home/silke/Documents/Fed_EWAS/Data/'#input[3]
+manifest_path <- '/home/silke/Documents/Fed_EWAS/Data/GSE66351_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv'#input[4]
+identifier <- 'GSE66351_half' #input[5]
 
 ##### Start with installing the required packages ########
 need <- c("wateRmelon", "methylumi", "ChAMP")
 if (!require(need, quietly = TRUE))
-  BiocManager::install(need, updata = FALSE)
+  BiocManager::install(need, update = FALSE)
 library(wateRmelon, methylumi)
 library(ChAMP) # for some reason library only loads this package when it is called on its own
 
@@ -18,7 +18,7 @@ if (!require("tidyverse", quietly = TRUE))
 	install.packages("tidyverse")
 library(tidyverse)
 ##### source the Exeter functions needed for the pipeline - Change to the local filepath that contains these functions
-lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Federated_Differential_Methylation_Analysis\\Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
+lapply(list.files("/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
 ## Set the working directory
 setwd(working_dir) # set working directory
 ## create a folder for the QC output
@@ -29,7 +29,7 @@ if(!dir.exists(QC_output)){
 if(!dir.exists(file.path(QC_output, "Plots"))){
   dir.create(file.path(QC_output, "Plots"))
 } 
-
+set.seed(42)
 preprocess <- function(idat, pheno_info, intens_threshold) {
 # loading in actual data - GSE66351
 pheno1 <- read.table(pheno_info)
@@ -45,7 +45,9 @@ Sample_ID <- getBarcodes(idat)
 pheno1 <- cbind(pheno1, Sample_ID)
 
 
-pheno1_half <- as.data.frame(pheno1[1:20,])
+pheno1_half <- as.data.frame(pheno1[sample(nrow(pheno1), 20),])
+  write.csv(pheno1_half, file.path(QC_output, "Reduced_Pheno_Info.csv"))
+# save the reduced phenotype file for downstream use
 
 
 barcodes_GSE66351_half <- pheno1_half$Sample_ID # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 20 instead
@@ -278,8 +280,8 @@ gc()
 
 ##### Removal of cross-hybridisation probes ###############
 # load the cpgs to be removed - this step should probably be preformed locally
-crosshyb <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt"))
-snpProbes <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt"), header = TRUE)
+crosshyb <- read.table('/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc2.txt') #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt,
+snpProbes <- read.table('/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc1.txt', header = TRUE) #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt,
 msetEPIC.pf <- msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
 kept_probes <- filterSNPprobesEdit(msetEPIC.pf, population = "EUR", maf = 0.05)
 msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]
@@ -289,20 +291,19 @@ msetEPIC.pf <- msetEPIC.pf[-grep("rs", rownames(msetEPIC.pf@assayData$betas)), ]
 setwd(working_dir)
 
 # save the filtered MethylumiSet object for r-based normalisation
-save(msetEPIC.pf, QCmetrics, file = file.path(QC_output,"preprocessed_MethyLumiSet.RData"))
+save(msetEPIC.pf, QCmetrics, file = file.path(QC_output,"FilteredMethylumisetQCmetrics.RData")) #"preprocessed_MethyLumiSet.RData"
 
 # betas
 raw_betas <- betas(msetEPIC.pf)
-write.csv(raw_betas, file.path(QC_output, "Preprocessed_betas.csv"))
+write.csv(raw_betas, file.path(QC_output, "Filtered_Betas.csv")) #"Preprocessed_betas.csv"
 # methylated values
 raw_methylated <- methylumi::methylated(msetEPIC.pf)
-write.csv(raw_methylated, file.path(QC_output, "Preprocessed_methylated_intensities.csv"))
-# unmethylated values
+write.csv(raw_methylated, file.path(QC_output, "Filtered_Methylated.csv")) ## unmethylated values
+
 raw_unmethylated <- methylumi::unmethylated(msetEPIC.pf)
-write.csv(raw_unmethylated, file.path(QC_output, "Preprocessed_unmethylated_intensities.csv"))
+write.csv(raw_unmethylated, file.path(QC_output, "Filtered_Unmethylated.csv")) #"Preprocessed_unmethylated_intensities.csv"
 
 write.csv(QCmetrics, file.path(QC_output, "pre_norm_pheno_information.csv"))
-
 
 }
 

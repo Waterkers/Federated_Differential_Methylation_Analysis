@@ -6,14 +6,21 @@ import os
 import sys
 
 import methylcheck
-import dasen_normalisation
+try:
+    import dasen_normalisation
+except ModuleNotFoundError:
+    sys.path.append("/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Python_translation")
+    import dasen_normalisation
 
 from sklearn.decomposition import PCA 
 from scipy.stats import pearsonr
 import seaborn as sns
 import matplotlib.pyplot as plt
-import EWAS_central
-
+try:
+    import EWAS_central
+except ModuleNotFoundError:
+    sys.path.append("/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Python_translation")
+    import EWAS_central
 import argparse
 
 parser = argparse.ArgumentParser(description = "In case of raw data run centralised preprocessing, perform dasen normalisation, run linear model EWAS and save results")
@@ -53,27 +60,43 @@ if args.Filtered:
         os.makedirs(output_dir_QC)
 else:
     try:
-        preprocessing = subprocess.run(["C:\\Program Files\\R\\R-4.1.2\\bin\\Rscript.exe", '--vanilla', os.path.join(script_dir, "complete_preprocessing_half.r"),
-        os.path.join(input_dir, "idat"), os.path.join(input_dir, (identifier + "_pheno.txt")), output_dir, 
-        os.path.join(input_dir, "GPL13534_HumanMethylation450_15017482_v.1.1.csv"), identifier], capture_output=True)
-        preprocessing_result_dir = os.path.join(output_dir, ("OC_" + identifier))
-        pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Reduced_Pheno_Info.csv"), index_col=0)
-        unmeth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Unmethylated.csv"), index_col=0)
-        unmeth.astype(np.float64)
-        meth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Methylated.csv"), index_col=0)
-        meth.astype(np.float64)
-        pre_norm_betas = pd.read_csv(preprocessing_result_dir, "Filtered_Betas.csv", index_col=0)
-        pre_norm_betas.astype(np.float64)
+        rscript_path = subprocess.check_output("which Rscript", shell=True).decode("utf-8").strip()
+        if '_half' in identifier:
+            identifier_temp = identifier.split('_')[0]
+            preprocessing = subprocess.run([rscript_path, '--vanilla', os.path.join(script_dir, "centralised_preprocessing_half.r"),
+            os.path.join(input_dir, "idat"), os.path.join(input_dir, (identifier_temp + "_pheno.txt")), output_dir,
+            os.path.join(input_dir, "GPL13534_HumanMethylation450_15017482_v.1.1.csv"), identifier], capture_output=True)
+        else:
+            preprocessing = subprocess.run(
+                [rscript_path, '--vanilla', os.path.join(script_dir, "centralised_preprocessing_half.r"),
+                 os.path.join(input_dir, "idat"), os.path.join(input_dir, (identifier + "_pheno.txt")), output_dir,
+                 os.path.join(input_dir, "GPL13534_HumanMethylation450_15017482_v.1.1.csv"), identifier],
+                capture_output=True)
+        print('preprocessing complete')
     except:
+        print('There was an error in preprocessing')
         print(preprocessing.stderr)
         sys.exit(1)
+    preprocessing_result_dir = os.path.join(output_dir, ("QC_" + identifier))
+    pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Reduced_Pheno_Info.csv"), index_col=0)
+    unmeth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Unmethylated.csv"), index_col=0)
+    unmeth.astype(np.float64)
+    meth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Methylated.csv"), index_col=0)
+    meth.astype(np.float64)
+    pre_norm_betas = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Betas.csv"), index_col=0)
+    pre_norm_betas.astype(np.float64)
+    # create the output file structure
+    output_dir_QC = os.path.join(output_dir, "QC_Python")
+    if not os.path.isdir(output_dir_QC):
+        os.makedirs(output_dir_QC)
+
 
 annotation = pd.read_csv(os.path.join(input_dir, "GPL13534_HumanMethylation450_15017482_v.1.1.csv"), skiprows=7, index_col=0, low_memory=False)
-annotation_data = annotation.loc[set(meth.index.values).intersection(set(annotation.index.values)), :]
+annotation_data = annotation.loc[list(set(meth.index.values).intersection(set(annotation.index.values))), :]
 
 # pre-norm betas distribution density plot
 pre_norm_BD = methylcheck.beta_density_plot(pre_norm_betas, return_fig=True)
-pre_norm_BD.savefig(os.path.join(output_dir_QC, (identifier + "_pre-normalisation beta density distribution.jpeg")))
+pre_norm_BD.savefig(os.path.join(output_dir, identifier + "_pre-normalisation beta density distribution.jpeg"))
 
 print("Normalising data")
 # dasen normalisation
@@ -90,9 +113,13 @@ n_comp = 10
 PCA = PCA(n_components=n_comp)
 PCA_out = PCA.fit(normalised_betas)
 Principle_components = pd.DataFrame(PCA_out.components_.T, columns=["PC1", "PC2", "PC3", "PC4", "PC5", "PC6", "PC7", "PC8", "PC9", "PC10"], index=pheno.index)
-data_to_plot = pd.concat([Principle_components, pheno.loc[:, "Sentrix_ID"]], axis = 1)
+if "Sentrix_ID" in pheno.columns:
+    sentrixCol = "Sentrix_ID"
+elif "sentrix_id" in pheno.columns:
+    sentrixCol = "sentrix_id"
+data_to_plot = pd.concat([Principle_components, pheno.loc[:, sentrixCol]], axis=1)
 # exploratory grid plot to visualise the correlation between the PCs and Sentrix_ID
-g = sns.PairGrid(data_to_plot, hue= "Sentrix_ID")
+g = sns.PairGrid(data_to_plot, hue= sentrixCol)
 g.map(sns.scatterplot)
 try:
     g.savefig(os.path.join(output_dir_QC, (identifier + "_Exploratory PCA grid coloured by Sentrix_ID.jpeg")))
@@ -101,7 +128,7 @@ except:
 # calculate the correlation between the PC clusters and the Sentrix_ID variable
 pca_iterator = np.arange(0, n_comp)
 pca_cor = []
-codes_sentrix, options_sentrix = pd.factorize(pheno.loc[:,"Sentrix_ID"])
+codes_sentrix, options_sentrix = pd.factorize(pheno.loc[:,sentrixCol])
 for id, x in np.ndenumerate(pca_iterator):
     cor, p_value = pearsonr(PCA_out.components_[x,], codes_sentrix)
     pca_cor.append(float(cor)) # turn into list append
@@ -112,7 +139,7 @@ second = abs(pc_output.iloc[1])
 print("The top correlated principle components with Sentrix_ID:", first.name + 1, second.name + 1)
 
 # visualise the two PCs with the strongest correlation with Sentrix_ID
-data_to_plot = pd.DataFrame({"PC4":PCA_out.components_[int(first.name)], "PC5":PCA_out.components_[int(second.name)], "Sentrix_ID":pheno.loc[:, "Sentrix_ID"]},
+data_to_plot = pd.DataFrame({"PC4":PCA_out.components_[int(first.name)], "PC5":PCA_out.components_[int(second.name)], "Sentrix_ID":pheno.loc[:, sentrixCol]},
      index=pheno.index.values)
 detail_PCA = sns.lmplot(x="PC4", y = "PC5", hue="Sentrix_ID", data = data_to_plot, fit_reg=False)
 try:
