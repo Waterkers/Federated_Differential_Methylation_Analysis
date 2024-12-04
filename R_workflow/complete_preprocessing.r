@@ -31,10 +31,10 @@ if (!require("tidyverse", quietly = TRUE))
 library(tidyverse)
 
 ##### source the Exeter functions needed for the pipeline
-lapply(list.files("/home/rstudio/ExeterEWASPipeline-master/R",pattern = "\\.r$",full.names = T),function(x){source(x)})
+lapply(list.files("/home/silke/Documents/Fed_EWAS/Required_files/R",pattern = "\\.r$",full.names = T),function(x){source(x)})
 
 ## Set the working directory
-setwd("/home/rstudio") # set working directory to whatever is relevant
+setwd("/home/silke/Documents/Fed_EWAS/") # set working directory to whatever is relevant
 
 ## create a folder for the QC output - change the identifier to whatever works for the project
 identifier <- "GSE105109"
@@ -48,9 +48,9 @@ if(!dir.exists(QC_plots)){
 }
 
 #change filepaths to necessary files here
-phenotype_information_file <- "/home/rstudio/GSE105109_RAW/GSE105109_pheno.txt"
-idat_file_path <- "/home/rstudio/GSE105109_RAW/idat"
-annotation_information_manifest_file <- "/home/rstudio/GSE105109_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv"
+phenotype_information_file <- "/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files/GSE105109_pheno.txt"
+idat_file_path <- "/home/silke/Documents/Fed_EWAS/GSE105109_RAW/idat"
+annotation_information_manifest_file <- "/home/silke/Documents/Fed_EWAS/GSE105109_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv"
 
 #### import the data using methylumi -> create a MethyLumiSet object
 # loading in actual data - GSE105109
@@ -298,8 +298,8 @@ gc()
 
 ##### Removal of cross-hybridisation probes ###############
 # load the cpgs to be removed -  based on McCartney et al., 2016 ###
-crosshyb <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt"))
-snpProbes <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt"), header = TRUE)
+crosshyb <- read.table(url("https://pmc.ncbi.nlm.nih.gov/articles/instance/4909830/bin/mmc2.txt")) #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt,
+snpProbes <- read.table(url("https://pmc.ncbi.nlm.nih.gov/articles/instance/4909830/bin/mmc1.txt"), header = TRUE) #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt,
 msetEPIC.pf<-msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
 kept_probes <-filterSNPprobes(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
 msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]
