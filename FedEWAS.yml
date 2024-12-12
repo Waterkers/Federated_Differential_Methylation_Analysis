@@ -1,0 +1,23 @@
+name: FedEWAS
+channels:
+- bioconda
+- conda-forge
+dependencies:
+  - bioconductor-champ
+  - bioconductor-methylumi
+  - bioconductor-watermelon
+  - cython
+  - ipykernel
+  - notebook
+  - numpy
+  - pandas
+  - python=3.7
+  - r-biocmanager
+  - r-matrixstats=1.1.0
+  - r-reshape2
+  - r-tidyverse
+  - scipy
+  - setuptools
+  - statsmodels
+
+prefix: "/home/silke/miniconda3/envs/FedEWAS"
