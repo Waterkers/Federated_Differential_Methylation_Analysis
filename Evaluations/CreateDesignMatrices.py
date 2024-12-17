@@ -3,8 +3,11 @@ import os
 import argparse
 
 def createDesignMatrix66351(pheno_df_path: str, small: bool = True, federated: bool = False, per_region: bool = False,
-                       output_path: str = None):
-    pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
+                       output_path: str = None, half: bool = False):
+    if half:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
+    else:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False, sep='\t').T
     pheno["Diagnosis"] = pheno.loc[:, "Diagnosis"].str.strip()
     pheno["Sex"] = pheno.loc[:, "Sex"].str.strip()
     pheno["Brain_region"] = pheno.loc[:, "Brain_region"].str.strip()
@@ -121,8 +124,11 @@ def createDesignMatrix66351(pheno_df_path: str, small: bool = True, federated: b
                     x_large_cen.to_csv("Full_EWAS_design_local.csv")
 
 def createDesignMatrix105109(pheno_df_path: str, small: bool = True, federated: bool = False, per_region: bool = False,
-                       output_path: str = None):
-    pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
+                       output_path: str = None, half: bool = False):
+    if half:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
+    else:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False, sep='\t').T
     pheno["Diagnosis"] = pheno.loc[:, "Diagnosis"].str.strip()
     pheno["Sex"] = pheno.loc[:, "Sex"].str.strip()
     pheno["Brain_region"] = pheno.loc[:, "Brain_region"].str.strip()
@@ -238,8 +244,11 @@ def createDesignMatrix105109(pheno_df_path: str, small: bool = True, federated: 
                     x_large_cen.to_csv("Full_EWAS_design_local.csv")
 
 def createDesignMatrix134379(pheno_df_path: str, small: bool = True, federated: bool = False, per_region: bool = False,
-                       output_path: str = None):
-    pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
+                       output_path: str = None, half: bool = False):
+    if half:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
+    else:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False, sep='\t').T
     pheno["Diagnosis"] = pheno.loc[:, "Diagnosis"].str.strip()
     pheno["Sex"] = pheno.loc[:, "Sex"].str.strip()
     pheno["Brain_region"] = pheno.loc[:, "Brain_region"].str.strip()
