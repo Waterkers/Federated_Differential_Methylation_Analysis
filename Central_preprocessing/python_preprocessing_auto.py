@@ -7,21 +7,30 @@ import sys
 
 import methylcheck
 try:
-    import dasen_normalisation
+    from Federated_Differential_Methylation_Analysis.Python_translation import dasen_normalisation
 except ModuleNotFoundError:
-    sys.path.append("/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Python_translation")
-    import dasen_normalisation
+    sys.path.append("/home/silke/Documents/Fed_EWAS")
+    from Federated_Differential_Methylation_Analysis.Python_translation import dasen_normalisation
 
 from sklearn.decomposition import PCA 
 from scipy.stats import pearsonr
 import seaborn as sns
 import matplotlib.pyplot as plt
 try:
-    import EWAS_central
+    from Federated_Differential_Methylation_Analysis.Python_translation import EWAS_central
 except ModuleNotFoundError:
-    sys.path.append("/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Python_translation")
-    import EWAS_central
+    sys.path.append("/home/silke/Documents/Fed_EWAS")
+    from Federated_Differential_Methylation_Analysis.Python_translation import EWAS_central
+try:
+    from Federated_Differential_Methylation_Analysis.Evaluations.CreateDesignMatrices import createDesignMatrix66351, createDesignMatrix105109, createDesignMatrix134379
+except ModuleNotFoundError:
+    sys.path.append("/home/silke/Documents/Fed_EWAS")
+    from Federated_Differential_Methylation_Analysis.Evaluations.CreateDesignMatrices import createDesignMatrix66351, \
+        createDesignMatrix105109, createDesignMatrix134379
 import argparse
+
+designMatricesFunctions = {'GSE66351': createDesignMatrix66351,'GSE105109': createDesignMatrix105109, 'GSE134379': createDesignMatrix134379,
+                           'GSE66351_half': createDesignMatrix66351,'GSE105109_half': createDesignMatrix105109, 'GSE134379_half': createDesignMatrix134379}
 
 parser = argparse.ArgumentParser(description = "In case of raw data run centralised preprocessing, perform dasen normalisation, run linear model EWAS and save results")
 parser.add_argument("input_dir", metavar = "input_dir/", type=str, nargs=1,
@@ -68,7 +77,7 @@ else:
             os.path.join(input_dir, "GPL13534_HumanMethylation450_15017482_v.1.1.csv"), identifier], capture_output=True)
         else:
             preprocessing = subprocess.run(
-                [rscript_path, '--vanilla', os.path.join(script_dir, "centralised_preprocessing_half.r"),
+                [rscript_path, '--vanilla', os.path.join(script_dir, "centralised_preprocessing.r"),
                  os.path.join(input_dir, "idat"), os.path.join(input_dir, (identifier + "_pheno.txt")), output_dir,
                  os.path.join(input_dir, "GPL13534_HumanMethylation450_15017482_v.1.1.csv"), identifier],
                 capture_output=True)
@@ -78,7 +87,10 @@ else:
         print(preprocessing.stderr)
         sys.exit(1)
     preprocessing_result_dir = os.path.join(output_dir, ("QC_" + identifier))
-    pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Reduced_Pheno_Info.csv"), index_col=0)
+    if '_half' in identifier:
+        pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Reduced_Pheno_Info.csv"), index_col=0)
+    else:
+        pheno = pd.read_csv(os.path.join(input_dir, (identifier + "_pheno.txt")), index_col=0)
     unmeth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Unmethylated.csv"), index_col=0)
     unmeth.astype(np.float64)
     meth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Methylated.csv"), index_col=0)
@@ -148,6 +160,18 @@ except:
     print("Issue with saving figure")
 
 # EWAS
+# check if the design matrix exists
+if not os.path.exists(os.path.join(input_dir, "Small_EWAS_design.csv")):
+
+    if '_half' in identifier:
+        designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"Reduced_Pheno_Info.csv"),
+                            small=True, federated=False, per_region=False,
+                            output_path=input_dir)
+    else:
+        designMatricesFunctions[identifier](pheno_df_path=os.path.join(input_dir, f"{identifier}_pheno.txt"),
+                                small=True, federated=False, per_region=False,
+                                output_path=input_dir)
+
 design_matrix = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design.csv"), index_col=0)
 print("EWAS")
 results_diagnosis, results_ewas = EWAS_central.EWAS_central(design_matrix, normalised_betas)
