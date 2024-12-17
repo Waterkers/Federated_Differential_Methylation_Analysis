@@ -9,7 +9,7 @@ import methylcheck
 try:
     from Federated_Differential_Methylation_Analysis.Python_translation import dasen_normalisation
 except ModuleNotFoundError:
-    sys.path.append("/home/silke/Documents/Fed_EWAS")
+    sys.path.append("/cosybio/project/vanElferen/Fed_EWAS")
     from Federated_Differential_Methylation_Analysis.Python_translation import dasen_normalisation
 
 from sklearn.decomposition import PCA 
@@ -19,12 +19,12 @@ import matplotlib.pyplot as plt
 try:
     from Federated_Differential_Methylation_Analysis.Python_translation import EWAS_central
 except ModuleNotFoundError:
-    sys.path.append("/home/silke/Documents/Fed_EWAS")
+    sys.path.append("/cosybio/project/vanElferen/Fed_EWAS")
     from Federated_Differential_Methylation_Analysis.Python_translation import EWAS_central
 try:
     from Federated_Differential_Methylation_Analysis.Evaluations.CreateDesignMatrices import createDesignMatrix66351, createDesignMatrix105109, createDesignMatrix134379
 except ModuleNotFoundError:
-    sys.path.append("/home/silke/Documents/Fed_EWAS")
+    sys.path.append("/cosybio/project/vanElferen/Fed_EWAS")
     from Federated_Differential_Methylation_Analysis.Evaluations.CreateDesignMatrices import createDesignMatrix66351, \
         createDesignMatrix105109, createDesignMatrix134379
 import argparse
