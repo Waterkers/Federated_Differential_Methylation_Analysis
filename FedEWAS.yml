@@ -19,5 +19,3 @@ dependencies:
   - scipy
   - setuptools
   - statsmodels
-
-prefix: "/home/silke/miniconda3/envs/FedEWAS"
