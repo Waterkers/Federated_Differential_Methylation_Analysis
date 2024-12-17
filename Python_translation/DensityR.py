@@ -15,10 +15,10 @@ from statsmodels.sandbox.nonparametric import kernels
 import pyximport
 pyximport.install(setup_args={"script_args" : ["--verbose"]})
 try:
-    from linbinR import fast_linbin
+    from Federated_Differential_Methylation_Analysis.Python_translation.linbinR import fast_linbin
 except ModuleNotFoundError:
-    sys.path.append('/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Python_translation')
-    from linbinR import fast_linbin
+    sys.path.append('/cosybio/project/vanElferen/FedEWAS')
+    from Federated_Differential_Methylation_Analysis.Python_translation.linbinR import fast_linbin
 # Kernels Switch for estimators
 
 kernel_switch = dict(
