@@ -9,7 +9,7 @@ import methylcheck
 try:
     from Federated_Differential_Methylation_Analysis.Python_translation import dasen_normalisation
 except ModuleNotFoundError:
-    sys.path.append("/cosybio/project/vanElferen/Fed_EWAS")
+    sys.path.append("/cosybio/project/vanElferen/FedEWAS")
     from Federated_Differential_Methylation_Analysis.Python_translation import dasen_normalisation
 
 from sklearn.decomposition import PCA 
@@ -19,12 +19,12 @@ import matplotlib.pyplot as plt
 try:
     from Federated_Differential_Methylation_Analysis.Python_translation import EWAS_central
 except ModuleNotFoundError:
-    sys.path.append("/cosybio/project/vanElferen/Fed_EWAS")
+    sys.path.append("/cosybio/project/vanElferen/FedEWAS")
     from Federated_Differential_Methylation_Analysis.Python_translation import EWAS_central
 try:
     from Federated_Differential_Methylation_Analysis.Evaluations.CreateDesignMatrices import createDesignMatrix66351, createDesignMatrix105109, createDesignMatrix134379
 except ModuleNotFoundError:
-    sys.path.append("/cosybio/project/vanElferen/Fed_EWAS")
+    sys.path.append("/cosybio/project/vanElferen/FedEWAS")
     from Federated_Differential_Methylation_Analysis.Evaluations.CreateDesignMatrices import createDesignMatrix66351, \
         createDesignMatrix105109, createDesignMatrix134379
 import argparse
@@ -56,7 +56,10 @@ else:
 identifier = args.identifier[0]
 if args.Filtered:
     # read in the centrally r-processed filtered methylated and unmethylated intensities
-    pheno = pd.read_csv(os.path.join(input_dir, "Reduced_Pheno_Info.csv"), index_col=0)
+    if '_half' in identifier:
+        pheno = pd.read_csv(os.path.join(preprocessing_results_dir, "Reduced_Pheno_Info.csv"), index_col=0)
+    else:
+        pheno = pd.read_csv(os.path.join(input_dir, (identifier + '_pheno.txt')), index_col=0, sep='\t').T
     unmeth = pd.read_csv(os.path.join(input_dir, "Filtered_Unmethylated.csv"), index_col=0)
     unmeth.astype(np.float64)
     meth = pd.read_csv(os.path.join(input_dir, "Filtered_Methylated.csv"), index_col=0)
@@ -81,6 +84,7 @@ else:
                  os.path.join(input_dir, "idat"), os.path.join(input_dir, (identifier + "_pheno.txt")), output_dir,
                  os.path.join(input_dir, "GPL13534_HumanMethylation450_15017482_v.1.1.csv"), identifier],
                 capture_output=True)
+        print(preprocessing.stderr)
         print('preprocessing complete')
     except:
         print('There was an error in preprocessing')
@@ -90,7 +94,7 @@ else:
     if '_half' in identifier:
         pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Reduced_Pheno_Info.csv"), index_col=0)
     else:
-        pheno = pd.read_csv(os.path.join(input_dir, (identifier + "_pheno.txt")), index_col=0)
+        pheno = pd.read_csv(os.path.join(input_dir, (identifier + "_pheno.txt")), index_col=0, sep='\t').T
     unmeth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Unmethylated.csv"), index_col=0)
     unmeth.astype(np.float64)
     meth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Methylated.csv"), index_col=0)

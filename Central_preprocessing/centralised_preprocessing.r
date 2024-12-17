@@ -18,7 +18,7 @@ if (!require("tidyverse", quietly = TRUE))
 	install.packages("tidyverse")
 library(tidyverse)
 ##### source the Exeter functions needed for the pipeline - Change to the local filepath that contains these functions
-lapply(list.files("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Federated_Differential_Methylation_Analysis\\Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
+lapply(list.files("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
 ## Set the working directory
 setwd(working_dir) # set working directory
 ## create a folder for the QC output
@@ -272,8 +272,8 @@ gc()
 
 ##### Removal of cross-hybridisation probes ###############
 # load the cpgs to be removed - this step should probably be preformed locally
-crosshyb <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt"))
-snpProbes <- read.table(url("https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt"), header = TRUE)
+crosshyb <- read.table("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc2.txt")
+snpProbes <- read.table("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc1.txt", header = TRUE)
 msetEPIC.pf <- msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
 kept_probes <- filterSNPprobesEdit(msetEPIC.pf, population = "EUR", maf = 0.05)
 msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]
@@ -283,17 +283,17 @@ msetEPIC.pf <- msetEPIC.pf[-grep("rs", rownames(msetEPIC.pf@assayData$betas)), ]
 setwd(working_dir)
 
 # save the filtered MethylumiSet object for r-based normalisation
-save(msetEPIC.pf, QCmetrics, file = file.path(QC_output,"preprocessed_MethyLumiSet.RData"))
+save(msetEPIC.pf, QCmetrics, file = file.path(QC_output,"Filtered_MethyLumiSet.RData"))
 
 # betas
 raw_betas <- betas(msetEPIC.pf)
-write.csv(raw_betas, file.path(QC_output, "Preprocessed_betas.csv"))
+write.csv(raw_betas, file.path(QC_output, "Filtered_Betas.csv"))
 # methylated values
 raw_methylated <- methylumi::methylated(msetEPIC.pf)
-write.csv(raw_methylated, file.path(QC_output, "Preprocessed_methylated_intensities.csv"))
+write.csv(raw_methylated, file.path(QC_output, "Filtered_Methylated.csv"))
 # unmethylated values
 raw_unmethylated <- methylumi::unmethylated(msetEPIC.pf)
-write.csv(raw_unmethylated, file.path(QC_output, "Preprocessed_unmethylated_intensities.csv"))
+write.csv(raw_unmethylated, file.path(QC_output, "Filtered_Unmethylated.csv"))
 
 write.csv(QCmetrics, file.path(QC_output, "pre_norm_pheno_information.csv"))
 

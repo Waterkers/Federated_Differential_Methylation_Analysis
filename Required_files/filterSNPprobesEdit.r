@@ -8,7 +8,7 @@
 #' @export
 
 filterSNPprobesEdit<-function(betas, population = "EUR", maf = 0.05){
-	snpProbes <- read.table('/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc1.txt', header = TRUE) #url("https://pmc.ncbi.nlm.nih.gov/articles/instance/4909830/bin/mmc1.txt")
+	snpProbes <- read.table('/cosybio/project/vanElferen//FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc1.txt', header = TRUE) #url("https://pmc.ncbi.nlm.nih.gov/articles/instance/4909830/bin/mmc1.txt")
 	if(sum(startsWith(rownames(betas), "cg"))/nrow(betas) == 0){
 		stop("Rownames are not cg identifiers")
 	}
