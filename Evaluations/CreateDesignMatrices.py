@@ -13,7 +13,7 @@ def createDesignMatrix66351(pheno_df_path: str, small: bool = True, federated: b
     pheno["Brain_region"] = pheno.loc[:, "Brain_region"].str.strip()
     pheno["Brain_region"] = pheno.loc[:, "Brain_region"].str.replace(" ", "")
     x = pheno.loc[:, ["Diagnosis", "Age", "Sex", "sentrix_id",
-                      "Brain_region"]]  # design matrix with the dependent/explainatory variables to be included in the model
+                      "Brain_region"]].copy(deep=True)  # design matrix with the dependent/explainatory variables to be included in the model
     # The design matrix needs to consist of numeric representations of the covariates to be included in the model, i.e. binary diagnosis, binary sex, dummy sentrix etc.
     x["AD"] = 0
     x.loc[x["Diagnosis"] == "diagnosis: AD", "AD"] = 1  # create binary diagnosis with 1 = AD and 0 = CTR
@@ -137,9 +137,9 @@ def createDesignMatrix105109(pheno_df_path: str, small: bool = True, federated: 
                       "Brain_region"]]  # design matrix with the dependent/explainatory variables to be included in the model
     # The design matrix needs to consist of numeric representations of the covariates to be included in the model, i.e. binary diagnosis, binary sex, dummy sentrix etc.
     x["AD"] = 0
-    x.loc[x["Diagnosis"] == " Alzheimer's disease", "AD"] = 1  # create binary diagnosis with 1 = AD and 0 = CTR
+    x.loc[x["Diagnosis"] == "post-mortem diagnosis: Alzheimer's disease", "AD"] = 1  # create binary diagnosis with 1 = AD and 0 = CTR
     x["CTRL"] = 0
-    x.loc[x["Diagnosis"] == " Control", "CTRL"] = 1
+    x.loc[x["Diagnosis"] == "post-mortem diagnosis: Control", "CTRL"] = 1
     x.loc[x["Sex"] == " F", "Sex"] = 1
     x.loc[x["Sex"] == " M", "Sex"] = 0
     # x.loc[x["Sex"] == " F", "Sex"] = 1 #create binary sex with 1 = F and 0 = M
@@ -257,9 +257,9 @@ def createDesignMatrix134379(pheno_df_path: str, small: bool = True, federated: 
                       "Brain_region"]]  # design matrix with the dependent/explainatory variables to be included in the model
     # The design matrix needs to consist of numeric representations of the covariates to be included in the model, i.e. binary diagnosis, binary sex, dummy sentrix etc.
     x["AD"] = 0
-    x.loc[x["Diagnosis"] == " AD", "AD"] = 1  # create binary diagnosis with 1 = AD and 0 = CTR
+    x.loc[x["Diagnosis"] == "diagnosis: AD", "AD"] = 1  # create binary diagnosis with 1 = AD and 0 = CTR
     x["CTRL"] = 0
-    x.loc[x["Diagnosis"] == " CTRL", "CTRL"] = 1
+    x.loc[x["Diagnosis"] == "diagnosis: ND", "CTRL"] = 1
     x.loc[x["Sex"] == " F", "Sex"] = 1
     x.loc[x["Sex"] == " M", "Sex"] = 0
     # x.loc[x["Sex"] == " F", "Sex"] = 1 #create binary sex with 1 = F and 0 = M
