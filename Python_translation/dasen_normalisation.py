@@ -6,7 +6,7 @@ from statsmodels.distributions.mixture_rvs import mixture_rvs
 try:
     from Federated_Differential_Methylation_Analysis.Python_translation import DensityR
 except ModuleNotFoundError:
-    sys.path.append("/cosybio/project/vanElferen/FedEWAS")
+    sys.path.append('/home/silke/Documents/Fed_EWAS')
     from Federated_Differential_Methylation_Analysis.Python_translation import DensityR
 import statsmodels.api as sm
 import re

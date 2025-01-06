@@ -18,7 +18,7 @@ if (!require("tidyverse", quietly = TRUE))
 	install.packages("tidyverse")
 library(tidyverse)
 ##### source the Exeter functions needed for the pipeline - Change to the local filepath that contains these functions
-lapply(list.files("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
+lapply(list.files("/home/silke/Documents/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
 ## Set the working directory
 setwd(working_dir) # set working directory
 ## create a folder for the QC output
@@ -32,11 +32,11 @@ if(!dir.exists(file.path(QC_output, "Plots"))){
 
 preprocess <- function(idat, pheno_info, intens_threshold) {
 # loading in actual data - GSE66351
-pheno1 <- read.table(pheno_info)
+pheno1 <- read.table(pheno_info, row.names = 1)
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
-colnames(pheno1)<- pheno1[1,]
-pheno1 <- pheno1[2:191,]
+#colnames(pheno1)<- pheno1[1,]
+#pheno1 <- pheno1[2:191,]
 
 print("Phenotype information imported")
 
@@ -272,8 +272,8 @@ gc()
 
 ##### Removal of cross-hybridisation probes ###############
 # load the cpgs to be removed - this step should probably be preformed locally
-crosshyb <- read.table("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc2.txt")
-snpProbes <- read.table("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc1.txt", header = TRUE)
+crosshyb <- read.table("/home/silke/Documents/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc2.txt")
+snpProbes <- read.table("/home/silke/Documents/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc1.txt", header = TRUE)
 msetEPIC.pf <- msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
 kept_probes <- filterSNPprobesEdit(msetEPIC.pf, population = "EUR", maf = 0.05)
 msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]

@@ -1,11 +1,11 @@
-#input <- commandArgs(trailingOnly = TRUE)
+input <- commandArgs(trailingOnly = TRUE)
 
 ## save input commands as local objects
-idat <- '/home/silke/Documents/Fed_EWAS/Data/GSE66351_RAW/idat'# input[1]
-pheno_info <- '/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files/GSE66351_pheno.txt'#input[2]
-working_dir <- '/home/silke/Documents/Fed_EWAS/Data/'#input[3]
-manifest_path <- '/home/silke/Documents/Fed_EWAS/Data/GSE66351_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv'#input[4]
-identifier <- 'GSE66351_half' #input[5]
+idat <- input[1] # '/home/silke/Documents/Fed_EWAS/Data/GSE66351_RAW/idat'
+pheno_info <- input[2] #'/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files/GSE66351_pheno.txt'
+working_dir <- input[3] #'/home/silke/Documents/Fed_EWAS/Data/'#input[3]
+manifest_path <- input[4] #'/home/silke/Documents/Fed_EWAS/Data/GSE66351_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv'#input[4]
+identifier <- input[5] #'GSE66351_half' #input[5]
 
 ##### Start with installing the required packages ########
 need <- c("wateRmelon", "methylumi", "ChAMP")
@@ -32,11 +32,11 @@ if(!dir.exists(file.path(QC_output, "Plots"))){
 set.seed(42)
 preprocess <- function(idat, pheno_info, intens_threshold) {
 # loading in actual data - GSE66351
-pheno1 <- read.table(pheno_info)
+pheno1 <- read.table(pheno_info, row.names = 1)
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
-colnames(pheno1)<- pheno1[1,]
-pheno1 <- pheno1[2:191,]
+#colnames(pheno1)<- pheno1[1,]
+#pheno1 <- pheno1[2:191,]
 
 print("Phenotype information imported")
 

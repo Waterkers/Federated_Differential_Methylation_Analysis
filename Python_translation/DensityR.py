@@ -17,7 +17,7 @@ pyximport.install(setup_args={"script_args" : ["--verbose"]})
 try:
     from Federated_Differential_Methylation_Analysis.Python_translation.linbinR import fast_linbin
 except ModuleNotFoundError:
-    sys.path.append('/cosybio/project/vanElferen/FedEWAS')
+    sys.path.append('/home/silke/Documents/FedEWAS')
     from Federated_Differential_Methylation_Analysis.Python_translation.linbinR import fast_linbin
 # Kernels Switch for estimators
 
