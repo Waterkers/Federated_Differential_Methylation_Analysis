@@ -43,7 +43,7 @@ print("Phenotype information imported")
 Sample_ID <- getBarcodes(idat)
 
 pheno1 <- cbind(pheno1, Sample_ID)
-write.csv(pheno1_half, file.path(QC_output, "Pheno_Info.csv"))
+  write.csv(pheno1_half, file.path(QC_output, "Pheno_Info.csv"))
 data <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = idat)
 
 save(data, pheno1, file = file.path(QC_output, "methylumiSet_PhenoDatafrma.RData"))
