@@ -167,14 +167,14 @@ except:
 # check if the design matrix exists
 if not os.path.exists(os.path.join(input_dir, "Small_EWAS_design.csv")):
 
-    if '_half' in identifier:
-        designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"Reduced_Pheno_Info.csv"),
-                            small=True, federated=False, per_region=False,
-                            output_path=input_dir)
-    else:
-        designMatricesFunctions[identifier](pheno_df_path=os.path.join(input_dir, f"{identifier}_pheno.txt"),
-                                small=True, federated=False, per_region=False,
-                                output_path=input_dir)
+    #if '_half' in identifier:
+    designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"Reduced_Pheno_Info.csv"),
+                        small=True, federated=False, per_region=False,
+                        output_path=input_dir)
+    #else:
+        #designMatricesFunctions[identifier](pheno_df_path=os.path.join(input_dir, f"{identifier}_pheno.txt"),
+        #                        small=True, federated=False, per_region=False,
+        #                        output_path=input_dir)
 
 design_matrix = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design.csv"), index_col=0)
 print("EWAS")
