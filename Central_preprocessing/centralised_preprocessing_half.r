@@ -32,11 +32,11 @@ if(!dir.exists(file.path(QC_output, "Plots"))){
 set.seed(42)
 preprocess <- function(idat, pheno_info, intens_threshold) {
 # loading in actual data - GSE66351
-pheno1 <- read.table(pheno_info)
+pheno1 <- read.table(pheno_info, row.names = 1)
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
-colnames(pheno1)<- pheno1[1,]
-pheno1 <- pheno1[2:191,]
+#colnames(pheno1)<- pheno1[1,]
+#pheno1 <- pheno1[2:191,]
 
 print("Phenotype information imported")
 
