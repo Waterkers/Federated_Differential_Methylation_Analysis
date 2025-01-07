@@ -94,7 +94,7 @@ else:
     if '_half' in identifier:
         pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Reduced_Pheno_Info.csv"), index_col=0)
     else:
-        pheno = pd.read_csv(os.path.join(input_dir, (identifier + "_pheno.txt")), index_col=0, sep='\t').T
+        pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Pheno_Info.csv"), index_col=0)
     unmeth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Unmethylated.csv"), index_col=0)
     unmeth.astype(np.float64)
     meth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Methylated.csv"), index_col=0)
@@ -133,6 +133,16 @@ if "Sentrix_ID" in pheno.columns:
     sentrixCol = "Sentrix_ID"
 elif "sentrix_id" in pheno.columns:
     sentrixCol = "sentrix_id"
+else:
+    print('there is no sentrix_id information in the pheno information, generating it from sample barcodes')
+    pheno['Sentrix_ID'] = [i.split('_')[1] for i in pheno.Sample_ID]
+    sentrixCol = 'Sentrix_ID'
+    print('saving pheno information with Sentrix_ID column')
+    if '_half' in identifier:
+        pheno.to_csv(os.path.join(preprocessing_result_dir,"Reduced_Pheno_Info.csv"))
+    else:
+        pheno.to_csv(os.path.join(preprocessing_result_dir, "Pheno_Info.csv"))
+
 data_to_plot = pd.concat([Principle_components, pheno.loc[:, sentrixCol]], axis=1)
 # exploratory grid plot to visualise the correlation between the PCs and Sentrix_ID
 g = sns.PairGrid(data_to_plot, hue= sentrixCol)

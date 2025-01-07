@@ -32,7 +32,11 @@ if(!dir.exists(file.path(QC_output, "Plots"))){
 set.seed(42)
 preprocess <- function(idat, pheno_info, intens_threshold) {
 # loading in actual data - GSE66351
-pheno1 <- read.table(pheno_info, row.names = 1)
+  if (is.element(identifier, c('GSE134379', 'GSE134379_half'))){
+    pheno1 <- read.table(pheno_info, row.names = 1, nrow=nrow(read.table(pheno_info))-5)
+  }
+  else {pheno1 <- read.table(pheno_info, row.names = 1)}
+
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
 #colnames(pheno1)<- pheno1[1,]
