@@ -52,8 +52,8 @@ def EWAS_central(design_matrix, beta_values):
     result_pvalue = pd.DataFrame(p_value, index=beta_values.index, columns=design_matrix.columns)
 
     #create a final results dataframe that contains the coefficient, standard error and p-value of the diagnosis covariate included in the linear regression
-    results_diagnosis = pd.DataFrame({"Diagnosis_Coef":result_coef["Diagnosis"], "Diagnosis_StanErr":result_staner["Diagnosis"],
-        "Diagnosis_Pvalue":result_pvalue["Diagnosis"],
-        "Diagnosis_CorP":results_corp["Diagnosis"]}, index=beta_values.index)
+    results_diagnosis = pd.DataFrame({"Diagnosis_Coef": result_coef["AD"], "Diagnosis_StanErr": result_staner["AD"],
+                                      "Diagnosis_Pvalue": result_pvalue["AD"],
+                                      "Diagnosis_CorP": results_corp["AD"]}, index=beta_values.index)
     results_EWAS = pd.concat([result_coef, result_staner, result_pvalue, results_corp], axis = 1, keys = ["Coefficient", "Standard Error", "P-value", "Corrected P-value"])
     return results_diagnosis, results_EWAS
