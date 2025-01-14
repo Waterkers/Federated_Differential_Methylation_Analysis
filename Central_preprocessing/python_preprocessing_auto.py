@@ -188,12 +188,12 @@ if not os.path.exists(os.path.join(input_dir, "Small_EWAS_design.csv")):
 
 design_matrix = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design.csv"), index_col=0)
 print("EWAS")
-results_diagnosis, results_ewas = EWAS_central.EWAS_central(design_matrix, normalised_betas)
+results_ewas = EWAS_central.EWAS_central(design_matrix, normalised_betas)
 
 # create an output table with the top (genomewide) significant probes and their associated gene with the metrics
 gene_annotations = annotation.loc[:, "UCSC_RefGene_Name"]
 gene_annotations = gene_annotations.loc[set(results_ewas.index.values).intersection(set(annotation_data.index.values))]
-final_results_table = pd.DataFrame({"Associated Gene":gene_annotations, "Methylation Change":results_ewas.loc[:,("Coefficient", "Diagnosis")], "Corrected P-value":results_ewas.loc[:,("Corrected P-value", "Diagnosis")]})
+final_results_table = pd.DataFrame({"Associated Gene":gene_annotations, "Methylation Change":results_ewas.loc[:,("Coefficient", "AD")], "Corrected P-value":results_ewas.loc[:,("Corrected P-value", "Diagnosis")]})
 final_results_table.sort_values(by = ["Corrected P-value"], inplace = True)
 # save the EWAS results to the output directory
 final_results_table.to_csv(os.path.join(output_dir_QC, (identifier + "_results_diagnosis_regression_python.csv")))
