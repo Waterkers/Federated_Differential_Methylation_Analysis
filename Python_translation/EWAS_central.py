@@ -6,6 +6,7 @@ def EWAS_central(design_matrix, beta_values):
     import pandas as pd
     import scipy.stats
     from statsmodels.stats.multitest import multipletests
+    from tqdm import tqdm
     x_matrix = design_matrix.values
     y_matrix = beta_values.values
 
@@ -23,7 +24,7 @@ def EWAS_central(design_matrix, beta_values):
     p_value = []
     corrected_pvalue = []
 
-    for i in range(0, n):
+    for i in tqdm(range(0, n)):
         y_m = y_matrix[i, :]
         x_t = x_matrix.T @ x_matrix
         x_t_y = x_matrix.T @ y_m
@@ -53,4 +54,4 @@ def EWAS_central(design_matrix, beta_values):
 
     #create a final results dataframe that contains the coefficient, standard error and p-value of the diagnosis covariate included in the linear regression
     results_EWAS = pd.concat([result_coef, result_staner, result_pvalue, results_corp], axis = 1, keys = ["Coefficient", "Standard Error", "P-value", "Corrected P-value"])
-    return results_EWAS
+    return results_EWAS, SSE
