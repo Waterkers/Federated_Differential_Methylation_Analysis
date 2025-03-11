@@ -147,8 +147,8 @@ class eBayesLocal:
 
 
     def tmixture_matrix(self, var_prior_lim=False, proportion=0.01):
-        tstat = self.results["t"]
-        stdev_unscaled = self.stdev_unscaled
+        tstat = self.results["t"].values
+        stdev_unscaled = self.stdev_unscaled.values
         df_total = self.df_total
         ncoef = self.results["t"].shape[1]
         v0 = np.zeros(ncoef)
@@ -240,7 +240,7 @@ class eBayesLocal:
 
     def topTableT(self, adjust="fdr_bh", p_value=1.0, lfc=0, confint=0.95):
         feature_names = self.beta.index.to_list()
-        self.results["logFC"] = pd.Series(self.beta[:, 0], index=feature_names)
+        self.results["logFC"] = pd.Series(self.beta.values[:, 0], index=feature_names)
 
         # confidence intervals for LogFC
         if confint:
@@ -259,8 +259,8 @@ class eBayesLocal:
         # remove 'df_prior', 's2_prior', 's2_post', 'df_total','var_prior'
         for key in ['df_prior', 's2_prior', 's2_post', 'var_prior', "p_value"]:
             del self.table[key]
-        self.table["t"] = pd.Series(self.table["t"][:, 0], index=feature_names)
-        self.table["lods"] = pd.Series(self.table["lods"][:, 0], index=feature_names)
+        self.table["t"] = pd.Series(self.table["t"].values[:, 0], index=feature_names)
+        self.table["lods"] = pd.Series(self.table["lods"].values[:, 0], index=feature_names)
         self.table = pd.DataFrame.from_dict(self.table)
 
 
