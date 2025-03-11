@@ -1,0 +1,8 @@
+*.csv
+*Test.py
+Python_translation/*Test.py
+Python_translation/*.csv
+Python_translation/*.so
+Evaluations/__pycache__/
+Python_translation/__pycache__/
+Python_translation/build/
