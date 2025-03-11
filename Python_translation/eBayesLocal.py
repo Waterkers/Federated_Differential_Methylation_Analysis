@@ -1,13 +1,34 @@
 import numpy as np
 import pandas as pd
+from copy import copy
 from scipy.special import digamma,polygamma
 import sys
+from scipy.stats import t
+from statsmodels.stats.multitest import multipletests
+
 
 class eBayesLocal:
-    def __init__(self,df):
+    def __init__(self,df_path, sse_path, n_samples):
+        df = df_path # pd.read_csv(df_path, index_col=0, header=[0,1])
+        #print(df.head())
         self.linearModel = df
-        self.beta = df.loc[pd.IndexSlice('Coefficient',None)]
-        self.sigma = None
+        self.n_samples = n_samples
+        self.beta = df.loc[:, pd.IndexSlice['Coefficient',:]].droplevel(0, axis=1)
+        self.stdev_unscaled = df.loc[:, pd.IndexSlice['Standard Error',:]].droplevel(0, axis=1)
+        self.SSE = sse_path
+        #with open(sse_path, 'r') as file:
+        #    for i in file.readlines():
+        #        self.SSE.append(i)
+        self.SSE = np.array(self.SSE)
+        if (self.n_samples-self.beta.shape[1]) == 0:
+            print('degrees of freedom technically 0 because too few samples, for debug purposes set degrees of freedom to 1')
+            self.df_residual = np.ones(self.beta.shape[0]) * 1
+            self.var = self.SSE / 1
+        else:
+            self.df_residual = np.ones(self.beta.shape[0]) * (self.n_samples-self.beta.shape[1])
+            self.var = self.SSE / (self.n_samples - self.beta.shape[1])
+        self.table = None
+        self.sigma = np.sqrt(self.var)
 
     def trigamma(self ,x):
         return polygamma(1 ,x)
@@ -218,7 +239,7 @@ class eBayesLocal:
 
 
     def topTableT(self, adjust="fdr_bh", p_value=1.0, lfc=0, confint=0.95):
-        feature_names = self.global_probes
+        feature_names = self.beta.index.to_list()
         self.results["logFC"] = pd.Series(self.beta[:, 0], index=feature_names)
 
         # confidence intervals for LogFC
