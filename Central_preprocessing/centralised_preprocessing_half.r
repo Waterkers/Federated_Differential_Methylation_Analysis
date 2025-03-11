@@ -49,7 +49,7 @@ Sample_ID <- getBarcodes(idat)
 pheno1 <- cbind(pheno1, Sample_ID)
 
 
-pheno1_half <- as.data.frame(pheno1[sample(nrow(pheno1), 20),])
+pheno1_half <- as.data.frame(pheno1[sample(nrow(pheno1), 50),])
   write.csv(pheno1_half, file.path(QC_output, "Reduced_Pheno_Info.csv"))
 # save the reduced phenotype file for downstream use
 
