@@ -6,7 +6,7 @@ def EWAS_central(design_matrix, beta_values):
     import pandas as pd
     import scipy.stats
     from statsmodels.stats.multitest import multipletests
-    from tqdm import tqdm
+    from tqdm.contrib.telegram import tqdm
     x_matrix = design_matrix.values
     y_matrix = beta_values.values
 
@@ -24,7 +24,7 @@ def EWAS_central(design_matrix, beta_values):
     p_value = []
     corrected_pvalue = []
 
-    for i in tqdm(range(0, n)):
+    for i in tqdm(range(0, n), token='7885595681:AAFmqfAkTqvAdOCRWF1RMl0s26XUmj5_Yv8', chat_id='5671488828'):
         y_m = y_matrix[i, :]
         x_t = x_matrix.T @ x_matrix
         x_t_y = x_matrix.T @ y_m
