@@ -1,0 +1,5 @@
+Evaluations/__pycache__/
+Python_translation/__pycache__/
+Python_translation/build/
+Python_translation/linbinR.cpython-37m-x86_64-linux-gnu.so
+*.yml
