@@ -58,7 +58,7 @@ def createDesignMatrix66351(pheno_df_path: str, small: bool = True, federated: b
                         x_Tcen[id] = (x_Tcen["sentrix_id"] == id).astype(int)
                     t_cen = x_Tcen.drop(columns=["Diagnosis", "Brain_region", "sentrix_id"])
                     if output_path:
-                        t_cen.to_csv(os.path.join(output_path, "Small_EWAS_design.csv"))
+                        t_cen.to_csv(os.path.join(output_path, "Small_%s_EWAS_design_local.csv" % (tis)))
                     else:
                         t_cen.to_csv("Small_%s_EWAS_design_local.csv" % (tis))
             else:
@@ -69,7 +69,7 @@ def createDesignMatrix66351(pheno_df_path: str, small: bool = True, federated: b
                     x_cen[id] = (x_cen["sentrix_id"] == id).astype(int)
                 x_cen.drop(columns=["Diagnosis", "sentrix_id", "Brain_region"], inplace=True)
                 if output_path:
-                    x_cen.to_csv(os.path.join(output_path, "Small_EWAS_design.csv"))
+                    x_cen.to_csv(os.path.join(output_path, "Small_EWAS_design_local.csv"))
                 else:
                     x_cen.to_csv("Small_EWAS_design_local.csv")
     else:
@@ -86,7 +86,7 @@ def createDesignMatrix66351(pheno_df_path: str, small: bool = True, federated: b
                     # x.loc[pheno["Brain_region"] == (" " + tis), :]
                     t_large = x_large.drop(columns=["Brain_region"])
                     if output_path:
-                        t_large.to_csv(os.path.join(output_path, "Small_EWAS_design.csv"))
+                        t_large.to_csv(os.path.join(output_path, "Full_%s_EWAS_design.csv" % (tis)))
                     else:
                         t_large.to_csv("Full_%s_EWAS_design.csv" % (tis))
 
@@ -178,7 +178,7 @@ def createDesignMatrix105109(pheno_df_path: str, small: bool = True, federated: 
                         x_Tcen[id] = (x_Tcen["Sentrix_ID"] == id).astype(int)
                     t_cen = x_Tcen.drop(columns=["Diagnosis", "Source_Tissue", "Sentrix_ID"])
                     if output_path:
-                        t_cen.to_csv(os.path.join(output_path, "Small_EWAS_design.csv"))
+                        t_cen.to_csv(os.path.join(output_path, "Small_%s_EWAS_design_local.csv" % (tis)))
                     else:
                         t_cen.to_csv("Small_%s_EWAS_design_local.csv" % (tis))
             else:
@@ -189,7 +189,7 @@ def createDesignMatrix105109(pheno_df_path: str, small: bool = True, federated: 
                     x_cen[id] = (x_cen["Sentrix_ID"] == id).astype(int)
                 x_cen.drop(columns=["Diagnosis", "Sentrix_ID", "Source_Tissue"], inplace=True)
                 if output_path:
-                    x_cen.to_csv(os.path.join(output_path, "Small_EWAS_design.csv"))
+                    x_cen.to_csv(os.path.join(output_path, "Small_EWAS_design_local.csv"))
                 else:
                     x_cen.to_csv("Small_EWAS_design_local.csv")
     else:
@@ -206,7 +206,7 @@ def createDesignMatrix105109(pheno_df_path: str, small: bool = True, federated: 
                     # x.loc[pheno["Source_Tissue"] == (" " + tis), :]
                     t_large = x_large.drop(columns=["Source_Tissue"])
                     if output_path:
-                        t_large.to_csv(os.path.join(output_path, "Small_EWAS_design.csv"))
+                        t_large.to_csv(os.path.join(output_path, "Full_%s_EWAS_design.csv" % (tis)))
                     else:
                         t_large.to_csv("Full_%s_EWAS_design.csv" % (tis))
 
@@ -214,7 +214,7 @@ def createDesignMatrix105109(pheno_df_path: str, small: bool = True, federated: 
                 if output_path:
                     x_large.loc[:, ["AD", "CTRL", "Age", "Sex", "Sentrix_ID",
                                     "Cell_Type1", "Cell_Type2", "Cell_Type3", "Cell_Type4", "Cell_Type5"]].to_csv(
-                        os.path.join(output_path, "Small_EWAS_design.csv"))
+                        os.path.join(output_path, "Full_EWAS_design.csv"))
                 else:
                     x_large.loc[:, ["AD", "CTRL", "Age", "Sex", "Sentrix_ID",
                                     "Cell_Type1", "Cell_Type2", "Cell_Type3", "Cell_Type4", "Cell_Type5"]].to_csv(
@@ -298,7 +298,7 @@ def createDesignMatrix134379(pheno_df_path: str, small: bool = True, federated: 
                         x_Tcen[id] = (x_Tcen["Sentrix_ID"] == id).astype(int)
                     t_cen = x_Tcen.drop(columns=["Diagnosis", "Source_region", "Sentrix_ID"])
                     if output_path:
-                        t_cen.to_csv(os.path.join(output_path, "Small_EWAS_design.csv"))
+                        t_cen.to_csv(os.path.join(output_path, "Small_EWAS_design_local.csv"))
                     else:
                         t_cen.to_csv("Small_%s_EWAS_design_local.csv" % (tis))
             else:
@@ -309,7 +309,7 @@ def createDesignMatrix134379(pheno_df_path: str, small: bool = True, federated: 
                     x_cen[id] = (x_cen["Sentrix_ID"] == id).astype(int)
                 x_cen.drop(columns=["Diagnosis", "Sentrix_ID", "Source_region"], inplace=True)
                 if output_path:
-                    x_cen.to_csv(os.path.join(output_path, "Small_EWAS_design.csv"))
+                    x_cen.to_csv(os.path.join(output_path, "Small_EWAS_design_local.csv"))
                 else:
                     x_cen.to_csv("Small_EWAS_design_local.csv")
     else:
@@ -326,7 +326,7 @@ def createDesignMatrix134379(pheno_df_path: str, small: bool = True, federated: 
                     # x.loc[pheno["Source_region"] == (" " + tis), :]
                     t_large = x_large.drop(columns=["Source_region"])
                     if output_path:
-                        t_large.to_csv(os.path.join(output_path, "Small_EWAS_design.csv"))
+                        t_large.to_csv(os.path.join(output_path, "Full_%s_EWAS_design.csv" % (tis)))
                     else:
                         t_large.to_csv("Full_%s_EWAS_design.csv" % (tis))
 
@@ -334,7 +334,7 @@ def createDesignMatrix134379(pheno_df_path: str, small: bool = True, federated: 
                 if output_path:
                     x_large.loc[:, ["AD", "CTRL", "Age", "Sex", "Sentrix_ID",
                                     "Cell_Type1", "Cell_Type2", "Cell_Type3", "Cell_Type4", "Cell_Type5"]].to_csv(
-                        os.path.join(output_path, "Small_EWAS_design.csv"))
+                        os.path.join(output_path, "Full_EWAS_design.csv"))
                 else:
                     x_large.loc[:, ["AD", "CTRL", "Age", "Sex", "Sentrix_ID",
                                     "Cell_Type1", "Cell_Type2", "Cell_Type3", "Cell_Type4", "Cell_Type5"]].to_csv(
