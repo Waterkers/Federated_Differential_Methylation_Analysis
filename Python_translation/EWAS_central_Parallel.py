@@ -1,10 +1,8 @@
-from pyexpat.errors import XML_ERROR_FEATURE_REQUIRES_XML_DTD
 import numpy as np
 import pandas as pd
 import scipy.stats
 import yaml
 from statsmodels.stats.multitest import multipletests
-from tqdm.contrib.concurrent import process_map
 from tqdm.contrib.telegram import tqdm
 import multiprocessing
 import os
@@ -28,19 +26,12 @@ def EWASCalculation(row, x_matrix):
     x_t_y = x_matrix.T @ y_m
     x_t_inv = np.linalg.inv(x_t)
     coef = x_t_inv @ x_t_y  # beta
-    #coefficient.append(coef)
     stan_er = np.sqrt(np.diag(x_t_inv))  # stdev_unscaled
-    #standard_error.append(stan_er)
     m = x_matrix @ coef
-    #mu.append(m)
     stersq = np.sum((y_m - m) ** 2)
-    #SSE.append(stersq)
-
     t = coef / stan_er
-    #t_stat.append(t)
     df = row.shape[0] - 2  # degrees of freedom is defined as number of observations - 2
     p = scipy.stats.t.sf(abs(t), df)
-    #p_value.append(p)
     return coef, stan_er, m, stersq, t, p#{'coef':coef, 'stan_er':stan_er, 'm':m, 'stersq':stersq, 't':t, 'p':p}
 
 
