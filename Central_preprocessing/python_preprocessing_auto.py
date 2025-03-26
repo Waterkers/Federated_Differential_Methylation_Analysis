@@ -17,10 +17,10 @@ from scipy.stats import pearsonr
 import seaborn as sns
 import matplotlib.pyplot as plt
 try:
-    from Federated_Differential_Methylation_Analysis.Python_translation import EWAS_central
+    from Federated_Differential_Methylation_Analysis.Python_translation import EWAS_central_Parallel
 except ModuleNotFoundError:
     sys.path.append("/cosybio/project/vanElferen/FedEWAS")
-    from Federated_Differential_Methylation_Analysis.Python_translation import EWAS_central
+    from Federated_Differential_Methylation_Analysis.Python_translation import EWAS_central_Parallel
 try:
     from Federated_Differential_Methylation_Analysis.Evaluations.CreateDesignMatrices import createDesignMatrix66351, createDesignMatrix105109, createDesignMatrix134379
 except ModuleNotFoundError:
