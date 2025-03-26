@@ -12,7 +12,7 @@ from functools import partial
 import argparse
 
 
-config_file = '/home/silke/Documents/Fed_EWAS/telegrambot_config.yml'
+config_file = '/cosybio/project/vanElferen/FedEWAS/telegrambot_config.yml'
 with open(config_file) as configStream:
     config = yaml.load(configStream, Loader=yaml.Loader)
 
