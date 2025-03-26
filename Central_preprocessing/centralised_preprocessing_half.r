@@ -1,4 +1,4 @@
-#input <- commandArgs(trailingOnly = TRUE)
+input <- commandArgs(trailingOnly = TRUE)
 
 ## save input commands as local objects
 idat <- input[1]  # '/home/silke/Documents/FedEWAS/Data/GSE66351_RAW/idat'
