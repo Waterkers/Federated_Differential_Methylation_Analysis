@@ -1,10 +1,10 @@
 #input <- commandArgs(trailingOnly = TRUE)
 
 ## save input commands as local objects
-idat <- '/home/silke/Documents/Fed_EWAS/Data/GSE66351_RAW/idat'# input[1]
-pheno_info <- '/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files/GSE66351_pheno.txt'#input[2]
-working_dir <- '/home/silke/Documents/Fed_EWAS/Data/'#input[3]
-manifest_path <- '/home/silke/Documents/Fed_EWAS/Data/GSE66351_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv'#input[4]
+idat <- '/home/silke/Documents/FedEWAS/Data/GSE66351_RAW/idat'# input[1]
+pheno_info <- '/home/silke/Documents/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/GSE66351_pheno.txt'#input[2]
+working_dir <- '/home/silke/Documents/FedEWAS/Data/'#input[3]
+manifest_path <- '/home/silke/Documents/FedEWAS/Data/GSE66351_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv'#input[4]
 identifier <- 'GSE66351_half' #input[5]
 
 ##### Start with installing the required packages ########
@@ -18,7 +18,7 @@ if (!require("tidyverse", quietly = TRUE))
 	install.packages("tidyverse")
 library(tidyverse)
 ##### source the Exeter functions needed for the pipeline - Change to the local filepath that contains these functions
-lapply(list.files("/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
+lapply(list.files("/home/silke/Documents/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
 ## Set the working directory
 setwd(working_dir) # set working directory
 ## create a folder for the QC output
@@ -45,7 +45,7 @@ Sample_ID <- getBarcodes(idat)
 pheno1 <- cbind(pheno1, Sample_ID)
 
 
-pheno1_half <- as.data.frame(pheno1[sample(nrow(pheno1), 20),])
+pheno1_half <- as.data.frame(pheno1[sample(nrow(pheno1), 50),])
   write.csv(pheno1_half, file.path(QC_output, "Reduced_Pheno_Info.csv"))
 # save the reduced phenotype file for downstream use
 
@@ -53,7 +53,8 @@ pheno1_half <- as.data.frame(pheno1[sample(nrow(pheno1), 20),])
 barcodes_GSE66351_half <- pheno1_half$Sample_ID # my personal laptop cannot deal with all 190 samples so I'm trying it with the first 20 instead
 
 data <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = idat)
-
+# only use the first 1000 probes for a test run
+data <- data[0:1000, :]
 save(data, pheno1, file = file.path(QC_output, "methylumiSet_PhenoDatafrma.RData"))
 print("Finished reading and saving .idat files")
 
