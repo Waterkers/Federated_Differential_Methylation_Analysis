@@ -101,7 +101,7 @@ else:
     if '_half' in identifier:
         pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Reduced_Pheno_Info.csv"), index_col=0)
     else:
-        pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Pheno_Info.csv"), index_col=0)
+        pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "post_processing_Pheno_Information.csv"), index_col=0)
     unmeth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Unmethylated.csv"), index_col=0)
     unmeth.astype(np.float64)
     meth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Methylated.csv"), index_col=0)
@@ -148,7 +148,7 @@ else:
     if '_half' in identifier:
         pheno.to_csv(os.path.join(preprocessing_result_dir,"Reduced_Pheno_Info.csv"))
     else:
-        pheno.to_csv(os.path.join(preprocessing_result_dir, "Pheno_Info.csv"))
+        pheno.to_csv(os.path.join(preprocessing_result_dir, "post_processing_Pheno_Information.csv"))
 
 data_to_plot = pd.concat([Principle_components, pheno.loc[:, sentrixCol]], axis=1)
 # exploratory grid plot to visualise the correlation between the PCs and Sentrix_ID
