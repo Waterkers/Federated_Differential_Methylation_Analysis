@@ -298,9 +298,11 @@ write.csv(raw_methylated, file.path(QC_output, "Filtered_Methylated.csv"))
 # unmethylated values
 raw_unmethylated <- methylumi::unmethylated(msetEPIC.pf)
 write.csv(raw_unmethylated, file.path(QC_output, "Filtered_Unmethylated.csv"))
-
+# pheno before preprocessing with QC information
 write.csv(QCmetrics, file.path(QC_output, "pre_norm_pheno_information.csv"))
-
+# pheno information for samples included in the preprocessed data
+  postProcessPheno <- pheno1[match(colnames(raw_betas), pheno$Sample_ID)]
+  write.csv(postProcessPheno, file.path(QC_output, "post_processing_Pheno_Information.csv"))
 
 }
 
