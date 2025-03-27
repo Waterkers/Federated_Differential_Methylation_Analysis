@@ -185,11 +185,11 @@ except:
 if not os.path.exists(os.path.join(input_dir, "Small_EWAS_design_local.csv")):
 
     if '_half' in identifier:
-        designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"Reduced_Pheno_Info.csv"),
+        designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"post_processing_Pheno_Information.csv"),
                             small=True, federated=False, per_region=False,
                             output_path=input_dir)
     else:
-        designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"Pheno_Info.csv"),
+        designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"post_processing_Pheno_Information.csv"),
                                 small=True, federated=False, per_region=False,
                                 output_path=input_dir)
 
