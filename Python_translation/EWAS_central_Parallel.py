@@ -36,7 +36,7 @@ def EWASCalculation(row, x_matrix):
 
 
 
-def EWAS_central(design_matrix, beta_values):
+def EWAS_central(design_matrix, beta_values, identifier):
     x_matrix = design_matrix.values
     y_matrix = beta_values.values
 
@@ -51,7 +51,7 @@ def EWAS_central(design_matrix, beta_values):
     t_stat = []
     p_value = []
     corrected_pvalue = []
-    with multiprocessing.Pool(processes=max(int(os.cpu_count() / 2), 2)) as processPool, tqdm(total=int(n),
+    with multiprocessing.Pool(processes=max(int(os.cpu_count()- 2), 2)) as processPool, tqdm(total=int(n),
                                                                                               token=
                                                                                               config[
                                                                                                   'serverProgressBot'][
@@ -59,7 +59,7 @@ def EWAS_central(design_matrix, beta_values):
                                                                                               chat_id=
                                                                                               config[
                                                                                                   'serverProgressBot'][
-                                                                                                  'chat_id']) as pbar:
+                                                                                                  'chat_id'], desc=f'Central EWAS {identifier}') as pbar:
         EWASCalculationPartial = partial(EWASCalculation, x_matrix=x_matrix)
         for result in processPool.imap(EWASCalculationPartial, y_matrix):
             # increment the progress bar
