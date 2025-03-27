@@ -188,7 +188,7 @@ if not os.path.exists(os.path.join(input_dir, "Small_EWAS_design.csv")):
 design_matrix = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design.csv"), index_col=0)
 
 print("EWAS")
-results_diagnosis, results_ewas = EWAS_central.EWAS_central(design_matrix, normalised_betas, identifier)
+results_diagnosis, results_ewas = EWAS_central_Parallel.EWAS_central(design_matrix, normalised_betas, identifier)
 
 # create an output table with the top (genomewide) significant probes and their associated gene with the metrics
 gene_annotations = annotation.loc[:, "UCSC_RefGene_Name"]
