@@ -54,7 +54,7 @@ barcodes_GSE66351_half <- pheno1_half$Sample_ID # my personal laptop cannot deal
 
 data <- wateRmelon::readEPIC(barcodes = barcodes_GSE66351_half, pdat = pheno1_half, idatPath = idat)
 # only use the first 1000 probes for a test run
-data <- data[0:1000, :]
+data <- data[0:1000, ]
 save(data, pheno1, file = file.path(QC_output, "methylumiSet_PhenoDatafrma.RData"))
 print("Finished reading and saving .idat files")
 
