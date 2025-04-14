@@ -369,7 +369,7 @@ if __name__ == "__main__":
     parser.add_argument('output_path', type=str,help='path to folder to store the design matrices')
     parser.add_argument('-s', '--small', action='store_true', help='create small design matrices')
     parser.add_argument('-f', '--federated', action='store_true', help='create federated design matrices')
-    parser.add_argument('-h', '--half', action='store_true', default=False, help='create design matrices for subset based on Reduced_Pheno_Info.csv')
+    parser.add_argument('-h', '--half', action='store_true', help='create design matrices for subset based on Reduced_Pheno_Info.csv')
     parser.add_argument('--per_region', action='store_true', help='create per region design matrices')
     args = parser.parse_args()
     if '66351' in args.pheno_df_path:
