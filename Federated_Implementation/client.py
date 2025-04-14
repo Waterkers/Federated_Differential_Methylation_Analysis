@@ -342,7 +342,8 @@ class Client:
             weighted = True
             W = np.sqrt(self.weights)
             y_matrix = np.multiply(y_matrix,W) 
-
+        # TODO implement progress bar
+        # TODO implement option for multiprocesing - speed-up
         for i in range(0,n):
             y = y_matrix[i,:]
             if weighted:
