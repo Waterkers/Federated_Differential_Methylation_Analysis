@@ -31,6 +31,8 @@ def createDataSplits(meth_path:str,
                      small_design_path:str,
                      full_design_path:str,
                      pheno_path:str,
+                     diagnosis_col:str,
+                     ad_diagnosis:str,
                      save_local:bool=True,
                      small_design_local_path:str=None,
                      full_design_local_path:str=None,
@@ -46,12 +48,14 @@ def createDataSplits(meth_path:str,
         if small_design_local_path:
             small_design_local = pd.read_csv(small_design_local_path)
         else:
-            small_design_local = small_design
+            small_design_local = None
         if full_design_local_path:
             full_design_local = pd.read_csv(full_design_local_path)
+        else:
+            full_design_local = None
 
     N_total = splits_pheno.shape[0] * 1.0 * 1.0
-    N_ad = splits_pheno.loc[splits_pheno["Diagnosis"] == " AD", :].shape[0] * 1.0 * 1.0
+    N_ad = splits_pheno.loc[splits_pheno[diagnosis_col] == ad_diagnosis, :].shape[0] * 1.0 * 1.0
     random_state = 42
     seed(random_state)
     n_splits = 3
@@ -74,7 +78,7 @@ def createDataSplits(meth_path:str,
     print(n_ad, sum(n_ad))
 
     splits = {}
-    ad = set(pheno.loc[pheno["Diagnosis"] == " AD", :].index.values)
+    ad = set(pheno.loc[pheno[diagnosis_col] == ad_diagnosis, :].index.values)
     other = set(pheno.index.values).difference(ad)  # .difference(fem)
     for i in range(0, n_splits - 1):
         b = set(sample(ad, n_ad[i]))
@@ -133,6 +137,8 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--distortion",)
     parser.add_argument("-o", "--output_path",)
     parser.add_argument("-p", "--pheno_path",)
+    parser.add_argument('--diagnosis_col', default='Diagnosis')
+    parser.add_argument('--ad_diagnosis', default=' AD')
     parser.add_argument("--save_local",action="store_true", default=False)
     parser.add_argument("--small_design_local_path", default=None,)
     parser.add_argument("--full_design_local_path", default=None,)
@@ -144,6 +150,8 @@ if __name__ == "__main__":
                          output_path=args.output_path,
                          distortion=args.distortion,
                          pheno_path=args.pheno_path,
+                         diagnosis_col=args.diagnosis_col,
+                         ad_diagnosis=args.ad_diagnosis,
                          save_local=args.save_local,
                          identifier=args.identifier,
                          small_design_path=args.small_design_path,
@@ -156,6 +164,8 @@ if __name__ == "__main__":
                              output_path=args.output_path,
                              distortion=args.distortion,
                              pheno_path=args.pheno_path,
+                             diagnosis_col=args.diagnosis_col,
+                             ad_diagnosis=args.ad_diagnosis,
                              save_local=args.save_local,
                              identifier=args.identifier,
                              small_design_path=args.small_design_path,
