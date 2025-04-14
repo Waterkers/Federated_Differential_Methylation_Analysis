@@ -4,10 +4,10 @@ import argparse
 
 def createDesignMatrix66351(pheno_df_path: str, small: bool = True, federated: bool = False, per_region: bool = False,
                        output_path: str = None, half: bool = False):
-    #if half:
-    pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
-    #else:
-        #pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False, sep='\t').T
+    if half:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
+    else:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False, sep='\t').T
     pheno["Diagnosis"] = pheno.loc[:, "Diagnosis"].str.strip()
     pheno["Sex"] = pheno.loc[:, "Sex"].str.strip()
     pheno["Brain_region"] = pheno.loc[:, "Brain_region"].str.strip()
@@ -125,10 +125,10 @@ def createDesignMatrix66351(pheno_df_path: str, small: bool = True, federated: b
 
 def createDesignMatrix105109(pheno_df_path: str, small: bool = True, federated: bool = False, per_region: bool = False,
                        output_path: str = None, half: bool = False):
-    # if half:
-    pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
-    # else:
-    # pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False, sep='\t').T
+    if half:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
+    else:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False, sep='\t').T
     pheno["Diagnosis"] = pheno.loc[:, "Diagnosis"].str.strip()
     pheno["Sex"] = pheno.loc[:, "Sex"].str.strip()
     pheno["Source_Tissue"] = pheno.loc[:, "Source_Tissue"].str.strip()
@@ -245,10 +245,10 @@ def createDesignMatrix105109(pheno_df_path: str, small: bool = True, federated: 
 
 def createDesignMatrix134379(pheno_df_path: str, small: bool = True, federated: bool = False, per_region: bool = False,
                        output_path: str = None, half: bool = False):
-    # if half:
-    pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
-    # else:
-    # pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False, sep='\t').T
+    if half:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False)
+    else:
+        pheno = pd.read_csv(pheno_df_path, index_col="Sample_ID", low_memory=False, sep='\t').T
     pheno["Diagnosis"] = pheno.loc[:, "Diagnosis"].str.strip()
     pheno["Sex"] = pheno.loc[:, "Sex"].str.strip()
     pheno["Source_region"] = pheno.loc[:, "Source_region"].str.strip()
@@ -369,19 +369,20 @@ if __name__ == "__main__":
     parser.add_argument('output_path', type=str,help='path to folder to store the design matrices')
     parser.add_argument('-s', '--small', action='store_true', help='create small design matrices')
     parser.add_argument('-f', '--federated', action='store_true', help='create federated design matrices')
+    parser.add_argument('-h', '--half', action='store_true', default=False, help='create design matrices for subset based on Reduced_Pheno_Info.csv')
     parser.add_argument('--per_region', action='store_true', help='create per region design matrices')
     args = parser.parse_args()
     if '66351' in args.pheno_df_path:
         createDesignMatrix66351(pheno_df_path=args.pheno_df_path,
                             small=args.small, federated=args.federated, per_region=args.per_region,
-                            output_path=args.output_path)
+                            output_path=args.output_path, half=args.half)
     elif '105109' in args.pheno_df_path:
         createDesignMatrix105109(pheno_df_path=args.pheno_df_path,
                                 small=args.small, federated=args.federated, per_region=args.per_region,
-                                output_path=args.output_path)
+                                output_path=args.output_path, half=args.half)
     elif '134379' in args.pheno_df_path:
         createDesignMatrix134379(pheno_df_path=args.pheno_df_path,
                                 small=args.small, federated=args.federated, per_region=args.per_region,
-                                output_path=args.output_path)
+                                output_path=args.output_path, half=args.half)
     else:
         print(f'There is no function to create design matrices for dataset {args.pheno_df_path.split("/")[-1].split("_")[1]}')
