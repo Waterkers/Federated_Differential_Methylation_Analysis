@@ -245,7 +245,7 @@ class eBayesLocal:
         # confidence intervals for LogFC
         if confint:
             alpha = (1.0 + confint) / 2
-            margin_error = np.sqrt(self.results["s2_post"]) * self.stdev_unscaled[:, 0] * t.ppf(alpha, df=self.df_total)
+            margin_error = np.sqrt(self.results["s2_post"]) * self.stdev_unscaled.values[:, 0] * t.ppf(alpha, df=self.df_total)
             self.results["CI.L"] = self.results["logFC"] - margin_error
             self.results["CI.R"] = self.results["logFC"] + margin_error
         # adjusting p-value for multiple testing
