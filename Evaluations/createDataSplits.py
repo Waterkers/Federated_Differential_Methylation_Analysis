@@ -85,11 +85,11 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
 
     if save_local:
         if small_design_local_path:
-            small_design_local = read_data(small_design_local_path)
+            small_design_local = read_data(small_design_local_path, index_col="Sample_ID")
         else:
             raise ValueError('Save local was selected and no local small-design matrix was provided')
         if full_design_local_path:
-            full_design_local = read_data(full_design_local_path)
+            full_design_local = read_data(full_design_local_path, index_col="Sample_ID")
         else:
             full_design_local = None
     else:
@@ -207,20 +207,17 @@ if __name__ == "__main__":
                          small_design_path=args.small_design_path,
                          full_design_path=args.full_design_path)
     elif args.save_local:
-        if args.small_design_local_path & args.full_design_local_path:
-            createDataSplits(meth_path=args.meth_path,
-                             umeth_path=args.umeth_path,
-                             beta_path=args.beta_path,
-                             output_path=args.output_path,
-                             distortion=args.distortion,
-                             pheno_path=args.pheno_path,
-                             diagnosis_col=args.diagnosis_col,
-                             ad_diagnosis=args.ad_diagnosis,
-                             save_local=args.save_local,
-                             identifier=args.identifier,
-                             small_design_path=args.small_design_path,
-                             full_design_path=args.full_design_path,
-                             small_design_local_path=args.small_design_local_path,
-                             full_design_local_path=args.full_design_local_path)
-        else:
-            raise ValueError('Selected save local but not path to local design matrices provided')
+        createDataSplits(meth_path=args.meth_path,
+                         umeth_path=args.umeth_path,
+                         beta_path=args.beta_path,
+                         output_path=args.output_path,
+                         distortion=args.distortion,
+                         pheno_path=args.pheno_path,
+                         diagnosis_col=args.diagnosis_col,
+                         ad_diagnosis=args.ad_diagnosis,
+                         save_local=args.save_local,
+                         identifier=args.identifier,
+                         small_design_path=args.small_design_path,
+                         full_design_path=args.full_design_path,
+                         small_design_local_path=args.small_design_local_path,
+                         full_design_local_path=args.full_design_local_path)
