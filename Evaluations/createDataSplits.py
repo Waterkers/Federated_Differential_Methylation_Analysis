@@ -2,6 +2,7 @@ import pandas as pd
 from random import seed, sample
 import os
 import argparse
+from typing import Union
 
 distortion_ratios = {'GSE66351':{'balanced':{'ad_freqs':[0.53,0.53,0.53],
                                              'sizes':[1,1,1]},
@@ -23,47 +24,94 @@ distortion_ratios = {'GSE66351':{'balanced':{'ad_freqs':[0.53,0.53,0.53],
                                             'sizes': None}},
                      }
 
-def createDataSplits(meth_path:str,
-                     umeth_path:str,
-                     beta_path:str,
+label_information = {'GSE66351':{'col':"Diagnosis",
+                                 'ad_val':"diagnosis: AD",
+                                 },
+                     'GSE134379': {'col':"Diagnosis",
+                                 'ad_val':"diagnosis: AD",
+                                 },
+                     'GSE105109': {'col':"Diagnosis",
+                                 'ad_val':"post-mortem diagnosis: Alzheimer's disease",
+                                 },
+                     }
+
+def read_data(data:Union[str, pd.DataFrame], index_col:Union[int, str, None]=0)->pd.DataFrame:
+    if isinstance(data, str):
+        if index_col:
+            data = pd.read_csv(data, index_col=index_col)
+        else:
+            data = pd.read_csv(data)
+        return data
+    elif isinstance(data, pd.DataFrame):
+        return data
+    else:
+        raise TypeError(f'data needs to be a path (str) or a pd.DataFrame {type(data)} was provided')
+
+def createDataSplits(meth_path:Union[str, pd.DataFrame],
+                     umeth_path:Union[str, pd.DataFrame],
+                     beta_path:Union[str, pd.DataFrame],
+                     pheno_path:Union[str, pd.DataFrame],
+                     diagnosis_col:Union[str, None],
+                     ad_diagnosis:Union[str, None],
                      output_path:str,
                      identifier:str,
-                     small_design_path:str,
-                     full_design_path:str,
-                     pheno_path:str,
-                     diagnosis_col:str,
-                     ad_diagnosis:str,
+                     small_design_path:Union[str, pd.DataFrame],
+                     full_design_path:Union[str, pd.DataFrame, None]=None,
                      save_local:bool=True,
-                     small_design_local_path:str=None,
-                     full_design_local_path:str=None,
+                     small_design_local_path:Union[str, pd.DataFrame, None]=None,
+                     full_design_local_path:Union[str, pd.DataFrame, None]=None,
                      distortion:str='balanced'):
-    meth = pd.read_csv(meth_path)
-    umeth = pd.read_csv(umeth_path)
-    beta = pd.read_csv(beta_path)
-    small_design = pd.read_csv(small_design_path)
-    full_design = pd.read_csv(full_design_path)
-    pheno = pd.read_csv(pheno_path)
-    splits_pheno = pheno.copy(deep=True)
+    # read in the data
+    meth = read_data(meth_path)
+    umeth = read_data(umeth_path)
+    beta = read_data(beta_path)
+    small_design = read_data(small_design_path, index_col= "Sample_ID")
+
+    if full_design_local_path:
+        full_design = read_data(full_design_path)
+    else:
+        full_design = None
+    pheno = read_data(pheno_path, index_col="Sample_ID")
+    if not ad_diagnosis:
+        if identifier in label_information:
+            ad_diagnosis = label_information[identifier]['ad_val']
+        else:
+            raise ValueError('No ad-diagnosis was provided')
+    if not diagnosis_col and identifier in label_information:
+        if identifier in label_information:
+            diagnosis_col = label_information[identifier]['col']
+        else:
+            raise ValueError('No diagnosis was provided')
+
     if save_local:
         if small_design_local_path:
-            small_design_local = pd.read_csv(small_design_local_path)
+            small_design_local = read_data(small_design_local_path)
         else:
-            small_design_local = None
+            raise ValueError('Save local was selected and no local small-design matrix was provided')
         if full_design_local_path:
-            full_design_local = pd.read_csv(full_design_local_path)
+            full_design_local = read_data(full_design_local_path)
         else:
             full_design_local = None
+    else:
+        small_design_local = None
+        full_design_local = None
 
+
+    # create the splits
+    splits_pheno = pheno.copy(deep=True)
     N_total = splits_pheno.shape[0] * 1.0 * 1.0
     N_ad = splits_pheno.loc[splits_pheno[diagnosis_col] == ad_diagnosis, :].shape[0] * 1.0 * 1.0
     random_state = 42
     seed(random_state)
     n_splits = 3
-    if distortion_ratios[identifier][distortion]['sizes'] & distortion_ratios[identifier][distortion]['ad_freqs']:
+    if distortion_ratios[identifier][distortion]['sizes']:
         sizes = distortion_ratios[identifier][distortion]['sizes']
+    else:
+        raise AttributeError(f'sizes not found in distortion ratios for {identifier} with distortion {distortion}')
+    if distortion_ratios[identifier][distortion]['ad_freqs']:
         ad_freqs = distortion_ratios[identifier][distortion]['ad_freqs']
     else:
-        raise AttributeError(f'sizes or ad_freqs not found in distortion ratios for {identifier} with distortion {distortion}')
+        raise AttributeError(f'sizes not found in distortion ratios for {identifier} with distortion {distortion}')
 
     Sizes = []
     n_ad = []
@@ -90,7 +138,7 @@ def createDataSplits(meth_path:str,
         splits_pheno["Split_" + str(i + 1)] = 0
         splits_pheno.loc[sele_samples, "Split_" + str(i + 1)] = 1
 
-    output_dir = os.path.join(output_path, f"{identifier}_strong_splits")
+    output_dir = os.path.join(output_path, f"{identifier}_{distortion}_splits")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     for i in range(n_splits):
@@ -101,10 +149,12 @@ def createDataSplits(meth_path:str,
         umeth.loc[:, samples].to_csv(output_dir + "/" + s + "_unmethylated.csv")
         beta.loc[:, samples].to_csv(output_dir + "/" + s + "_betas.csv")
         small_design.loc[samples, :].to_csv(output_dir + "/" + s + "_design.csv")
-        full_design.loc[samples, :].to_csv(output_dir + "/" + s + "_Full_design.csv")
+        if full_design:
+            full_design.loc[samples, :].to_csv(output_dir + "/" + s + "_Full_design.csv")
         if save_local:
             small_design_local.loc[samples, :].to_csv(output_dir + "/" + s + "_design_local.csv")
-            full_design_local.loc[samples, :].to_csv(output_dir + "/" + s + "_Full_design_local.csv")
+            if full_design_local:
+                full_design_local.loc[samples, :].to_csv(output_dir + "/" + s + "_Full_design_local.csv")
 
     if save_local:
         if small_design_local_path:
@@ -133,7 +183,7 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--beta_path",)
     parser.add_argument("-i", "--identifier",)
     parser.add_argument("-s", "--small_design_path",)
-    parser.add_argument("-f", "--full_design_path",)
+    parser.add_argument("-f", "--full_design_path", default=None)
     parser.add_argument("-d", "--distortion",)
     parser.add_argument("-o", "--output_path",)
     parser.add_argument("-p", "--pheno_path",)
