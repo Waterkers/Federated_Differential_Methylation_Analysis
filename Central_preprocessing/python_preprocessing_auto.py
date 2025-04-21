@@ -175,18 +175,52 @@ except:
 # EWAS
 # check if the design matrix exists
 if not os.path.exists(os.path.join(input_dir, "Small_EWAS_design_local.csv")):
-
+    print('creating local design matrix')
     if '_half' in identifier:
         designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"Reduced_Pheno_Info.csv"),
                             small=True, federated=False, per_region=False,
                             output_path=input_dir)
     else:
-        designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"Pheno_Info.csv"),
+        designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"post_processing_Pheno_Information.csv"),
                                 small=True, federated=False, per_region=False,
                                 output_path=input_dir)
 
-design_matrix = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design_local.csv"), index_col=0)
 
+if not os.path.exists(os.path.join(input_dir, "Small_EWAS_design.csv")):
+    print('creating federated design matrix')
+    if '_half' in identifier:
+        designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"Reduced_Pheno_Info.csv"),
+                            small=True, federated=True, per_region=False,
+                            output_path=input_dir)
+    else:
+        designMatricesFunctions[identifier](pheno_df_path=os.path.join(preprocessing_result_dir,"post_processing_Pheno_Information.csv"),
+                                small=True, federated=True, per_region=False,
+                                output_path=input_dir)
+# create dataset splits and add cohort effect to the local design matrix
+print('Creating dataset splits')
+splits_output_dir = preprocessing_result_dir
+if '_half' in identifier:
+    createDataSplits(meth_path=meth, umeth_path=unmeth, beta_path=pre_norm_betas,
+                     output_path=splits_output_dir, identifier=identifier,
+                     pheno_path=os.path.join(preprocessing_result_dir,"Reduced_Pheno_Info.csv"),
+                     small_design_path=os.path.join(input_dir, "Small_EWAS_design.csv"),
+                     distortion='balanced',
+                     save_local=True,
+                     small_design_local_path=os.path.join(input_dir, "Small_EWAS_design_local.csv"))
+else:
+    createDataSplits(meth_path=meth, umeth_path=unmeth, beta_path=pre_norm_betas,
+                     output_path=splits_output_dir, identifier=identifier,
+                     pheno_path=os.path.join(preprocessing_result_dir, "post_processing_Pheno_Information.csv"),
+                     small_design_path=os.path.join(input_dir, "Small_EWAS_design.csv"),
+                     distortion='balanced',
+                     save_local=True,
+                     small_design_local_path=os.path.join(input_dir, "Small_EWAS_design_local.csv"))
+
+# local
+#design_matrix = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design_local.csv"), index_col=0)
+#TODO add flag for this in the function
+# central
+design_matrix = pd.read_csv(os.path.join(input_dir, "central_design_matrix.csv"), index_col=0)
 print("EWAS")
 results_ewas, SSE = EWAS_central_Parallel.EWAS_central(design_matrix, normalised_betas, identifier)
 
