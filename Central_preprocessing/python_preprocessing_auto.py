@@ -27,6 +27,11 @@ except ModuleNotFoundError:
     sys.path.append("/cosybio/project/vanElferen/FedEWAS")
     from Federated_Differential_Methylation_Analysis.Evaluations.CreateDesignMatrices import createDesignMatrix66351, \
         createDesignMatrix105109, createDesignMatrix134379
+try:
+    from Federated_Differential_Methylation_Analysis.Evaluations.createDataSplits import createDataSplits
+except ModuleNotFoundError:
+    sys.path.append("/cosybio/project/vanElferen/FedEWAS")
+    from Federated_Differential_Methylation_Analysis.Evaluations.createDataSplits import createDataSplits
 import argparse
 
 designMatricesFunctions = {'GSE66351': createDesignMatrix66351,'GSE105109': createDesignMatrix105109, 'GSE134379': createDesignMatrix134379,
