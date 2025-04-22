@@ -222,7 +222,7 @@ else:
                      small_design_local_path=os.path.join(input_dir, "Small_EWAS_design_local.csv"))
 
 # local
-#design_matrix = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design_local.csv"), index_col=0)
+#design_matrix_local = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design_local.csv"), index_col=0)
 #TODO add flag for this in the function
 # central
 design_matrix = pd.read_csv(os.path.join(input_dir, "central_design_matrix.csv"), index_col=0)
@@ -235,17 +235,17 @@ gene_annotations = gene_annotations.loc[set(results_ewas.index.values).intersect
 final_results_table = pd.DataFrame({"Associated Gene":gene_annotations, "Methylation Change":results_ewas.loc[:,("Coefficient", "AD")], "Corrected P-value":results_ewas.loc[:,("Corrected P-value", "AD")]})
 final_results_table.sort_values(by = ["Corrected P-value"], inplace = True)
 # save the EWAS results to the output directory
-final_results_table.to_csv(os.path.join(output_dir_QC, (identifier + "_results_diagnosis_regression_python.csv")))
-results_ewas.to_csv(os.path.join(output_dir_QC, (identifier + "_full_results_regression_python.csv")))
+final_results_table.to_csv(os.path.join(output_dir_QC, (identifier + "_results_diagnosis_regression_python_central.csv")))
+results_ewas.to_csv(os.path.join(output_dir_QC, (identifier + "_full_results_regression_python_central.csv")))
 # save the SSE to a file for the calculation of the eBayes results
-with open(os.path.join(output_dir_QC, (identifier + "_SSE_list.csv")), "w") as outfile:
+with open(os.path.join(output_dir_QC, (identifier + "_SSE_list_central.csv")), "w") as outfile:
     outfile.writelines('\n'.join([str(i) for i in SSE]))
 # try the ebayes calculation with the regression output
 regressioResultsCalculator = eBayesLocal.eBayesLocal(results_ewas,
                                          SSE,
                                          design_matrix.shape[0])
 regressioResultsCalculator.eBayes()
-regressioResultsCalculator.table.to_csv(os.path.join(output_dir_QC, (identifier + "_eBayesTopTableResult.csv")))
+regressioResultsCalculator.table.to_csv(os.path.join(output_dir_QC, (identifier + "_eBayesTopTableResult_central.csv")))
 
 sys.exit(0)
 
