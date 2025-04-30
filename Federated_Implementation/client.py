@@ -24,12 +24,12 @@ def dfs2_python(x, probe_type):
     # new code version that should work on one column at a time
     x_copy = x.copy()
     # KDEUnivariate attempt to match r
-    KD_one = DensityR.KDEUnivariate_rDensity(x_copy[probe_type.squeeze() == "I"])
+    KD_one = DensityR.KDEUnivariate_rDensity(x_copy[probe_type == "I"])
     KD_one.fit(gridsize=2**15, low=0, high=5000)
     one = KD_one.support[np.argmax(KD_one.density)]
 
     # KDEUnivariate attempt to match r
-    KD_two = DensityR.KDEUnivariate_rDensity(x_copy[probe_type.squeeze() == "II"])
+    KD_two = DensityR.KDEUnivariate_rDensity(x_copy[probe_type == "II"])
     KD_two.fit(gridsize=2**15, low=0, high=5000)
     two = KD_two.support[np.argmax(KD_two.density)]
     
@@ -41,7 +41,7 @@ def dfsfit_python(x, probe_type):
     import re
     x = x.copy()
     dis_diff = x.apply(dfs2_python, args = (probe_type,), axis=0) #create a dataframe/array of the values when dfs2 is applied to each column
-    
+    print(dis_diff)
     roco = []
     for col_name in x.columns.values.tolist() :
         found = re.search("(R0[1-9]C0[1-9])", col_name).group(1)
@@ -113,7 +113,7 @@ class Client:
         # data
         self.raw_methylated = pd.read_csv(methylated_filepath, index_col=0)
         self.raw_unmethylated = pd.read_csv(unmethylated_filepath, index_col=0)
-        self.probe_annotation = pd.read_csv(probe_annotation_path, index_col=0)
+        self.probe_annotation = pd.read_csv(probe_annotation_path, index_col=0, skiprows=7)
 
         # design
         self.designmatrix = pd.read_csv(design_matrix_filepath, index_col=0)
@@ -159,15 +159,15 @@ class Client:
                 matrix and removes these
         '''      
         # check probe type annotation data
-        if not np.all(self.probes == self.probe_annotation.index.values):
+        if not self.probes == self.probe_annotation.index.to_list():
             data_probes = set(self.probes)
             annotation_probes = set(self.probe_annotation.index.values)
             no_annotation = data_probes.difference(annotation_probes)
-            if no_annotation > 0:
+            if len(no_annotation) > 0:
                 print("Probe type annotation for %s probes in data is missing"%(len(no_annotation)), file = stderr)
                 sys.exit(1)
             no_data = annotation_probes.difference(data_probes)
-            if no_data > 0:
+            if len(no_data) > 0:
                 keep_annotation = annotation_probes.intersection(data_probes)
                 self.probe_annotation = self.probe_annotation.loc[keep_annotation,:]
 
@@ -178,7 +178,7 @@ class Client:
             no_local = global_conditions.difference(local_conditions)
             no_global = local_conditions.difference(global_conditions)
             if len(no_local) > 0:
-                print("%s global conditions are not present in the local design matrix"%(len(no_local)), file=stderr)
+                print("%s global conditions are not present in the local design matrix, %s"%(len(no_local), no_local), file=stderr)
                 sys.exit(1)
             if len(no_global) > 0:
                 print("%s conditions in the design matrix are not specified in the global conditions and will be removed"%(len(no_global)), file=stderr)
@@ -204,7 +204,7 @@ class Client:
                 self.probes = probes_to_keep
 
     def find_unique_SentrixIDS(self):
-        sentrix_ids = self.designmatrix.loc[:, "sentrix_id"]
+        sentrix_ids = self.designmatrix.loc[:, "Sentrix_ID"]
         self.unique_SentrixIDS = list(set(sentrix_ids))
     
     def find_unique_PlateIDS(self):
@@ -223,9 +223,9 @@ class Client:
         for ID in global_SentrixID:
             #if ID in self.unique_SentrixIDS:
             self.designmatrix[ID] = 0
-            self.designmatrix[ID].loc[self.designmatrix["sentrix_id"] == ID] = 1
+            self.designmatrix[ID].loc[self.designmatrix["Sentrix_ID"] == ID] = 1
             #self.designmatrix[ID].loc[self.designmatrix["Sentrix_ID"] != ID] = 0
-        self.designmatrix.drop(columns="sentrix_id", inplace=True)
+        self.designmatrix.drop(columns="Sentrix_ID", inplace=True)
         self.designcolumns = list(self.designmatrix.columns.values)
 
     def PlateID_effects(self, global_PlateID):
@@ -238,16 +238,16 @@ class Client:
 
     # client level computation for (dasen)normalisation
     def intensity_distributions(self):
-        self.methylated_dist = dfsfit_python(self.raw_methylated, self.probe_annotation)
-        self.unmethylated_dist = dfsfit_python(self.raw_unmethylated, self.probe_annotation)
+        self.methylated_dist = dfsfit_python(self.raw_methylated, self.probe_annotation['Infinium_Design_Type'])
+        self.unmethylated_dist = dfsfit_python(self.raw_unmethylated, self.probe_annotation['Infinium_Design_Type'])
         return self.methylated_dist, self.unmethylated_dist
     
     def local_normalisation_parameters(self):
         # for the methylated type I probes, methylated type II, unmethylated type I and unmethylated type II        
-        methI_data = self.methylated_dist[self.probe_annotation.values == "I"].copy().to_numpy() # not working as expected
-        methII_data = self.methylated_dist[self.probe_annotation.values == "II"].copy().to_numpy()
-        unmethI_data = self.unmethylated_dist[self.probe_annotation.values == "I"].copy().to_numpy()
-        unmethII_data = self.unmethylated_dist[self.probe_annotation.values == "II"].copy().to_numpy()
+        methI_data = self.methylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "I"].copy().to_numpy() # not working as expected
+        methII_data = self.methylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "II"].copy().to_numpy()
+        unmethI_data = self.unmethylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "I"].copy().to_numpy()
+        unmethII_data = self.unmethylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "II"].copy().to_numpy()
         data_list = [methI_data, methII_data, unmethI_data, unmethII_data]
         observations = []
         row_sums = []
@@ -287,10 +287,10 @@ class Client:
         
 
     def final_normalisation(self, probe_type_means):
-        methI_data = self.methylated_dist[self.probe_annotation.values == "I"].copy().to_numpy()
-        methII_data = self.methylated_dist[self.probe_annotation.values == "II"].copy().to_numpy()
-        unmethI_data = self.unmethylated_dist[self.probe_annotation.values == "I"].copy().to_numpy()
-        unmethII_data = self.unmethylated_dist[self.probe_annotation.values == "II"].copy().to_numpy()
+        methI_data = self.methylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "I"].copy().to_numpy()
+        methII_data = self.methylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "II"].copy().to_numpy()
+        unmethI_data = self.unmethylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "I"].copy().to_numpy()
+        unmethII_data = self.unmethylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "II"].copy().to_numpy()
         data_list = [methI_data, methII_data, unmethI_data, unmethII_data]
 
         data_out = []
@@ -305,19 +305,19 @@ class Client:
                 results[:,col] = f((rank - 1)/(n-1))
             data_out.append(pd.DataFrame(results))
         #save the normalised methylated intensities
-        data_out[0].set_index(self.methylated_dist[self.probe_annotation.squeeze() =="I"].index, inplace = True)
+        data_out[0].set_index(self.methylated_dist[self.probe_annotation['Infinium_Design_Type'] =="I"].index, inplace = True)
         data_out[0].columns = self.sample_names
 
-        data_out[1].set_index(self.methylated_dist[self.probe_annotation.squeeze() =="II"].index, inplace = True)
+        data_out[1].set_index(self.methylated_dist[self.probe_annotation['Infinium_Design_Type'] =="II"].index, inplace = True)
         data_out[1].columns = self.sample_names
         self.methnorm = pd.concat([data_out[0], data_out[1]])
         self.methnorm.sort_index(inplace=True)
 
         #save the normalised unmethylated intensities
-        data_out[2].set_index(self.methylated_dist[self.probe_annotation.squeeze() =="I"].index, inplace = True)
+        data_out[2].set_index(self.methylated_dist[self.probe_annotation['Infinium_Design_Type'] =="I"].index, inplace = True)
         data_out[2].columns = self.sample_names
 
-        data_out[3].set_index(self.methylated_dist[self.probe_annotation.squeeze() =="II"].index, inplace = True)
+        data_out[3].set_index(self.methylated_dist[self.probe_annotation['Infinium_Design_Type'] =="II"].index, inplace = True)
         data_out[3].columns = self.sample_names
         self.unmethnorm = pd.concat([data_out[2], data_out[3]])
         self.unmethnorm.sort_index(inplace=True)
@@ -342,7 +342,8 @@ class Client:
             weighted = True
             W = np.sqrt(self.weights)
             y_matrix = np.multiply(y_matrix,W) 
-
+        # TODO implement progress bar
+        # TODO implement option for multiprocesing - speed-up
         for i in range(0,n):
             y = y_matrix[i,:]
             if weighted:
