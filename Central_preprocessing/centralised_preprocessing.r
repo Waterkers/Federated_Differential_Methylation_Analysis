@@ -301,8 +301,9 @@ write.csv(raw_unmethylated, file.path(QC_output, "Filtered_Unmethylated.csv"))
 # pheno before preprocessing with QC information
 write.csv(QCmetrics, file.path(QC_output, "pre_norm_pheno_information.csv"))
 # pheno information for samples included in the preprocessed data
-  postProcessPheno <- pheno1[match(colnames(raw_betas), pheno1$Sample_ID)]
-  write.csv(postProcessPheno, file.path(QC_output, "post_processing_Pheno_Information.csv"))
+print(head(pheno))
+#postProcessPheno <- pheno[match(colnames(raw_betas), pheno$Sample_ID),]
+#write.csv(pheno, file.path(QC_output, "post_processing_Pheno_Information.csv"))
 
 }
 
