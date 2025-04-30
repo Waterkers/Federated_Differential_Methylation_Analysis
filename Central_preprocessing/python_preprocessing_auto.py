@@ -177,6 +177,18 @@ try:
 except:
     print("Issue with saving figure")
 
+# check if the samples in the pheno information are the same as the samples in the normalised betas
+if pheno.shape[0] != normalised_betas.shape[1]:
+    print('The number of samples in the pheno information and the normalised betas do not match')
+    print('The number of samples in the pheno information:', pheno.shape[0])
+    print('The number of samples in the normalised betas:', normalised_betas.shape[1])
+    print('Saving the pheno information with the samples that are in the normalised betas')
+    new_pheno = pheno.loc[pheno.index.isin(normalised_betas.columns), :]
+    new_pheno.to_csv(os.path.join(preprocessing_result_dir, "post_processing_Pheno_Information.csv"))
+else:
+    new_pheno = pheno
+    new_pheno.to_csv(os.path.join(preprocessing_result_dir, "post_processing_Pheno_Information.csv"))
+
 # EWAS
 # check if the design matrix exists
 if not os.path.exists(os.path.join(input_dir, "Small_EWAS_design_local.csv")):
@@ -222,12 +234,12 @@ else:
                      small_design_local_path=os.path.join(input_dir, "Small_EWAS_design_local.csv"))
 
 # local
-#design_matrix_local = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design_local.csv"), index_col=0)
+design_matrix_local = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design_local.csv"), index_col=0)
 #TODO add flag for this in the function
 # central
-design_matrix = pd.read_csv(os.path.join(input_dir, "central_design_matrix.csv"), index_col=0)
+#design_matrix = pd.read_csv(os.path.join(input_dir, "central_design_matrix.csv"), index_col=0)
 print("EWAS")
-results_ewas, SSE = EWAS_central_Parallel.EWAS_central(design_matrix, normalised_betas, identifier)
+results_ewas, SSE = EWAS_central_Parallel.EWAS_central(design_matrix_local, normalised_betas, identifier)
 
 # create an output table with the top (genomewide) significant probes and their associated gene with the metrics
 gene_annotations = annotation.loc[:, "UCSC_RefGene_Name"]
@@ -235,17 +247,17 @@ gene_annotations = gene_annotations.loc[set(results_ewas.index.values).intersect
 final_results_table = pd.DataFrame({"Associated Gene":gene_annotations, "Methylation Change":results_ewas.loc[:,("Coefficient", "AD")], "Corrected P-value":results_ewas.loc[:,("Corrected P-value", "AD")]})
 final_results_table.sort_values(by = ["Corrected P-value"], inplace = True)
 # save the EWAS results to the output directory
-final_results_table.to_csv(os.path.join(output_dir_QC, (identifier + "_results_diagnosis_regression_python_central.csv")))
-results_ewas.to_csv(os.path.join(output_dir_QC, (identifier + "_full_results_regression_python_central.csv")))
+final_results_table.to_csv(os.path.join(output_dir_QC, (identifier + "_results_diagnosis_regression_python.csv")))
+results_ewas.to_csv(os.path.join(output_dir_QC, (identifier + "_full_results_regression_python.csv")))
 # save the SSE to a file for the calculation of the eBayes results
-with open(os.path.join(output_dir_QC, (identifier + "_SSE_list_central.csv")), "w") as outfile:
+with open(os.path.join(output_dir_QC, (identifier + "_SSE_list.csv")), "w") as outfile:
     outfile.writelines('\n'.join([str(i) for i in SSE]))
 # try the ebayes calculation with the regression output
 regressioResultsCalculator = eBayesLocal.eBayesLocal(results_ewas,
                                          SSE,
                                          design_matrix.shape[0])
 regressioResultsCalculator.eBayes()
-regressioResultsCalculator.table.to_csv(os.path.join(output_dir_QC, (identifier + "_eBayesTopTableResult_central.csv")))
+regressioResultsCalculator.table.to_csv(os.path.join(output_dir_QC, (identifier + "_eBayesTopTableResult.csv")))
 
 sys.exit(0)
 
