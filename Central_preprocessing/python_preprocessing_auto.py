@@ -255,7 +255,7 @@ with open(os.path.join(output_dir_QC, (identifier + "_SSE_list.csv")), "w") as o
 # try the ebayes calculation with the regression output
 regressioResultsCalculator = eBayesLocal.eBayesLocal(results_ewas,
                                          SSE,
-                                         design_matrix.shape[0])
+                                         design_matrix_local.shape[0])
 regressioResultsCalculator.eBayes()
 regressioResultsCalculator.table.to_csv(os.path.join(output_dir_QC, (identifier + "_eBayesTopTableResult.csv")))
 
