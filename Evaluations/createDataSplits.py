@@ -89,7 +89,7 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
                      full_design_local_path:Union[str, pd.DataFrame, None]=None,
                      distortion:str='balanced'):
     # read in the data
-    meth = read_data(meth_path, index_col=0)
+    meth = read_data(meth_path, index_col='Unnamed: 0')
     print(meth.head())
     umeth = read_data(umeth_path)
     beta = read_data(beta_path)
