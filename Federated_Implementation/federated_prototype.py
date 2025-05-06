@@ -2,17 +2,39 @@
 import numpy as np
 import os
 import pandas as pd
-from server import Server 
 
+from Federated_Differential_Methylation_Analysis.Central_preprocessing.python_preprocessing_splits import output_dir
+from server import Server 
+import argparse
 from client import Client
 #%%
 #import pyximport
 #pyximport.install(setup_args={"script_args" : ["--verbose"]})
 #from linbinR import fast_linbin
 #%%
-split_dir = "/home/silke/Documents/Fed_EWAS/Data/QC_GSE134379_half/GSE134379_splits"
-output = "/home/silke/Documents/Fed_EWAS/Data/QC_GSE134379_half/GSE134379_Fed"
-probeAnnotationPath = "/home/silke/Documents/Fed_EWAS/Data/GSE134379_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv"
+args = None
+parser = argparse.ArgumentParser(description='Federated Differential Methylation Analysis')
+parser.add_argument('split_directory','-s')
+parser.add_argument('output_dir','-o')
+parser.add_argument('probe_annotation_path', '-p')
+parser.add_argument('split_type', '-t')
+args = parser.parse_args()
+#%%
+if not args:
+    split_dir = "/home/silke/Documents/Fed_EWAS/Data/QC_GSE134379_half/GSE134379_splits"
+    output = "/home/silke/Documents/Fed_EWAS/Data/QC_GSE134379_half/GSE134379_Fed"
+    probeAnnotationPath = "/home/silke/Documents/Fed_EWAS/Data/GSE134379_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv"
+    split_type = 'balanced'
+else:
+    split_dir = args.split_directory
+    output = args.output_dir
+    probeAnnotationPath = args.probe_annotation_path
+    split_type = args.split_type
+#%%
+# check if output directory exists, if not make it
+if not os.path.isdir(output_dir):
+    os.mkdir(output_dir)
+
 #%% md
 # ## Initialising the clients
 #%%
@@ -82,9 +104,9 @@ lab_b.final_normalisation(probe_type_means)
 lab_c.final_normalisation(probe_type_means)
 #%%
 # save the betas for testing
-# lab_a.betas.to_csv(os.path.join(output, "strong_split1_betas.csv"))
-# lab_b.betas.to_csv(os.path.join(output, "strong_split2_betas.csv"))
-# lab_c.betas.to_csv(os.path.join(output, "strong_split3_betas.csv"))
+lab_a.betas.to_csv(os.path.join(output, f"{split_type}_split1_betas.csv"))
+lab_b.betas.to_csv(os.path.join(output, f"{split_type}_split2_betas.csv"))
+lab_c.betas.to_csv(os.path.join(output, f"{split_type}_split3_betas.csv"))
 #%% md
 # ## EWAS - Linear regression model
 #%% md
@@ -114,17 +136,17 @@ cov_coef_list = [cov_coef_a, cov_coef_b, cov_coef_c]
 #%%
 serv.aggregate_SSE_and_cov_coef(SSE_list,cov_coef_list)
 #%%
-np.savetxt(os.path.join(output, "strong_splits_model_matrix.csv"), serv.beta, delimiter=",") 
-np.savetxt(os.path.join(output, "strong_splits_model_matrix_xty.csv"), serv.global_xty, delimiter=",") 
+np.savetxt(os.path.join(output, f"{split_type}_splits_model_matrix.csv"), serv.beta, delimiter=",")
+np.savetxt(os.path.join(output, f"{split_type}_splits_model_matrix_xty.csv"), serv.global_xty, delimiter=",")
 #%% md
 # Make and fit the contrasts to the linear model
 #%%
 contrasts_mat = serv.make_contrasts(contrasts=[(["AD"],["CTRL"])])
 serv.fit_contasts(contrasts_mat.values)
 #%%
-contrasts_mat.to_csv(os.path.join(output, "strong_splits_contrastmat.csv"))
-np.savetxt(os.path.join(output, "strong_splits_model_matrix_contractfit.csv"), serv.beta, delimiter=",") 
-np.savetxt(os.path.join(output, "strong_splits_model_matrix_xty_contractfit.csv"), serv.global_xty, delimiter=",") 
+contrasts_mat.to_csv(os.path.join(output, f"{split_type}_splits_contrastmat.csv"))
+np.savetxt(os.path.join(output, f"{split_type}_splits_model_matrix_contractfit.csv"), serv.beta, delimiter=",")
+np.savetxt(os.path.join(output, f"{split_type}_splits_model_matrix_xty_contractfit.csv"), serv.global_xty, delimiter=",")
 #%% md
 # Calculate the P-values
 #%%
@@ -134,4 +156,4 @@ serv.eBayes()
 #%%
 serv.table 
 #%%
-serv.table.to_csv(os.path.join(output, "strong_splits_EWAS_results.csv"))
+serv.table.to_csv(os.path.join(output, f"{split_type}_splits_EWAS_results.csv"))
