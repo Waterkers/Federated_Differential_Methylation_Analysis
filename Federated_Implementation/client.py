@@ -205,7 +205,7 @@ class Client:
                 self.probes = probes_to_keep
 
     def find_unique_SentrixIDS(self):
-        sentrix_ids = self.designmatrix.loc[:, "Sentrix_ID"]
+        sentrix_ids = self.designmatrix.loc[:, "sentrix_id"]
         self.unique_SentrixIDS = list(set(sentrix_ids))
     
     def find_unique_PlateIDS(self):
