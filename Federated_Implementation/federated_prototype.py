@@ -20,6 +20,7 @@ parser.add_argument('split_directory', type=str,)
 parser.add_argument('output_dir', type=str,)
 parser.add_argument('probe_annotation_path', type=str,)
 parser.add_argument('split_type', type=str,)
+parser.add_argument('-c', '--cohort', action='store-true')
 args = parser.parse_args()
 #%%
 if not args:
@@ -27,11 +28,13 @@ if not args:
     output = "/home/silke/Documents/Fed_EWAS/Data/QC_GSE134379_half/GSE134379_Fed"
     probeAnnotationPath = "/home/silke/Documents/Fed_EWAS/Data/GSE134379_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv"
     split_type = 'balanced'
+    cohort = False
 else:
     split_dir = args.split_directory
     output = args.output_dir
     probeAnnotationPath = args.probe_annotation_path
     split_type = args.split_type
+    cohort = args.cohort
 #%%
 # check if output directory exists, if not make it
 if not os.path.isdir(output):
@@ -58,16 +61,18 @@ serv.get_clients(lab_b.cohort_name, lab_b.probes, lab_b.designmatrix.index)
 serv.get_clients(lab_c.cohort_name, lab_c.probes, lab_c.designmatrix.index)
 #%%
 global_probes = serv.find_global_probes()
-cohort_effect = serv.find_cohort_effects()
+if cohort:
+    cohort_effect = serv.find_cohort_effects()
 #%%
 #check client input
 lab_a.input_validation(global_conditions, global_probes)
 lab_b.input_validation(global_conditions, global_probes)
 lab_c.input_validation(global_conditions, global_probes)
 #%%
-lab_a.cohort_effects(serv.cohort_effects)
-lab_b.cohort_effects(serv.cohort_effects)
-lab_c.cohort_effects(serv.cohort_effects)
+if cohort:
+    lab_a.cohort_effects(serv.cohort_effects)
+    lab_b.cohort_effects(serv.cohort_effects)
+    lab_c.cohort_effects(serv.cohort_effects)
 #%%
 if "Sentrix_ID" in global_conditions:
     lab_a.find_unique_SentrixIDS()
