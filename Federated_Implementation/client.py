@@ -120,8 +120,8 @@ class Client:
         # design
         self.designmatrix = pd.read_csv(design_matrix_filepath, index_col=0)
         if 'sentrix_id' in design_matrix.columns:
-            design_matrix['Sentrix_ID'] = design_matrix['sentrix_id']
-            design_matrix.drop('sentrix_id', axis=1, inplace=True)
+            self.designmatrix['Sentrix_ID'] = design_matrix['sentrix_id']
+            self.designmatrix.drop('sentrix_id', axis=1, inplace=True)
         self.designcolumns = list(self.designmatrix.columns.values)
 
         # check that the indexes of the methylated and unmethylated dataframes are the same
