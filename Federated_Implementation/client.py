@@ -119,8 +119,8 @@ class Client:
 
         # design
         self.designmatrix = pd.read_csv(design_matrix_filepath, index_col=0)
-        if 'sentrix_id' in design_matrix.columns:
-            self.designmatrix['Sentrix_ID'] = design_matrix['sentrix_id']
+        if 'sentrix_id' in self.designmatrix.columns:
+            self.designmatrix['Sentrix_ID'] = self.designmatrix['sentrix_id']
             self.designmatrix.drop('sentrix_id', axis=1, inplace=True)
         self.designcolumns = list(self.designmatrix.columns.values)
 
