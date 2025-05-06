@@ -16,10 +16,10 @@ from client import Client
 #%%
 args = None
 parser = argparse.ArgumentParser(description='Federated Differential Methylation Analysis')
-parser.add_argument('split_directory','-s')
-parser.add_argument('output_dir','-o')
-parser.add_argument('probe_annotation_path', '-p')
-parser.add_argument('split_type', '-t')
+parser.add_argument('split_directory','-s', type=str,)
+parser.add_argument('output_dir','-o', type=str,)
+parser.add_argument('probe_annotation_path', '-p', type=str,)
+parser.add_argument('split_type', '-t', type=str,)
 args = parser.parse_args()
 #%%
 if not args:
