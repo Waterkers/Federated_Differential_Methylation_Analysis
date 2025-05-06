@@ -90,6 +90,7 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
                      distortion:str='balanced'):
     # read in the data
     meth = read_data(meth_path)
+    print(meth.head())
     umeth = read_data(umeth_path)
     beta = read_data(beta_path)
     small_design = read_data(small_design_path, index_col= "Sample_ID")
@@ -172,7 +173,6 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
         s = "Split_" + str(i + 1)
         samples = sorted(splits_pheno.loc[splits_pheno["split"] == s, :].index.values)
         splits_pheno.loc[samples, :].to_csv(output_dir + "/" + s + "_pheno.csv")
-        print(meth.loc[:, samples].head())
         meth.loc[:, samples].to_csv(output_dir + "/" + s + "_methylated.csv")
         umeth.loc[:, samples].to_csv(output_dir + "/" + s + "_unmethylated.csv")
         beta.loc[:, samples].to_csv(output_dir + "/" + s + "_betas.csv")
