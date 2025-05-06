@@ -1,16 +1,17 @@
 from sys import stderr
 import pandas as pd
 import numpy as np
-import statsmodels.api as sm
-from statsmodels.distributions.mixture_rvs import mixture_rvs
-from statsmodels.stats.multitest import multipletests
-import statsmodels.api as sm
 import scipy
 import scipy.stats
 from scipy.stats import rankdata
 from scipy import interpolate
-import re
 import sys
+import yaml
+import multiprocessing
+from functools import partial
+from tqdm.contrib.telegram import tqdm as tqdmTelegram
+import os
+from tqdm import tqdm
 
 # dasen normalisation local substeps
 def dfs2_python(x, probe_type):
@@ -240,7 +241,7 @@ class Client:
     def intensity_distributions(self):
         self.methylated_dist = dfsfit_python(self.raw_methylated, self.probe_annotation['Infinium_Design_Type'])
         self.unmethylated_dist = dfsfit_python(self.raw_unmethylated, self.probe_annotation['Infinium_Design_Type'])
-        return self.methylated_dist, self.unmethylated_dist
+        #return self.methylated_dist, self.unmethylated_dist
     
     def local_normalisation_parameters(self):
         # for the methylated type I probes, methylated type II, unmethylated type I and unmethylated type II        
@@ -323,7 +324,7 @@ class Client:
         self.unmethnorm.sort_index(inplace=True)
         self.betas = self.methnorm/(self.methnorm + self.unmethnorm + 100)
 
-        return self.betas
+        #return self.betas
 
     # client level computations for EWAS based on simple linear model
     def local_xtx_xty(self, weighted = False):
@@ -343,8 +344,7 @@ class Client:
             W = np.sqrt(self.weights)
             y_matrix = np.multiply(y_matrix,W) 
         # TODO implement progress bar
-        # TODO implement option for multiprocesing - speed-up
-        for i in range(0,n):
+        for i in tqdm(range(0,n)):
             y = y_matrix[i,:]
             if weighted:
                 Xw = np.multiply(x_matrix,W[i,:].reshape(-1, 1)) # algebraic multiplications by W
@@ -353,8 +353,62 @@ class Client:
             else: 
                 self.xtx[i,:,:] = x_matrix.T @ x_matrix
                 self.xty[i,:] = x_matrix.T @ y
+        #return self.xtx, self.xty
+
+    def parallel_xtx_xty_cal(self, row, weighted, x_matrix):
+        y = row
+        if weighted:
+            Xw = np.multiply(x_matrix, W[row.name, :].reshape(-1, 1))  # algebraic multiplications by W
+            XtX = Xw.T @ Xw
+            XtY = Xw.T @ y
+            return XtX, XtY
+        else:
+            xtx = x_matrix.T @ x_matrix
+            xty = x_matrix.T @ y
+            return xtx, xty
+
+    def local_xtx_xty_parallel(self, weighted=False):
+        '''
+        Calculate the local intermediate matrices that are sent to the server
+        where they are used to calculate the global intermediates
+        Parallel implementation for speed-up
+        '''
+        config_file = '/home/silke/Documents/Fed_EWAS/telegrambot_config.yml'
+        with open(config_file) as configStream:
+            config = yaml.load(configStream, Loader=yaml.Loader)
+        x_matrix = self.designmatrix.values
+        y_matrix = self.betas.values
+        n = y_matrix.shape[0]  # number of genes
+        m = x_matrix.shape[1]  # number of conditions
+        self.xtx = np.zeros(
+            (n, m, m))  # create zeroes array with space to hold the xt_x matrix (m,m) for each probe (n)
+        self.xty = np.zeros((n, m))  # create zeroes array with space to hold the xt_y matrix (1,m) for each probe (n)
+
+        if weighted:
+            weighted = True
+            W = np.sqrt(self.weights)
+            y_matrix = np.multiply(y_matrix, W)
+        # TODO implement option for multiprocesing - speed-up
+        with multiprocessing.Pool(processes=max(int(os.cpu_count() / 2), 2)) as processPool, tqdmTelegram(total=int(n),
+                                                                                                  token=
+                                                                                                  config[
+                                                                                                      'serverProgressBot'][
+                                                                                                      'token'],
+                                                                                                  chat_id=
+                                                                                                  config[
+                                                                                                      'serverProgressBot'][
+                                                                                                      'chat_id']) as pbar:
+            xtx_xty_partial = partial(self.parallel_xtx_xty_cal, x_matrix=x_matrix, weighted=weighted)
+            for i, result in enumerate(processPool.imap(xtx_xty_partial, y_matrix)):
+                # increment the progress bar
+                pbar.update()
+                pbar.refresh()
+                print(len(result))
+                xtx, xty = result
+                self.xtx[i, :, :] = xtx
+                self.xty[i, :] = xty
         return self.xtx, self.xty
-    
+
     def compute_SSE_and_cov_coef(self,beta, weighted = False):
         x_matrix = self.designmatrix.values
         y_matrix = self.betas.values 
@@ -380,39 +434,7 @@ class Client:
         self.cov_coef = x_matrix.T @ x_matrix
         return self.SSE, self.cov_coef
 
-    """ def calculate_EWAS_results(self, global_xtx, global_xty):
-        n,m = global_xty.shape
-        self.coef = np.zeros((n,m))
-        self.stnd_err = np.zeros((n,m))
-        self.p_value = np.zeros((n,m))
-        self.p_value_cor = np.zeros((n,m))
-        self.mchange = np.zeros((n,m))
-        
-        for i in range(0,n):
-            xtx_inv = np.linalg.inv(global_xtx[i,:,:])
-            self.coef[i,:] = xtx_inv @ global_xty[i,:]
-            self.stnd_err[i,:] = np.diag(xtx_inv)
-            t = self.coef[i,:]/self.stnd_err[i,:]
-            df = m-2
-            self.p_value[i,:] = scipy.stats.t.sf(t, df)
-            #self.p_value_cor[i,:] = multipletests(self.p_value[i,:], method="fdr_bh")[1]
-        # create EWAS results dataframe with all information grouped by variable/confounder
-        for i in range(0,m):
-            self.p_value_cor[:,i] = multipletests(self.p_value[:,i], method="fdr_bh")[1]
-        
-        for i in range(0,m):
-            self.mchange[:,i] = self.coef[:,i]
-        coef = pd.DataFrame(self.coef,index=self.probes, columns= self.designcolumns)
-        stnErr = pd.DataFrame(self.stnd_err, index=self.probes, columns= self.designcolumns)
-        p_val = pd.DataFrame(self.p_value, index=self.probes, columns= self.designcolumns)
-        p_val_corrected = pd.DataFrame(self.p_value_cor, index=self.probes, columns= self.designcolumns)
-        mchange = pd.DataFrame(self.mchange, index = self.probes, columns=self.designcolumns)
-        # create a dataframe with the corrected p-values
-        
-        self.EWAS_results = pd.DataFrame([coef["Diagnosis"], stnErr["Diagnosis"], p_val["Diagnosis"], p_val_corrected["Diagnosis"], mchange["Diagnosis"]],
-            columns=["Coefficient", "Standar Error", "P-value", "Corrected P-value", "Methylation Change"])
-        
-        return self.EWAS_results """
+
 
 
         
