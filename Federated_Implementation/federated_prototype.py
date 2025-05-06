@@ -14,7 +14,7 @@ from client import Client
 #pyximport.install(setup_args={"script_args" : ["--verbose"]})
 #from linbinR import fast_linbin
 #%%
-args = None
+#args = None
 parser = argparse.ArgumentParser(description='Federated Differential Methylation Analysis')
 parser.add_argument('split_directory', type=str,)
 parser.add_argument('output_dir', type=str,)
