@@ -419,7 +419,7 @@ class Client:
         if weighted:
             W = np.sqrt(self.weights)
             y_matrix = np.multiply(y_matrix,W)
-        for i in range(0,n): 
+        for i in tqdm(range(0,n)):
             y = y_matrix[i,:]
             if weighted:
                 Xw = np.multiply(x_matrix,W[i,:].reshape(-1, 1))
