@@ -114,7 +114,7 @@ class Client:
         # data
         self.raw_methylated = pd.read_csv(methylated_filepath, index_col=0)
         self.raw_unmethylated = pd.read_csv(unmethylated_filepath, index_col=0)
-        self.probe_annotation = pd.read_csv(probe_annotation_path, index_col=0, skiprows=7)
+        self.probe_annotation = pd.read_csv(probe_annotation_path, index_col=0, skiprows=7, low_memory=False)
 
         # design
         self.designmatrix = pd.read_csv(design_matrix_filepath, index_col=0)
