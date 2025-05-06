@@ -1,8 +1,7 @@
 #%%
 import numpy as np
 import os
-from Federated_Differential_Methylation_Analysis.Central_preprocessing.python_preprocessing_splits import output_dir
-from server import Server 
+from server import Server
 import argparse
 from client import Client
 #%%
@@ -30,8 +29,8 @@ else:
     split_type = args.split_type
 #%%
 # check if output directory exists, if not make it
-if not os.path.isdir(output_dir):
-    os.mkdir(output_dir)
+if not os.path.isdir(output):
+    os.mkdir(output)
 
 #%% md
 # ## Initialising the clients
