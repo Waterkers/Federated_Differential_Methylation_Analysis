@@ -13,6 +13,9 @@ from tqdm.contrib.telegram import tqdm as tqdmTelegram
 import os
 from tqdm import tqdm
 
+from Federated_Differential_Methylation_Analysis.Central_preprocessing.python_preprocessing_splits import design_matrix
+
+
 # dasen normalisation local substeps
 def dfs2_python(x, probe_type):
     import statsmodels.api as sm
@@ -118,6 +121,9 @@ class Client:
 
         # design
         self.designmatrix = pd.read_csv(design_matrix_filepath, index_col=0)
+        if 'sentrix_id' in design_matrix.columns:
+            design_matrix['Sentrix_ID'] = design_matrix['sentrix_id']
+            design_matrix.drop('sentrix_id', axis=1, inplace=True)
         self.designcolumns = list(self.designmatrix.columns.values)
 
         # check that the indexes of the methylated and unmethylated dataframes are the same
@@ -205,7 +211,7 @@ class Client:
                 self.probes = probes_to_keep
 
     def find_unique_SentrixIDS(self):
-        sentrix_ids = self.designmatrix.loc[:, "sentrix_id"]
+        sentrix_ids = self.designmatrix.loc[:, "Sentrix_ID"]
         self.unique_SentrixIDS = list(set(sentrix_ids))
     
     def find_unique_PlateIDS(self):
