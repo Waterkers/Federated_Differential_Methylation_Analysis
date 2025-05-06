@@ -91,8 +91,8 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
     # read in the data
     meth = read_data(meth_path, index_col='Unnamed: 0')
     print(meth.head())
-    umeth = read_data(umeth_path)
-    beta = read_data(beta_path)
+    umeth = read_data(umeth_path, index_col='Unnamed: 0')
+    beta = read_data(beta_path, index_col='Unnamed: 0')
     small_design = read_data(small_design_path, index_col= "Sample_ID")
 
     if full_design_local_path:
