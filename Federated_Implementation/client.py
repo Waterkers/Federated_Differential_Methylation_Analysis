@@ -64,7 +64,7 @@ def dfsfit_python(x, probe_type):
     dis_diff = [fit_dist.fittedvalues]
     n = probe_type.squeeze() == "I"
     tI_correction = np.tile(np.array(dis_diff), (sum(n),1))
-    x[probe_type.squeeze() == "I"] = x[probe_type.squeeze() == "I"] - tI_correction
+    x[probe_type.squeeze() == "I"] = x.loc[probe_type.squeeze() == "I",:] - tI_correction
     return x
 
 class Client:
