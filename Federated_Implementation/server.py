@@ -156,12 +156,12 @@ class Server:
         return gmethI, gmethII, gunmethI, gunmethII
     
     
-    def global_regression_parameter(self, *local_xt_matrices):
+    def global_regression_parameter(self, *local_xt_matrices, cohort:bool):
         '''
         aggregate local xt_x to global xt_x matrix for linear regression
         '''
-        
-        self.confounders.extend(self.cohort_effects)
+        if cohort:
+            self.confounders.extend(self.cohort_effects)
         if self.global_SentrixID:
             self.confounders.extend(self.global_SentrixID)
             if 'sentrix_id' in self.confounders:
