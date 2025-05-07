@@ -164,7 +164,7 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
         splits_pheno.loc[sele_samples, "split"] = "Split_" + str(i + 1)
         splits_pheno["Split_" + str(i + 1)] = 0
         splits_pheno.loc[sele_samples, "Split_" + str(i + 1)] = 1
-    print(splits_pheno[:,' split'].unique())
+    print(splits_pheno.loc[:,' split'].unique())
     output_dir = os.path.join(output_path, f"{identifier}_{distortion}_splits")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
