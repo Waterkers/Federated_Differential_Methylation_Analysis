@@ -20,7 +20,7 @@ parser.add_argument('split_directory', type=str,)
 parser.add_argument('output_dir', type=str,)
 parser.add_argument('probe_annotation_path', type=str,)
 parser.add_argument('split_type', type=str,)
-parser.add_argument('-c', '--cohort', action='store-true')
+parser.add_argument('-c', '--cohort', action='store_true')
 args = parser.parse_args()
 #%%
 if not args:
