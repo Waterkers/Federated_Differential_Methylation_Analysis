@@ -39,7 +39,9 @@ else:
 # check if output directory exists, if not make it
 if not os.path.isdir(output):
     os.mkdir(output)
-
+#TODO wrap the whole thing into a function
+#TODO include logging or progress monitoring of some kind
+#TODO remove all return statements from the client/server functions unless the returned objects are saved to a file for logging
 #%% md
 # ## Initialising the clients
 #%%
@@ -125,6 +127,10 @@ lab_c.local_xtx_xty()
 #%% md
 # Server side
 #%%
+# print statements to figure out why the dimensions between the three splits differ
+print(f'Split 1: xtx {lab_a.xtx.shape}, xty {lab_a.xty.shape}/n '
+      f'Split2: xtx {lab_b.xtx.shape}, xty {lab_b.xty.shape}/n '
+      f'Split3: xtx {lab_c.xtx.shape}, xty {lab_c.xty.shape}/n ')
 serv.global_regression_parameter((lab_a.xtx, lab_a.xty), (lab_b.xtx, lab_b.xty), (lab_c.xtx, lab_c.xty))
 #%% md
 # #### Client side
