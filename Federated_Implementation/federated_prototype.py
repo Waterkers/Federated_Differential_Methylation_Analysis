@@ -131,7 +131,7 @@ lab_c.local_xtx_xty()
 print(f'Split 1: xtx {lab_a.xtx.shape}, xty {lab_a.xty.shape}/n '
       f'Split2: xtx {lab_b.xtx.shape}, xty {lab_b.xty.shape}/n '
       f'Split3: xtx {lab_c.xtx.shape}, xty {lab_c.xty.shape}/n ')
-serv.global_regression_parameter((lab_a.xtx, lab_a.xty), (lab_b.xtx, lab_b.xty), (lab_c.xtx, lab_c.xty))
+serv.global_regression_parameter(((lab_a.xtx, lab_a.xty), (lab_b.xtx, lab_b.xty), (lab_c.xtx, lab_c.xty)), cohort=cohort)
 #%% md
 # #### Client side
 #%% md
