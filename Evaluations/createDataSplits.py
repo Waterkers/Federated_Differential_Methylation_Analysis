@@ -154,6 +154,7 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
 
     splits = {}
     ad = set(pheno.loc[pheno[diagnosis_col] == ad_diagnosis, :].index.values)
+    print(len(ad))
     other = set(pheno.index.values).difference(ad)  # .difference(fem)
     for i in range(0, n_splits - 1):
         b = set(sample(ad, n_ad[i]))
