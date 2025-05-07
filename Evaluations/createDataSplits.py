@@ -171,6 +171,7 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
     for i in range(n_splits):
         s = "Split_" + str(i + 1)
         samples = sorted(splits_pheno.loc[splits_pheno["split"] == s, :].index.values)
+        print(len(samples))
         splits_pheno.loc[samples, :].to_csv(output_dir + "/" + s + "_pheno.csv")
         meth.loc[:, samples].to_csv(output_dir + "/" + s + "_methylated.csv")
         umeth.loc[:, samples].to_csv(output_dir + "/" + s + "_unmethylated.csv")
