@@ -175,6 +175,7 @@ class Server:
         
         n = len(self.global_probes)
         m = (len(self.variables) + len(self.confounders))
+        print(f'number of columns: {m}')
         self.global_xtx = np.zeros((n,m,m))
         self.global_xty = np.zeros((n,m))
         self.stdev_unscaled = np.zeros((n,m))
