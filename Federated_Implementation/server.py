@@ -164,7 +164,11 @@ class Server:
         self.confounders.extend(self.cohort_effects)
         if self.global_SentrixID:
             self.confounders.extend(self.global_SentrixID)
-            self.confounders.remove("sentrix_id")
+            if 'sentrix_id' in self.confounders:
+                self.confounders.remove("sentrix_id")
+            elif 'Sentrix_ID' in self.confounders:
+                self.confounders.remove("Sentrix_ID")
+
         if self.global_PlateID:
             self.confounders.extend(self.global_PlateID)
             self.confounders.remove("Plate_ID")
