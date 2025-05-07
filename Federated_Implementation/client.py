@@ -292,10 +292,10 @@ class Client:
         
 
     def final_normalisation(self, probe_type_means):
-        methI_data = self.methylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "I"].copy().to_numpy()
-        methII_data = self.methylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "II"].copy().to_numpy()
-        unmethI_data = self.unmethylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "I"].copy().to_numpy()
-        unmethII_data = self.unmethylated_dist[self.probe_annotation['Infinium_Design_Type'].values == "II"].copy().to_numpy()
+        methI_data = self.methylated_dist.loc[self.probe_annotation['Infinium_Design_Type'].values == "I",:].copy().to_numpy()
+        methII_data = self.methylated_dist.loc[self.probe_annotation['Infinium_Design_Type'].values == "II",:].copy().to_numpy()
+        unmethI_data = self.unmethylated_dist.loc[self.probe_annotation['Infinium_Design_Type'].values == "I",:].copy().to_numpy()
+        unmethII_data = self.unmethylated_dist.loc[self.probe_annotation['Infinium_Design_Type'].values == "II",:].copy().to_numpy()
         data_list = [methI_data, methII_data, unmethI_data, unmethII_data]
 
         data_out = []
@@ -310,19 +310,19 @@ class Client:
                 results[:,col] = f((rank - 1)/(n-1))
             data_out.append(pd.DataFrame(results))
         #save the normalised methylated intensities
-        data_out[0].set_index(self.methylated_dist[self.probe_annotation['Infinium_Design_Type'] =="I"].index, inplace = True)
+        data_out[0].set_index(self.methylated_dist.loc[self.probe_annotation['Infinium_Design_Type'] =="I",:].index, inplace = True)
         data_out[0].columns = self.sample_names
 
-        data_out[1].set_index(self.methylated_dist[self.probe_annotation['Infinium_Design_Type'] =="II"].index, inplace = True)
+        data_out[1].set_index(self.methylated_dist.loc[self.probe_annotation['Infinium_Design_Type'] =="II",:].index, inplace = True)
         data_out[1].columns = self.sample_names
         self.methnorm = pd.concat([data_out[0], data_out[1]])
         self.methnorm.sort_index(inplace=True)
 
         #save the normalised unmethylated intensities
-        data_out[2].set_index(self.methylated_dist[self.probe_annotation['Infinium_Design_Type'] =="I"].index, inplace = True)
+        data_out[2].set_index(self.methylated_dist.loc[self.probe_annotation['Infinium_Design_Type'] =="I",:].index, inplace = True)
         data_out[2].columns = self.sample_names
 
-        data_out[3].set_index(self.methylated_dist[self.probe_annotation['Infinium_Design_Type'] =="II"].index, inplace = True)
+        data_out[3].set_index(self.methylated_dist.loc[self.probe_annotation['Infinium_Design_Type'] =="II",:].index, inplace = True)
         data_out[3].columns = self.sample_names
         self.unmethnorm = pd.concat([data_out[2], data_out[3]])
         self.unmethnorm.sort_index(inplace=True)
