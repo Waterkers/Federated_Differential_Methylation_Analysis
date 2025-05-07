@@ -155,7 +155,8 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
     splits = {}
     ad = set(pheno.loc[pheno[diagnosis_col] == ad_diagnosis, :].index.values)
     other = set(pheno.index.values).difference(ad)  # .difference(fem)
-    for i in range(0, n_splits - 1):
+    for i in range(0, n_splits): # -1
+        print(i)
         print("Split_" + str(i + 1))
         b = set(sample(ad, n_ad[i]))
         ad = ad.difference(b)
@@ -164,8 +165,9 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
         sele_samples = b | o
         print(len(sele_samples))
         splits_pheno.loc[sele_samples, "split"] = "Split_" + str(i + 1)
-        splits_pheno["Split_" + str(i + 1)] = 0
-        splits_pheno.loc[sele_samples, "Split_" + str(i + 1)] = 1
+        if i < n_splits - 1:
+            splits_pheno["Split_" + str(i + 1)] = 0
+            splits_pheno.loc[sele_samples, "Split_" + str(i + 1)] = 1
     print(splits_pheno.loc[:,'split'].unique())
     output_dir = os.path.join(output_path, f"{identifier}_{distortion}_splits")
     if not os.path.exists(output_dir):
