@@ -121,16 +121,16 @@ QCmetrics<-cbind(pheno, M.median, U.median)
 
 # check median deviations +/- 3* median absolute deviation
 M_lower_bound <- median(M.median) - 3 * mad(M.median, constant = 1)
-M_lower_bound
+#M_lower_bound
 
 M_upper_bound <- median(M.median) + 3 * mad(M.median, constant = 1)
-M_upper_bound
+#M_upper_bound
 
 U_lower_bound <- median(U.median) - 3 * mad(U.median, constant = 1)
-U_lower_bound
+#U_lower_bound
 
 U_upper_bound <- median(U.median) + 3 * mad(U.median, constant = 1)
-U_upper_bound
+#U_upper_bound
 
 ## 1500 for buccal/saliva. change this to adjust the threshold at which you filter; 2000 for blood
 intens.Thres<-2000 
@@ -156,7 +156,7 @@ dev.off()
 
 # State outliers if strict
 strictoutliers = names(which(M.median<M_lower_bound | U.median<U_lower_bound | M.median>M_upper_bound | U.median>U_upper_bound))
-strictoutliers
+#strictoutliers
 
 # store outliers in QCmetrics
 QCmetrics$strict_outliers = QCmetrics$Sample_ID%in%strictoutliers #change column to match the sample_id column name
@@ -203,7 +203,6 @@ predSex1<-findGenderPC(betas, pheno$Sex, npcs = 20) # the default setting of npc
 # I reduced the number of princicple components for the example data set -> remember to put it back at 20
 # when using real data
 predSex2<-clusterGender(betas, pheno$Sex)
-print('ClusterGender went through')
 dev.off()
 
 # Confirm findings
@@ -230,12 +229,10 @@ dev.off()
 
 # Saving the correct predicted sex results to the QCmetrics matrix
 QCmetrics<-cbind(QCmetrics, predSex1)
-print('predSex1 was bound to QCmetrics')
 ###### Check genetically identical samples correlate across SNP probes ######
 #- Does not work for the example data
 betas <- methylumi::betas(msetEPIC) 
 pheno<-pheno[match(colnames(betas), pheno$SampleLabel),]
-print('pheno was updated to only contain the samples present in the betas frame')
 betas.rs<-betas[grep("rs", rownames(betas)),]
 
 # check for complete cases as it will cause error
@@ -268,9 +265,8 @@ for(i in 1:ncol(betas.rs)){
   yname = paste0( colnames(cors)[o]," (ID: ",pheno$Sample_title[which(pheno$Sample_ID==colnames(cors)[o])],")")
   
   id_match = pheno$Sample_title[which(pheno$Sample_ID==colnames(betas.rs)[i])] == pheno$Sample_title[which(pheno$Sample_ID==colnames(cors)[o])]
-  
   id_match_text = ifelse(id_match,"IDs match","IDs dont match")
-  if(!id_match){warning(paste0("mismatch with sample ",xname, " Index: ",i))}
+  if(is.null(id_match)){warning(paste0("mismatch with sample ",xname, " Index: ",i))}
   
   plot(betas.rs[,i], betas.rs[,o],xlab=xname,ylab=yname,main=paste0(id_match_text,"\n Cor: ",round(cors[o],3)))
   
