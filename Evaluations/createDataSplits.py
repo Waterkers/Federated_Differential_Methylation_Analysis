@@ -186,6 +186,10 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
 
     if save_local:
         if small_design_local_path:
+            if isinstance(small_design_local_path, str):
+                local_output = os.path.dirname(small_design_local_path)
+            else:
+                local_output = None
             central_design = small_design_local.copy()
             central_design["Cohort_effect"] = splits_pheno["split"]
             central_design["Split1"] = 0
@@ -193,8 +197,15 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
             central_design["Split2"] = 0
             central_design.loc[central_design["Cohort_effect"] == "Split_2", "Split2"] = 1
             central_design.drop(columns="Cohort_effect", inplace=True)
-            central_design.to_csv(os.path.join(output_dir + "/" + "central_design_matrix.csv"))
+            if local_output:
+                central_design.to_csv(os.path.join(local_output + "/" + "central_design_matrix.csv"))
+            else:
+                central_design.to_csv(os.path.join(output_dir + "/" + "central_design_matrix.csv"))
         if full_design_local_path:
+            if isinstance(full_design_local_path, str):
+                local_output = os.path.dirname(full_design_local_path)
+            else:
+                local_output = None
             central_full_design = full_design_local.copy()
             central_full_design["Cohort_effect"] = splits_pheno["split"]
             central_full_design["Split1"] = 0
@@ -202,7 +213,10 @@ def createDataSplits(meth_path:Union[str, pd.DataFrame],
             central_full_design["Split2"] = 0
             central_full_design.loc[central_full_design["Cohort_effect"] == "Split_2", "Split2"] = 1
             central_full_design.drop(columns="Cohort_effect", inplace=True)
-            central_full_design.to_csv(os.path.join(output_dir + "/" + "full_central_design_matrix.csv"))
+            if local_output:
+                central_full_design.to_csv(os.path.join(local_output + "/" + "full_central_design_matrix.csv"))
+            else:
+                central_full_design.to_csv(os.path.join(output_dir + "/" + "full_central_design_matrix.csv"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
