@@ -68,7 +68,7 @@ if (is.element(identifier, c('GSE134379', 'GSE134379_half'))){
 
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
-Sample_ID <- getBarcodes(idat_file_path) 
+Sample_ID <- getBarcodes(idat)
 pheno1 <- cbind(pheno1, Sample_ID)
 
 # add the sentrix id and position information to the phenotype file if it isn't there already
