@@ -67,7 +67,7 @@ if args.Filtered:
     if '_half' in identifier:
         pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Reduced_Pheno_Info.csv"), index_col=0)
     else:
-        pheno = pd.read_csv(os.path.join(input_dir, (identifier + '_pheno.txt')), index_col=0, sep='\t').T
+        pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Pheno_Info.csv"), index_col=0)
     unmeth = pd.read_csv(os.path.join(input_dir, "Filtered_Unmethylated.csv"), index_col=0)
     unmeth.astype(np.float64)
     meth = pd.read_csv(os.path.join(input_dir, "Filtered_Methylated.csv"), index_col=0)
