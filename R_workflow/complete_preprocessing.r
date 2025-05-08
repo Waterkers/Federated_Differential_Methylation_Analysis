@@ -280,7 +280,7 @@ dev.off()
 # Storing the correlations, source, target
 duplicateSamples = data.frame(source = rownames(snpCor), target = names(apply(snpCor, 1, max, na.rm = TRUE)), maxcorrelation = as.numeric(apply(snpCor, 1, max, na.rm = TRUE)))
 
-
+print('duplicate samples check went through')
 QCmetrics<-cbind(QCmetrics, duplicateSamples)
 
 ##### P-filter #############
