@@ -64,8 +64,7 @@ if(!dir.exists(QC_plots)){
 # loading in actual data - GSE105109
 if (is.element(identifier, c('GSE134379', 'GSE134379_half'))){
     pheno1 <- read.table(pheno_info, row.names = 1, nrow=nrow(read.table(pheno_info))-5)
-  }
-  else {pheno1 <- read.table(pheno_info, row.names = 1)}
+  } else {pheno1 <- read.table(pheno_info, row.names = 1)}
 
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
