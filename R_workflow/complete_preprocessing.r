@@ -230,12 +230,12 @@ dev.off()
 
 # Saving the correct predicted sex results to the QCmetrics matrix
 QCmetrics<-cbind(QCmetrics, predSex1)
-
+print('predSex1 was bound to QCmetrics')
 ###### Check genetically identical samples correlate across SNP probes ######
 #- Does not work for the example data
 betas <- methylumi::betas(msetEPIC) 
 pheno<-pheno[match(colnames(betas), pheno$SampleLabel),]
-
+print('pheno was updated to only contain the samples present in the betas frame')
 betas.rs<-betas[grep("rs", rownames(betas)),]
 
 # check for complete cases as it will cause error
