@@ -68,11 +68,11 @@ if args.Filtered:
         pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Reduced_Pheno_Info.csv"), index_col=0)
     else:
         pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Pheno_Info.csv"), index_col=0)
-    unmeth = pd.read_csv(os.path.join(input_dir, "Filtered_Unmethylated.csv"), index_col=0)
+    unmeth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Unmethylated.csv"), index_col=0)
     unmeth.astype(np.float64)
-    meth = pd.read_csv(os.path.join(input_dir, "Filtered_Methylated.csv"), index_col=0)
+    meth = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Methylated.csv"), index_col=0)
     meth.astype(np.float64)
-    pre_norm_betas = pd.read_csv(input_dir, "Filtered_Betas.csv", index_col=0)
+    pre_norm_betas = pd.read_csv(os.path.join(preprocessing_result_dir, "Filtered_Betas.csv"), index_col=0)
     pre_norm_betas.astype(np.float64)
     # create the output file structure
     output_dir_QC = os.path.join(output_dir, "QC_Python")
