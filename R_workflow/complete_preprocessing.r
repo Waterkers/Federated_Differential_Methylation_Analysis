@@ -203,6 +203,7 @@ predSex1<-findGenderPC(betas, pheno$Sex, npcs = 20) # the default setting of npc
 # I reduced the number of princicple components for the example data set -> remember to put it back at 20
 # when using real data
 predSex2<-clusterGender(betas, pheno$Sex)
+print('ClusterGender went through')
 dev.off()
 
 # Confirm findings
