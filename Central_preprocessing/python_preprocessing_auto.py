@@ -48,7 +48,8 @@ parser.add_argument("--Filtered", "-f", action="store_true",
     help = "Indicate that input files contain already preprocessed and filtered intensities. In case of raw input data leave this out")
 parser.add_argument("-scr_dir", "--script_directory", metavar= "script_directory/", type=str, nargs=1,
     help = "Pass the filepath to the directory containing the scirpts needed for preprocessing if they are not in the current working directory")
-
+parser.add_argument( "--cohort", action="store_true",
+                     help='Include to use the federated splits as cohort effects in the EWAS model')
 args = parser.parse_args()
 print(args)
 input_dir = args.input_dir[0]
@@ -59,6 +60,7 @@ else:
     script_dir = sys.path[0] #set script_dir to the directory from where this script was started
     print("The output can be found here:", script_dir)
 identifier = args.identifier[0]
+cohort_effect = args.cohort
 if args.Filtered:
     # read in the centrally r-processed filtered methylated and unmethylated intensities
     if '_half' in identifier:
@@ -233,31 +235,47 @@ else:
                      save_local=True,
                      small_design_local_path=os.path.join(input_dir, "Small_EWAS_design_local.csv"))
 
-# local
-design_matrix_local = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design_local.csv"), index_col=0)
-#TODO add flag for this in the function
-# central
-#design_matrix = pd.read_csv(os.path.join(input_dir, "central_design_matrix.csv"), index_col=0)
-print("EWAS")
-results_ewas, SSE = EWAS_central_Parallel.EWAS_central(design_matrix_local, normalised_betas, identifier)
+if not cohort_effect:
+    # local
+    design_matrix_local = pd.read_csv(os.path.join(input_dir, "Small_EWAS_design_local.csv"), index_col=0)
+    design_matrix = None
+    print("EWAS")
+    results_ewas, SSE = EWAS_central_Parallel.EWAS_central(design_matrix_local, normalised_betas, identifier)
+else:
+    #central
+    design_matrix = pd.read_csv(os.path.join(input_dir, "central_design_matrix.csv"), index_col=0)
+    design_matrix_local = None
+    print("EWAS")
+    results_ewas, SSE = EWAS_central_Parallel.EWAS_central(design_matrix, normalised_betas, identifier)
 
 # create an output table with the top (genomewide) significant probes and their associated gene with the metrics
 gene_annotations = annotation.loc[:, "UCSC_RefGene_Name"]
 gene_annotations = gene_annotations.loc[set(results_ewas.index.values).intersection(set(annotation_data.index.values))]
 final_results_table = pd.DataFrame({"Associated Gene":gene_annotations, "Methylation Change":results_ewas.loc[:,("Coefficient", "AD")], "Corrected P-value":results_ewas.loc[:,("Corrected P-value", "AD")]})
 final_results_table.sort_values(by = ["Corrected P-value"], inplace = True)
-# save the EWAS results to the output directory
-final_results_table.to_csv(os.path.join(output_dir_QC, (identifier + "_results_diagnosis_regression_python.csv")))
-results_ewas.to_csv(os.path.join(output_dir_QC, (identifier + "_full_results_regression_python.csv")))
-# save the SSE to a file for the calculation of the eBayes results
-with open(os.path.join(output_dir_QC, (identifier + "_SSE_list.csv")), "w") as outfile:
-    outfile.writelines('\n'.join([str(i) for i in SSE]))
+if not cohort_effect:
+    # save the EWAS results to the output directory
+    final_results_table.to_csv(os.path.join(output_dir_QC, (identifier + "_results_diagnosis_regression_python.csv")))
+    results_ewas.to_csv(os.path.join(output_dir_QC, (identifier + "_full_results_regression_python.csv")))
+    # save the SSE to a file for the calculation of the eBayes results
+    with open(os.path.join(output_dir_QC, (identifier + "_SSE_list.csv")), "w") as outfile:
+        outfile.writelines('\n'.join([str(i) for i in SSE]))
+else:
+    # save the EWAS results to the output directory
+    final_results_table.to_csv(os.path.join(output_dir_QC, (identifier + "_central_results_diagnosis_regression_python.csv")))
+    results_ewas.to_csv(os.path.join(output_dir_QC, (identifier + "_central_full_results_regression_python.csv")))
+    # save the SSE to a file for the calculation of the eBayes results
+    with open(os.path.join(output_dir_QC, (identifier + "_central_SSE_list.csv")), "w") as outfile:
+        outfile.writelines('\n'.join([str(i) for i in SSE]))
 # try the ebayes calculation with the regression output
 regressioResultsCalculator = eBayesLocal.eBayesLocal(results_ewas,
                                          SSE,
                                          design_matrix_local.shape[0])
 regressioResultsCalculator.eBayes()
-regressioResultsCalculator.table.to_csv(os.path.join(output_dir_QC, (identifier + "_eBayesTopTableResult.csv")))
+if not cohort_effect:
+    regressioResultsCalculator.table.to_csv(os.path.join(output_dir_QC, (identifier + "_eBayesTopTableResult.csv")))
+else:
+    regressioResultsCalculator.table.to_csv(os.path.join(output_dir_QC, (identifier + "_central_eBayesTopTableResult.csv")))
 
 sys.exit(0)
 
