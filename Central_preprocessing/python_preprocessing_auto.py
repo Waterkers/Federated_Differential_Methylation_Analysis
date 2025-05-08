@@ -61,10 +61,11 @@ else:
     print("The output can be found here:", script_dir)
 identifier = args.identifier[0]
 cohort_effect = args.cohort
+preprocessing_result_dir = os.path.join(output_dir, ("QC_" + identifier))
 if args.Filtered:
     # read in the centrally r-processed filtered methylated and unmethylated intensities
     if '_half' in identifier:
-        pheno = pd.read_csv(os.path.join(preprocessing_results_dir, "Reduced_Pheno_Info.csv"), index_col=0)
+        pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Reduced_Pheno_Info.csv"), index_col=0)
     else:
         pheno = pd.read_csv(os.path.join(input_dir, (identifier + '_pheno.txt')), index_col=0, sep='\t').T
     unmeth = pd.read_csv(os.path.join(input_dir, "Filtered_Unmethylated.csv"), index_col=0)
@@ -97,7 +98,7 @@ else:
         print('There was an error in preprocessing')
         print(preprocessing.stderr)
         sys.exit(1)
-    preprocessing_result_dir = os.path.join(output_dir, ("QC_" + identifier))
+
     if '_half' in identifier:
         pheno = pd.read_csv(os.path.join(preprocessing_result_dir, "Reduced_Pheno_Info.csv"), index_col=0)
     else:
