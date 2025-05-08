@@ -206,12 +206,13 @@ predSex2<-clusterGender(betas, pheno$Sex)
 dev.off()
 
 # Confirm findings
-PCA = prcomp(betas[complete.cases(betas),])
-plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(pheno$Sex=="Sex: M","blue","magenta"), main= "PCA of betas, colored by phenotype trait sex",pch=19)
+# commented plotting because they are not saved anywhere for now
+#PCA = prcomp(betas[complete.cases(betas),])
+#plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(pheno$Sex=="Sex: M","blue","magenta"), main= "PCA of betas, colored by phenotype trait sex",pch=19)
 # Check predsex
-plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(predSex1=="Sex: M","blue","magenta"), main= "PCA of betas, colored by predicted trait predSex1",pch=19)
+#plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(predSex1=="Sex: M","blue","magenta"), main= "PCA of betas, colored by predicted trait predSex1",pch=19)
 
-plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(predSex2=="Sex: M","blue","magenta"), main= "PCA of betas, colored by predicted trait predSex2",pch=19)
+#plot(PCA$rotation[,1],PCA$rotation[,3],col=ifelse(predSex2=="Sex: M","blue","magenta"), main= "PCA of betas, colored by predicted trait predSex2",pch=19)
 
 # the next step would be to put a note in the QCmetrics matrix for the samples where biological/phenotypical 
 # sex does not match with the sex determined based on the methylation data - in the example data this is not 
