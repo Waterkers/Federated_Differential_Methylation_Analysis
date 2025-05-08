@@ -113,9 +113,9 @@ lab_b.final_normalisation(probe_type_means)
 lab_c.final_normalisation(probe_type_means)
 #%%
 # save the betas for testing
-lab_a.betas.to_csv(os.path.join(output, f"{split_type}_split1_betas.csv"))
-lab_b.betas.to_csv(os.path.join(output, f"{split_type}_split2_betas.csv"))
-lab_c.betas.to_csv(os.path.join(output, f"{split_type}_split3_betas.csv"))
+lab_a.betas.to_csv(os.path.join(output, f"{split_type}_split1{'_central_' if cohort else '_'}betas.csv"))
+lab_b.betas.to_csv(os.path.join(output, f"{split_type}_split2{'_central_' if cohort else '_'}betas.csv"))
+lab_c.betas.to_csv(os.path.join(output, f"{split_type}_split3{'_central_' if cohort else '_'}betas.csv"))
 #%% md
 # ## EWAS - Linear regression model
 #%% md
@@ -149,17 +149,17 @@ cov_coef_list = [cov_coef_a, cov_coef_b, cov_coef_c]
 #%%
 serv.aggregate_SSE_and_cov_coef(SSE_list,cov_coef_list)
 #%%
-np.savetxt(os.path.join(output, f"{split_type}_splits_model_matrix.csv"), serv.beta, delimiter=",")
-np.savetxt(os.path.join(output, f"{split_type}_splits_model_matrix_xty.csv"), serv.global_xty, delimiter=",")
+np.savetxt(os.path.join(output, f"{split_type}_splits{'_central_' if cohort else '_'}model_matrix.csv"), serv.beta, delimiter=",")
+np.savetxt(os.path.join(output, f"{split_type}_splits{'_central_' if cohort else '_'}model_matrix_xty.csv"), serv.global_xty, delimiter=",")
 #%% md
 # Make and fit the contrasts to the linear model
 #%%
 contrasts_mat = serv.make_contrasts(contrasts=[(["AD"],["CTRL"])])
 serv.fit_contasts(contrasts_mat.values)
 #%%
-contrasts_mat.to_csv(os.path.join(output, f"{split_type}_splits_contrastmat.csv"))
-np.savetxt(os.path.join(output, f"{split_type}_splits_model_matrix_contractfit.csv"), serv.beta, delimiter=",")
-np.savetxt(os.path.join(output, f"{split_type}_splits_model_matrix_xty_contractfit.csv"), serv.global_xty, delimiter=",")
+contrasts_mat.to_csv(os.path.join(output, f"{split_type}_splits{'_central_' if cohort else '_'}contrastmat.csv"))
+np.savetxt(os.path.join(output, f"{split_type}_splits{'_central_' if cohort else '_'}model_matrix_contractfit.csv"), serv.beta, delimiter=",")
+np.savetxt(os.path.join(output, f"{split_type}_splits{'_central_' if cohort else '_'}model_matrix_xty_contractfit.csv"), serv.global_xty, delimiter=",")
 #%% md
 # Calculate the P-values
 #%%
@@ -169,4 +169,4 @@ serv.eBayes()
 #%%
 serv.table 
 #%%
-serv.table.to_csv(os.path.join(output, f"{split_type}_splits_EWAS_results.csv"))
+serv.table.to_csv(os.path.join(output, f"{split_type}_splits{'_central_' if cohort else '_'}EWAS_results.csv"))
