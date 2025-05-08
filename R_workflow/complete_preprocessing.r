@@ -281,7 +281,9 @@ QCmetrics<-cbind(QCmetrics, duplicateSamples)
 
 ##### P-filter #############
 # Remove objects in memory as a lot of RAM is needed when running pfilter
-removelist = c("betas","chip.M.median","chip.U.median","cors","duplicateSamples","m_intensities","PCA","u_intensities","snpCor","betas.rs","bs","corMax","i","id_match","id_match_text","M.median","o","predSex1","predSex2","U.median","val","xname","yname")
+removelist = c("betas","chip.M.median","chip.U.median","cors","duplicateSamples","m_intensities","u_intensities",
+               "snpCor","betas.rs","bs","corMax","i","id_match","id_match_text","M.median","o","predSex1",
+               "predSex2","U.median","val","xname","yname") #"PCA",
 rm(list=removelist)
 gc()
 
