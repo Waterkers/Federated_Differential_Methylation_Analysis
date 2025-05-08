@@ -1,5 +1,5 @@
 if (!require("IlluminaHumanMethylation450kanno.ilmn12.hg19", quietly = TRUE))
-  BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19")
+  BiocManager::install("IlluminaHumanMethylation450kanno.ilmn12.hg19", update = FALSE)
 suppressPackageStartupMessages(library(IlluminaHumanMethylation450kanno.ilmn12.hg19))
 suppressPackageStartupMessages(library(limma))
 
