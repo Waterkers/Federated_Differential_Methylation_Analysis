@@ -8,6 +8,14 @@
 #	Age                                                                  #
 #	Diagnosis                                                            #
 ##########################################################################
+input <- commandArgs(trailingOnly = TRUE)
+
+## save input commands as local objects
+idat <- input[1]
+pheno_info <- input[2]
+working_dir <- input[3]
+manifest_path <- input[4]
+identifier <- input[5]
 
 
 ##### Start with installing the required packages ########
@@ -31,14 +39,14 @@ if (!require("tidyverse", quietly = TRUE))
 library(tidyverse)
 
 ##### source the Exeter functions needed for the pipeline
-lapply(list.files("/home/silke/Documents/Fed_EWAS/Required_files/R",pattern = "\\.r$",full.names = T),function(x){source(x)})
+lapply(list.files("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
 
 ## Set the working directory
-setwd("/home/silke/Documents/Fed_EWAS/") # set working directory to whatever is relevant
+setwd(working_dir) # set working directory to whatever is relevant
 
 ## create a folder for the QC output - change the identifier to whatever works for the project
-identifier <- "GSE105109"
-QC_output <- paste0("QC_", identifier)
+#identifier <- "GSE105109"
+QC_output <- paste0("QC_Rworkflow_", identifier)
 QC_plots <- file.path(QC_output, "Plots")
 if(!dir.exists(QC_output)){
   dir.create(QC_output)
@@ -48,17 +56,19 @@ if(!dir.exists(QC_plots)){
 }
 
 #change filepaths to necessary files here
-phenotype_information_file <- "/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files/GSE105109_pheno.txt"
-idat_file_path <- "/home/silke/Documents/Fed_EWAS/GSE105109_RAW/idat"
-annotation_information_manifest_file <- "/home/silke/Documents/Fed_EWAS/GSE105109_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv"
+#phenotype_information_file <- "/home/silke/Documents/Fed_EWAS/Federated_Differential_Methylation_Analysis/Required_files/GSE105109_pheno.txt"
+#idat_file_path <- "/home/silke/Documents/Fed_EWAS/GSE105109_RAW/idat"
+#annotation_information_manifest_file <- "/home/silke/Documents/Fed_EWAS/GSE105109_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv"
 
 #### import the data using methylumi -> create a MethyLumiSet object
 # loading in actual data - GSE105109
-pheno1 <- read.table(phenotype_information_file) 
+if (is.element(identifier, c('GSE134379', 'GSE134379_half'))){
+    pheno1 <- read.table(pheno_info, row.names = 1, nrow=nrow(read.table(pheno_info))-5)
+  }
+  else {pheno1 <- read.table(pheno_info, row.names = 1)}
+
 pheno1 <- t(pheno1)#transpose the imported tabel to the sample characteristics/ids etc are columns and the samples are rows
 pheno1 <- as.data.frame(pheno1)
-colnames(pheno1)<- pheno1[1,]
-pheno1 <- pheno1[2:nrow(pheno1),]
 Sample_ID <- getBarcodes(idat_file_path) 
 pheno1 <- cbind(pheno1, Sample_ID)
 
@@ -86,7 +96,7 @@ pheno1["sentrix_position"] <- sentrix_position
 library(parallel)
 num_cores <- detectCores()
 
-data2 <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = idat_file_path, parallel = TRUE, mc.cores = num_cores)
+data2 <- wateRmelon::readEPIC(barcodes = Sample_ID, pdat = pheno1, idatPath = idat, parallel = TRUE, mc.cores = num_cores)
 ## next it is necessary to rename the phenotype and data object to the names that are used in the pipeline
 pheno <- pheno1
 msetEPIC <- data2
@@ -298,8 +308,8 @@ gc()
 
 ##### Removal of cross-hybridisation probes ###############
 # load the cpgs to be removed -  based on McCartney et al., 2016 ###
-crosshyb <- read.table(url("https://pmc.ncbi.nlm.nih.gov/articles/instance/4909830/bin/mmc2.txt")) #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt,
-snpProbes <- read.table(url("https://pmc.ncbi.nlm.nih.gov/articles/instance/4909830/bin/mmc1.txt"), header = TRUE) #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt,
+crosshyb <- read.table("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc2.txt") #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt,
+snpProbes <- read.table("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc1.txt", header = TRUE) #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt,
 msetEPIC.pf<-msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
 kept_probes <-filterSNPprobes(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
 msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]
@@ -316,7 +326,7 @@ save(msetEPIC.pf, QCmetrics, file = file.path(QC_output, "FilteredMethylumisetQC
 msetEPIC.pf <- dasen(msetEPIC.pf)
 # adding feature/probe annotation information after normalisation because otherwise
 # the dasen function becomes fussy and won't work
-annotation_data <- read.csv(annotation_information_manifest_file, skip = 7, header = TRUE) 
+annotation_data <- read.csv(manifest_path, skip = 7, header = TRUE)
 retained_annotation <- annotation_data[annotation_data$IlmnID %in% rownames(betas(msetEPIC.pf)), ]
 fData(msetEPIC.pf) <- retained_annotation
 
