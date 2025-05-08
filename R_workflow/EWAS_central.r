@@ -30,20 +30,20 @@ design <- design[, !names(design) %in% c("Brain_region")]
 Betas <- Betas[row.names(design)]
 ## create a folder to save EWAS output
 #TODO wrap in if statement if cohort_effect is true create folder with central otherwise not
-if(cohort_effect) {
-  if (!dir.exists(paste0("EWAS_R_Central_", identifier))) {
-    dir.create(paste0("EWAS_R_Central_", identifier))
-  }
-  if (!dir.exists(file.path(paste0("EWAS_R_Central_", identifier), "Plots"))) {
-    dir.create(file.path(paste0("EWAS_R_Central_", identifier), "Plots"))
-  }
-} else {if (!dir.exists(paste0("EWAS_R_", identifier))) {
-    dir.create(paste0("EWAS_R_", identifier))
-  }
-  if (!dir.exists(file.path(paste0("EWAS_R_", identifier), "Plots"))) {
-    dir.create(file.path(paste0("EWAS_R_", identifier), "Plots"))
-  }
-}
+# if(cohort_effect) {
+#   if (!dir.exists(paste0("EWAS_R_Central_", identifier))) {
+#     dir.create(paste0("EWAS_R_Central_", identifier))
+#   }
+#   if (!dir.exists(file.path(paste0("EWAS_R_Central_", identifier), "Plots"))) {
+#     dir.create(file.path(paste0("EWAS_R_Central_", identifier), "Plots"))
+#   }
+# } else {if (!dir.exists(paste0("EWAS_R_", identifier))) {
+#     dir.create(paste0("EWAS_R_", identifier))
+#   }
+#   if (!dir.exists(file.path(paste0("EWAS_R_", identifier), "Plots"))) {
+#     dir.create(file.path(paste0("EWAS_R_", identifier), "Plots"))
+#   }
+# }
 model <- lmFit(Betas, design)
 contrastMatrics <- makeContrasts(AD - CTRL,levels = colnames(model$coefficients))
 contrast_fit <- contrasts.fit(model, contrastMatrics)
@@ -51,5 +51,5 @@ result <- eBayes(contrast_fit)
 table_res <- topTable(result, adjust="BH",resort.by="P",p.value=1,confint=TRUE,number=dim(Betas)[1])
 #save the results to a csv as as
 if(cohort_effect) {
-  write.csv(table_res, file.path(paste0("EWAS_R_Central_", identifier), "Small_Results_dataset.csv"))
-} else {write.csv(table_res, file.path(paste0("EWAS_R_", identifier), "Small_Results_dataset.csv")) }
+  write.csv(table_res, file.path(workingDir, "Small_Results_dataset_central.csv"))
+} else {write.csv(table_res, file.path(workingDir, "Small_Results_dataset.csv")) }
