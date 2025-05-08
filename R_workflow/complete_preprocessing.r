@@ -22,8 +22,8 @@ identifier <- input[5]
 need <- c("wateRmelon", "methylumi", "ChAMP")
 if (!require(need, quietly = TRUE))
   BiocManager::install(need, update = FALSE)
-library(wateRmelon, methylumi)
-library(ChAMP) # for some reason library only loads this package when it is called on its own
+suppressPackageStartupMessages(library(wateRmelon, methylumi))
+suppressPackageStartupMessages(library(ChAMP)) # for some reason library only loads this package when it is called on its own
 
 #if (!require("RefFreeEWAS", quietly = TRUE))
 # not available on CRAN anymore so needs to be downloaded manually from the archive
@@ -32,11 +32,11 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/RefFreeEWAS/Ref
 # replace with filepath of the local download location of the archieved RefFreeEWAS package
 
 #install.packages("quadprog") # one of the RefFreeEWAS dependencies that I hadn't installed yet
-library(RefFreeEWAS)
+suppressPackageStartupMessages(library(RefFreeEWAS))
 # instal tidyverse for easier dataframe manipulation
 if (!require("tidyverse", quietly = TRUE))
 	install.packages("tidyverse")
-library(tidyverse)
+suppressPackageStartupMessages(library(tidyverse))
 
 ##### source the Exeter functions needed for the pipeline
 lapply(list.files("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files",pattern = "\\.r$",full.names = T),function(x){source(x)})
