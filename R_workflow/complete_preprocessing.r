@@ -310,7 +310,7 @@ gc()
 crosshyb <- read.table("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc2.txt") #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc2.txt,
 snpProbes <- read.table("/cosybio/project/vanElferen/FedEWAS/Federated_Differential_Methylation_Analysis/Required_files/mmc1.txt", header = TRUE) #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4909830/bin/mmc1.txt,
 msetEPIC.pf<-msetEPIC.pf[!(rownames(msetEPIC.pf@assayData$betas) %in% crosshyb[,1]), ]
-kept_probes <-filterSNPprobes(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
+kept_probes <-filterSNPprobesEdit(betas(msetEPIC.pf), population = "EUR", maf = 0.05) ## filters common probes based on allele frequency in european populations.
 msetEPIC.pf <- msetEPIC.pf[rownames(msetEPIC.pf@assayData$betas) %in% rownames(kept_probes), ]
 msetEPIC.pf<-msetEPIC.pf[-grep("rs", rownames(msetEPIC.pf@assayData$betas)),] ## remove SNP probes
 
