@@ -38,33 +38,36 @@ def dfs2_python(x, probe_type):
     out = np.max(one) - np.max(two) #not quite sure if any of this is correct
     return out
 
-def dfsfit_python(x, probe_type):
-    import statsmodels.api as sm
-    import re
-    x = x.copy()
-    dis_diff = x.apply(dfs2_python, args = (probe_type,), axis=0) #create a dataframe/array of the values when dfs2 is applied to each column
-    print(dis_diff)
-    roco = []
-    for col_name in x.columns.values.tolist() :
-        found = re.search("(R0[1-9]C0[1-9])", col_name).group(1)
-        roco.append(found) 
-    
-    srow = []
-    scol = []
-    for ro in roco:
-        row = int(ro[2])
-        srow.append(row)
-        col = int(ro[5])
-        scol.append(col)
-    roco_zip = list(zip(srow, scol))
-    data = pd.DataFrame(roco_zip, index = x.columns.values, columns = ["srow", "scol"])
-    data.insert(loc = 0, column="dis_diff", value=dis_diff)
 
-    fit_dist = sm.OLS.from_formula("dis_diff ~ scol + srow", data).fit()
-    dis_diff = [fit_dist.fittedvalues]
+def dfsfit_python(x, probe_type, roco: bool = True):
+    x = x.copy()
+    dis_diff = x.apply(dfs2_python, args=(probe_type,),
+                       axis=0)  # create a dataframe/array of the values when dfs2 is applied to each column
+
+    if roco:
+        roco = []
+        for col_name in x.columns.values.tolist():
+            found = re.search("(R0[1-9]C0[1-9])", col_name).group(1)
+            roco.append(found)
+
+        srow = []
+        scol = []
+        for ro in roco:
+            row = int(ro[2])
+            srow.append(row)
+            col = int(ro[5])
+            scol.append(col)
+
+        roco_zip = list(zip(srow, scol))
+        data = pd.DataFrame(roco_zip, index=x.columns.values, columns=["srow", "scol"])
+        data.insert(loc=0, column="dis_diff", value=dis_diff)
+
+        fit_dist = sm.OLS.from_formula("dis_diff ~ scol + srow", data).fit()
+        dis_diff = [fit_dist.fittedvalues]
+
     n = probe_type.squeeze() == "I"
-    tI_correction = np.tile(np.array(dis_diff), (sum(n),1))
-    x[probe_type.squeeze() == "I"] = x.loc[probe_type.squeeze() == "I",:] - tI_correction
+    tI_correction = np.tile(np.array(dis_diff), (sum(n), 1))
+    x.loc[probe_type == "I"] = x.loc[probe_type == "I"] - tI_correction
     return x
 
 class Client:
@@ -244,7 +247,7 @@ class Client:
     # client level computation for (dasen)normalisation
     def intensity_distributions(self):
         self.methylated_dist = dfsfit_python(self.raw_methylated, self.probe_annotation['Infinium_Design_Type'])
-        self.unmethylated_dist = dfsfit_python(self.raw_unmethylated, self.probe_annotation['Infinium_Design_Type'])
+        self.unmethylated_dist = dfsfit_python(self.raw_unmethylated, self.probe_annotation['Infinium_Design_Type'], roco=False)
         #return self.methylated_dist, self.unmethylated_dist
     
     def local_normalisation_parameters(self):

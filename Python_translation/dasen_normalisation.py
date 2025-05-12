@@ -24,7 +24,7 @@ def dasen_normalisation(unmethylated, methylated, probe_type, base = 100):
     Returns: a dataframe of normalised beta values
     """
     # fit the probability ditribution to the methylated and unmethylated probe intensities based on their probe type
-    unmethylated_fit = dfsfit_python(unmethylated, probe_type)
+    unmethylated_fit = dfsfit_python(unmethylated, probe_type, roco=False)
     methylated_fit = dfsfit_python(methylated, probe_type)
 
     # calculate the quantile normalised values for the methylated and unmethylated probe intensities based on the estimated distribution values
@@ -54,30 +54,32 @@ def dfs2_python(x, probe_type):
     out = np.max(one) - np.max(two) 
     return out
 
-def dfsfit_python(x, probe_type):
+def dfsfit_python(x, probe_type, roco:bool=True):
     
     x = x.copy()
     dis_diff = x.apply(dfs2_python, args = (probe_type,), axis=0) #create a dataframe/array of the values when dfs2 is applied to each column
-    
-    roco = []
-    for col_name in x.columns.values.tolist() :
-        found = re.search("(R0[1-9]C0[1-9])", col_name).group(1)
-        roco.append(found) 
-    
-    srow = []
-    scol = []
-    for ro in roco:
-        row = int(ro[2])
-        srow.append(row)
-        col = int(ro[5])
-        scol.append(col)
-    
-    roco_zip = list(zip(srow, scol))
-    data = pd.DataFrame(roco_zip, index = x.columns.values, columns = ["srow", "scol"])
-    data.insert(loc = 0, column="dis_diff", value=dis_diff)
 
-    fit_dist = sm.OLS.from_formula("dis_diff ~ scol + srow", data).fit()
-    dis_diff = [fit_dist.fittedvalues]
+    if roco:
+        roco = []
+        for col_name in x.columns.values.tolist() :
+            found = re.search("(R0[1-9]C0[1-9])", col_name).group(1)
+            roco.append(found)
+
+        srow = []
+        scol = []
+        for ro in roco:
+            row = int(ro[2])
+            srow.append(row)
+            col = int(ro[5])
+            scol.append(col)
+
+        roco_zip = list(zip(srow, scol))
+        data = pd.DataFrame(roco_zip, index = x.columns.values, columns = ["srow", "scol"])
+        data.insert(loc = 0, column="dis_diff", value=dis_diff)
+
+        fit_dist = sm.OLS.from_formula("dis_diff ~ scol + srow", data).fit()
+        dis_diff = [fit_dist.fittedvalues]
+
     n = probe_type.squeeze() == "I"
     tI_correction = np.tile(np.array(dis_diff), (sum(n),1))
     x.loc[probe_type == "I"] = x.loc[probe_type == "I"] - tI_correction
