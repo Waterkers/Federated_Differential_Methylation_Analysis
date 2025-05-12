@@ -274,8 +274,16 @@ regressioResultsCalculator = eBayesLocal.eBayesLocal(results_ewas,
                                          design_matrix_local.shape[0])
 regressioResultsCalculator.eBayes()
 if not cohort_effect:
+    regressioResultsCalculator = eBayesLocal.eBayesLocal(results_ewas,
+                                                         SSE,
+                                                         design_matrix_local.shape[0])
+    regressioResultsCalculator.eBayes()
     regressioResultsCalculator.table.to_csv(os.path.join(output_dir_QC, (identifier + "_eBayesTopTableResult.csv")))
 else:
+    regressioResultsCalculator = eBayesLocal.eBayesLocal(results_ewas,
+                                                         SSE,
+                                                         design_matrix.shape[0])
+    regressioResultsCalculator.eBayes()
     regressioResultsCalculator.table.to_csv(os.path.join(output_dir_QC, (identifier + "_central_eBayesTopTableResult.csv")))
 
 sys.exit(0)
