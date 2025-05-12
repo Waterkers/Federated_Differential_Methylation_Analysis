@@ -5,17 +5,17 @@ import sys
 try:
     from Federated_Differential_Methylation_Analysis.Python_translation import dasen_normalisation
 except ModuleNotFoundError:
-    sys.path.append("/home/silke/Documents/Fed_EWAS")
+    sys.path.append("/cosybio/project/vanElferen/FedEWAS")
     from Federated_Differential_Methylation_Analysis.Python_translation import dasen_normalisation
 #%%
 np.seterr(under='ignore')
 #%%
 # read in the data
-unmeth = pd.read_csv('/home/silke/Documents/Fed_EWAS/Data/EWASResultsServer/Intermediates/Python_central/GSE66351/Filtered_Unmethylated.csv',
+unmeth = pd.read_csv('/cosybio/project/vanElferen/FedEWAS/Data/QC_GSE66351/Filtered_Unmethylated.csv',
                      index_col=0)
-meth = pd.read_csv('/home/silke/Documents/Fed_EWAS/Data/EWASResultsServer/Intermediates/Python_central/GSE66351/Filtered_Methylated.csv',
+meth = pd.read_csv('/cosybio/project/vanElferen/FedEWAS/Data/QC_GSE66351/Filtered_Methylated.csv',
                    index_col=0)
-annotation = pd.read_csv('/home/silke/Documents/Fed_EWAS/Data/GSE134379_RAW/GPL13534_HumanMethylation450_15017482_v.1.1.csv',
+annotation = pd.read_csv('/cosybio/project/vanElferen/FedEWAS/Data/GSE134379_Raw/GPL13534_HumanMethylation450_15017482_v.1.1.csv',
                          skiprows=7, index_col=0, low_memory=False)
 annotation_data = annotation.loc[list(set(meth.index.values).intersection(set(annotation.index.values))), :]
 #%%
