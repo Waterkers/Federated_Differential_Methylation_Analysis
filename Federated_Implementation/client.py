@@ -13,6 +13,7 @@ from tqdm.contrib.telegram import tqdm as tqdmTelegram
 import os
 from tqdm import tqdm
 import re
+import statsmodels.api as sm
 
 # dasen normalisation local substeps
 def dfs2_python(x, probe_type):
