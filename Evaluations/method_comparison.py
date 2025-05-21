@@ -154,30 +154,24 @@ phenotype_recoding = {'GSE66351':{'Diagnosis':{"diagnosis: AD":"AD",
 #%%
 # compile all the steps that need to be performed per dataset on ONE first
 # then create function around it to make it easy to call on all of them
-GSE66351_pheno = pd.read_csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\Data_Full_Datasets\\GSE66351\\Reduced_Pheno_Info.csv", index_col=0)
-recoded_pheno = GSE66351_pheno.copy(deep=True)
-for column in phenotype_recoding['GSE66351']:
-    recoded_pheno[column] = recoded_pheno[column].map(phenotype_recoding['GSE66351'][column])
+# GSE66351_pheno = pd.read_csv("E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\Data_Full_Datasets\\GSE66351\\Reduced_Pheno_Info.csv", index_col=0)
+# recoded_pheno = GSE66351_pheno.copy(deep=True)
+# for column in phenotype_recoding['GSE66351']:
+#     recoded_pheno[column] = recoded_pheno[column].map(phenotype_recoding['GSE66351'][column])
 
 # make sure all the phenotype files used the same codes for the diagnosis
 
 #%%
 # read in the results from the different implementations
 original_r_GSE66351_E = pd.read_csv("/home/silke/Documents/Fed_EWAS/Data/EWASResultsServer/Small_Results_dataset.csv", index_col=0)
-
-#%%
+# python
 python_central_GSE66351_E = pd.read_csv("/home/silke/Documents/Fed_EWAS/Data/EWASResultsServer/GSE66351_eBayesTopTableResult.csv", index_col=0)
-
-
-#%%
 distortions = ['balanced', 'strong', 'mild']
 federated_balanced = pd.read_csv("/home/silke/Documents/Fed_EWAS/Data/EWASResultsServer/balanced_splits_EWAS_results.csv", index_col=0)
 #federated_mild_imbalance = pd.read_csv("E:\Msc Systems Biology\MSB5000_Master_Thesis\Practical work\Data\GSE66351_Fed\mild_splits_EWAS_results.csv", index_col=0)
 #federated_strong_imbalance = pd.read_csv("E:\Msc Systems Biology\MSB5000_Master_Thesis\Practical work\Data\GSE66351_Fed\strong_splits_EWAS_results.csv", index_col=0)
-
 #%%
-
-#%%
+# calculate diff and non-dfff methylated probes for all of the methods for checking purposes
 GSE66351_groundTruth = groundTruthNew(original_r_GSE66351_E)
 python_ground_truth = groundTruthNew(python_central_GSE66351_E)
 federatedGroundTruth = groundTruthNew(federated_balanced)
@@ -187,21 +181,21 @@ datasets = {"Python":python_central_GSE66351_E,"Balanced":federated_balanced} #,
 rGroundTruth_results = create_performance_metrics_excel(datasets, original_r_GSE66351_E,
                                  "/home/silke/Documents/Fed_EWAS/Data/EWASResultsServer/GSE66351_noCohortEffects_rGroundTruth_EvaluationResults.xlsx",
                                  return_results=True)
+# compare against R central run
 for data in datasets:
     plot_pval_distributions(datasets[data], original_r_GSE66351_E, 'GSE66351', data,
                             "/home/silke/Documents/Fed_EWAS/Data/EWASResultsServer/GSE66351_noCohortEffects_rGroundTruth_pvalDistributions.png")
     plot_pval_probes_diff_gt_fed(datasets[data], original_r_GSE66351_E, 'GSE66351', data,
                                  save_file_name="/home/silke/Documents/Fed_EWAS/Data/EWASResultsServer/GSE66351_noCohortEffects_rGroundTruth_pvalProbeDifferences.png")
+#%%
+datasets = {"R":original_r_GSE66351_E,"Balanced":federated_balanced}
 pythonGroundTruth_results = create_performance_metrics_excel(datasets, python_central_GSE66351_E,
                                  "/home/silke/Documents/Fed_EWAS/Data/EWASResultsServer/GSE66351_noCohortEffects_pythonGroundTruth_EvaluationResults.xlsx",
                                  return_results=True)
+# compare against python central run
 for data in datasets:
-    plot_pval_distributions(datasets[data], original_r_GSE66351_E, 'GSE66351', data,
+    plot_pval_distributions(datasets[data], python_central_GSE66351_E, 'GSE66351', data,
                             "/home/silke/Documents/Fed_EWAS/Data/EWASResultsServer/GSE66351_noCohortEffects_pythonGroundTruth_pvalDistributions.png")
-    plot_pval_probes_diff_gt_fed(datasets[data], original_r_GSE66351_E, 'GSE66351', data,
+    plot_pval_probes_diff_gt_fed(datasets[data], python_central_GSE66351_E, 'GSE66351', data,
                                  save_file_name="/home/silke/Documents/Fed_EWAS/Data/EWASResultsServer/GSE66351_noCohortEffects_pythonGroundTruth_pvalProbeDifferences.png")
-#%%
-#r and fed beta deviation density distribution plot
-#%%
-
 #%%
