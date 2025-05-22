@@ -46,22 +46,48 @@ Betas <- Betas[row.names(design)]
 # }
 model <- lmFit(Betas, design)
 if(cohort_effect) {
-  write.csv(model, file.path(workingDir, "regression_model_central.csv"))
-} else {write.csv(model, file.path(workingDir, "regression_model.csv")) }
+  if (split) {
+    write.csv(model, file.path(workingDir, "regression_model_central_from_split.csv"))
+  } else {write.csv(model, file.path(workingDir, "regression_model_central.csv"))}
+
+}  else {
+  if (split) {
+    write.csv(model, file.path(workingDir, "regression_model_from_split.csv"))
+  } else {write.csv(model, file.path(workingDir, "regression_model.csv"))}
+   }
 contrastMatrics <- makeContrasts(AD - CTRL,levels = colnames(model$coefficients))
 if(cohort_effect) {
-  write.csv(contrastMatrics, file.path(workingDir, "contrast_matrix_central.csv"))
-} else {write.csv(contrastMatrics, file.path(workingDir, "contrast_matrix_dataset.csv")) }
+  if (split) {
+    write.csv(contrastMatrics, file.path(workingDir, "contrast_matrix_central_from_split.csv"))
+  } else {write.csv(contrastMatrics, file.path(workingDir, "contrast_matrix_central.csv"))}
+
+} else {
+  if (split) {
+    write.csv(contrastMatrics, file.path(workingDir, "contrast_matrix_dataset_from_split.csv"))
+  } else { write.csv(contrastMatrics, file.path(workingDir, "contrast_matrix_dataset.csv")) } }
 contrast_fit <- contrasts.fit(model, contrastMatrics)
 if(cohort_effect) {
-  write.csv(contrast_fit, file.path(workingDir, "fitted_contrast_matrix_central.csv"))
-} else {write.csv(contrast_fit, file.path(workingDir, "fitted_contrast_matrix_dataset.csv")) }
+  if (split) {
+    write.csv(contrast_fit, file.path(workingDir, "fitted_contrast_matrix_central_from_split.csv"))
+  } else {write.csv(contrast_fit, file.path(workingDir, "fitted_contrast_matrix_central.csv"))}
+} else {
+  if (split) {
+    write.csv(contrast_fit, file.path(workingDir, "fitted_contrast_matrix_dataset_from_split.csv"))
+  } else { write.csv(contrast_fit, file.path(workingDir, "fitted_contrast_matrix_dataset.csv")) } }
 result <- eBayes(contrast_fit)
 if(cohort_effect) {
-  write.csv(result, file.path(workingDir, "eBayes_output_raw_central.csv"))
-} else {write.csv(result, file.path(workingDir, "eBayes_output_raw_dataset.csv")) }
+  if (split) {
+  } else {write.csv(result, file.path(workingDir, "eBayes_output_raw_central_from_split.csv"))
+}
+  } else { if (split) {
+  write.csv(result, file.path(workingDir, "eBayes_output_raw_dataset_from_split.csv"))
+} else { write.csv(result, file.path(workingDir, "eBayes_output_raw_dataset.csv")) } }
 table_res <- topTable(result, adjust="BH",resort.by="P",p.value=1,confint=TRUE,number=dim(Betas)[1])
 #save the results to a csv as as
 if(cohort_effect) {
-  write.csv(table_res, file.path(workingDir, "Small_Results_dataset_central.csv"))
-} else {write.csv(table_res, file.path(workingDir, "Small_Results_dataset.csv")) }
+  if (split) {
+    write.csv(table_res, file.path(workingDir, "Small_Results_dataset_central_from_split.csv"))
+  } else {write.csv(table_res, file.path(workingDir, "Small_Results_dataset_central.csv"))}
+} else {if (split) {
+  write.csv(table_res, file.path(workingDir, "Small_Results_dataset_from_split.csv"))
+} else { write.csv(table_res, file.path(workingDir, "Small_Results_dataset.csv")) } }
