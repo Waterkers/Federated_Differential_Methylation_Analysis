@@ -15,9 +15,9 @@ setwd(workingDir) # set the working directory
 #data_dir <- "E:\\Msc Systems Biology\\MSB5000_Master_Thesis\\Practical work\\Data\\GSE66351_splits"
 #TODO wrap in if statement if split is true otherwise load the normalised beta from data_dir
 if(split){
-Betas1 <- read.csv(file.path(data_dir, "Split_1_betas.csv"), row.names = 1, header = TRUE)
-Betas2 <- read.csv(file.path(data_dir, "Split_2_betas.csv"), row.names = 1, header = TRUE)
-Betas3 <- read.csv(file.path(data_dir, "Split_3_betas.csv"), row.names = 1, header = TRUE)
+Betas1 <- read.csv(file.path(data_dir, "balanced_split1_betas.csv"), row.names = 1, header = TRUE)
+Betas2 <- read.csv(file.path(data_dir, "balanced_split2_betas.csv"), row.names = 1, header = TRUE)
+Betas3 <- read.csv(file.path(data_dir, "balanced_split3_betas.csv"), row.names = 1, header = TRUE)
 Betas <- cbind(Betas1, Betas2)
 Betas <- cbind(Betas, Betas3)
 rm(Betas1, Betas2, Betas3)
