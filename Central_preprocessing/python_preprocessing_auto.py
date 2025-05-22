@@ -268,6 +268,9 @@ else:
     # save the SSE to a file for the calculation of the eBayes results
     with open(os.path.join(output_dir_QC, (identifier + "_central_SSE_list.csv")), "w") as outfile:
         outfile.writelines('\n'.join([str(i) for i in SSE]))
+
+# TODO implement the contrast fitting before doing the eBayes calculation
+
 # try the ebayes calculation with the regression output
 regressioResultsCalculator = eBayesLocal.eBayesLocal(results_ewas,
                                          SSE,
