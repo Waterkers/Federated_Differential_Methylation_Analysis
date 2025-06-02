@@ -17,8 +17,6 @@ from client import Client
 #pyximport.install(setup_args={"script_args" : ["--verbose"]})
 #from linbinR import fast_linbin
 #%%
-
-#TODO wrap the whole thing into a function
 #TODO include logging or progress monitoring of some kind
 #TODO remove all return statements from the client/server functions unless the returned objects are saved to a file for logging
 def run_federated_prototype(split_directory:str,
