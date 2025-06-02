@@ -233,7 +233,7 @@ class Client:
             #if ID in self.unique_SentrixIDS:
             self.designmatrix = self.designmatrix.copy(deep=True)
             self.designmatrix[ID] = 0
-            self.designmatrix[ID].loc[self.designmatrix["Sentrix_ID"] == ID] = 1
+            self.designmatrix.loc[self.designmatrix["Sentrix_ID"] == ID, ID] = 1
             #self.designmatrix[ID].loc[self.designmatrix["Sentrix_ID"] != ID] = 0
         self.designmatrix.drop(columns="Sentrix_ID", inplace=True)
         self.designcolumns = list(self.designmatrix.columns.values)
@@ -242,7 +242,7 @@ class Client:
         for ID in global_PlateID:
             #if ID in self.unique_PlateIDS:
             self.designmatrix[ID] = 0
-            self.designmatrix[ID].loc[self.designmatrix["Plate_ID"] == ID] = 1
+            self.designmatrix.loc[self.designmatrix["Plate_ID"] == ID, ID] = 1
         self.designmatrix.drop(columns="Plate_ID", inplace=True)
         self.designcolumns = list(self.designmatrix.columns.values)
 
