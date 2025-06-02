@@ -231,6 +231,7 @@ class Client:
     def SentrixID_effects(self, global_SentrixID):
         for ID in global_SentrixID:
             #if ID in self.unique_SentrixIDS:
+            self.designmatrix = self.designmatrix.copy(deep=True)
             self.designmatrix[ID] = 0
             self.designmatrix[ID].loc[self.designmatrix["Sentrix_ID"] == ID] = 1
             #self.designmatrix[ID].loc[self.designmatrix["Sentrix_ID"] != ID] = 0
