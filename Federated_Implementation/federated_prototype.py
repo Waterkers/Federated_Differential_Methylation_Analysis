@@ -3,8 +3,7 @@ import numpy as np
 import os
 
 import pandas as pd
-import warnings
-warnings.filterwarnings("error", category=pd.errors.SettingWithCopyWarning)
+pd.set_option('mode.chained_assignment','raise')
 from server import Server
 import argparse
 from client import Client
