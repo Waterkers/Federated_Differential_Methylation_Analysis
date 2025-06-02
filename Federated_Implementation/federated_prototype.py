@@ -4,18 +4,10 @@ import os
 
 import pandas as pd
 
-# try:
-#     from Federated_Differential_Methylation_Analysis.Central_preprocessing.python_preprocessing_splits import output_dir
-# except ModuleNotFoundError:
-#     sys.path.append("/cosybio/project/vanElferen/FedEWAS")
-#     from Federated_Differential_Methylation_Analysis.Central_preprocessing.python_preprocessing_splits import output_dir
 from server import Server
 import argparse
 from client import Client
-#%%
-#import pyximport
-#pyximport.install(setup_args={"script_args" : ["--verbose"]})
-#from linbinR import fast_linbin
+
 #%%
 #TODO include logging or progress monitoring of some kind
 #TODO remove all return statements from the client/server functions unless the returned objects are saved to a file for logging
