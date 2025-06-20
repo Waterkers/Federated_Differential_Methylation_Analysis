@@ -325,9 +325,12 @@ save(msetEPIC.pf, QCmetrics, file = file.path(QC_output, "FilteredMethylumisetQC
 msetEPIC.pf <- dasen(msetEPIC.pf)
 # pull dasen normalisation apart to save intermediate steps
 annotation_data <- read.csv(manifest_path, skip = 7, header = TRUE)
-intesity_dist <- apply(mn,2,dfs2,annotation_data[c("IlmnID", "Infinium_Design_Type")],method="median")
+intesity_dist <- apply(betas(msetEPIC.pf),2,dfs2,annotation_data[c("IlmnID", "Infinium_Design_Type")])
 print(head(intesity_dist))
-write.csv(intesity_dist, file = file.path(QC_output, "dsf2_intensity_distribution.csv"))
+write.csv(intesity_dist, file = file.path(QC_output, "dfs2_intensity_distribution.csv"))
+corrected_intensity <- dfsfit(betas(msetEPIC.pf), annotation_data[c("IlmnID", "Infinium_Design_Type")])
+print(head(corrected_intensi))
+write.csv(corrected_intensity, file = file.path(QC_output, "dfsfit_corrected_intensity_distribution.csv"))
 # adding feature/probe annotation information after normalisation because otherwise
 # the dasen function becomes fussy and won't work
 retained_annotation <- annotation_data[annotation_data$IlmnID %in% rownames(betas(msetEPIC.pf)), ]
